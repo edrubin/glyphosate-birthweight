@@ -1,6 +1,9 @@
 # Data Requirements 
 
-### USDA NASS Data 
+### API Keys
 
-Need an API key---from [USDA QuickStats API](https://quickstats.nass.usda.gov/api/). Add the key as `NASS_KEY` to your R environmental variables. 
+The following API keys are required, save them to .Renviron with with `usethis::edit_r_environ()`   
+- [USDA QuickStats API](https://quickstats.nass.usda.gov/api/) saved in .Renviron as `NASS_KEY`  
+- [Census API](https://api.census.gov/data/key_signup.html) saved in .Renviron as `CENSUS_KEY`  
+- [BEA API](https://apps.bea.gov/API/signup/) saved in .Renvoron as `BEA_KEY`  
 
