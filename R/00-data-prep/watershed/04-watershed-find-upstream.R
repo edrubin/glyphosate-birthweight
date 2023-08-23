@@ -3,8 +3,8 @@
 library(pacman)
 p_load(
   data.table, here, fixest, ggplot2, 
-  tigris, magrittr, sf, tidyr, dplyr, HydroCode,
-  janitor, fst, stringr
+  tigris, magrittr, sf, tidyr, dplyr, 
+  janitor, fst, stringr, units
 )
 
 # Loading HydroBASINS data limiting to those in the continental US
@@ -32,7 +32,7 @@ hydrobasin_dt =
 ggplot(data = hydrobasin_dt, aes(x = dist_next_down_km)) + 
   geom_histogram(bins = 500) + 
   geom_vline(xintercept = 250, linetype = 'dashed')
-
+# Censoring these to cut off those with centroids more than 100km appart
 hydrobasin_dt[,
   next_down := fcase(
     dist_next_down_km <= 100, next_down, 
@@ -43,7 +43,7 @@ hydrobasin_dt[,
 # Loading weights to limit to watersheds in continental US
 area_weight_dt = 
   read_fst(
-    here("data-clean/watershed/weights/hydrobasin/hydrobasin-area-weights.fst"),
+    here("data-clean/watershed/weights/hydrobasin-area-weights.fst"),
     as.data.table = TRUE
   ) |>
   setnames(old = "watershed_weight",new = "area_weight") |>
@@ -318,22 +318,22 @@ dist_fn = function(x, exp = -1){
 }
 
 # Plot of the weighting function
-dist_wt_fn =
-  ggplot() +
-  stat_function(fun = dist_fn, args = list(exp = 0), color = "#57754d", size = 2) + 
-  stat_function(fun = dist_fn, args = list(exp = -0.25), color = "#ffcc77", size = 2) +  
-  stat_function(fun = dist_fn, args = list(exp = -2), color = "#ec7662", size = 2) + 
-  xlim(0,15) + 
-  labs(
-    x = "Number of Watersheds",
-    y = "Distance Weight"
-  ) +
-  theme_minimal(base_size = 16)
-ggsave(
-  dist_wt_fn, 
-  filename = here("figures/watershed_plots/dist_wt_fn.jpeg"),
-  width = 8,height = 6
-)
+# dist_wt_fn =
+#   ggplot() +
+#   stat_function(fun = dist_fn, args = list(exp = 0), color = "#57754d", size = 2) + 
+#   stat_function(fun = dist_fn, args = list(exp = -0.25), color = "#ffcc77", size = 2) +  
+#   stat_function(fun = dist_fn, args = list(exp = -2), color = "#ec7662", size = 2) + 
+#   xlim(0,15) + 
+#   labs(
+#     x = "Number of Watersheds",
+#     y = "Distance Weight"
+#   ) +
+#   theme_minimal(base_size = 16)
+# ggsave(
+#   dist_wt_fn, 
+#   filename = here("figures/watershed_plots/dist_wt_fn.jpeg"),
+#   width = 8,height = 6
+# )
 
 # Getting dist for first up/down watershed outside of county
 dist_up_dt = upstream_dt[
@@ -388,20 +388,47 @@ upstream_dt[, dist_km_bin := cut(
   labels = paste0('d',dist_breaks[1:length(dist_breaks)-1]) |> str_replace('-','n')
 )]
 
-
 # saving the results
 write.fst(
   upstream_dt, 
   path = here("data-clean/watershed/upstream-dt-hydrobasin.fst")
 )
 
-upstream_dt =
-read.fst(
-  path = here("data-clean/watershed/upstream-dt-hydrobasin.fst"),
-  as.data.table = TRUE
+# Now adding distances between centroids
+upstream_dt = 
+  read.fst(
+    path = here("data-clean/watershed/upstream-dt-hydrobasin.fst"),
+    as.data.table = TRUE
+  )[order(hybas_id, hybas_id2)]
+
+upstream_hybas_sf = 
+  merge(
+    upstream_dt, 
+    hydrobasin_sf,
+    by = 'hybas_id'
+  )[order(hybas_id, hybas_id2)] |> 
+  st_as_sf() |>
+  st_centroid()
+upstream_hybas_sf2 = 
+  merge(
+    upstream_dt, 
+    hydrobasin_sf,
+    by.x = 'hybas_id2',
+    by.y = 'hybas_id'
+  )[order(hybas_id, hybas_id2)] |> 
+  st_as_sf() |>
+  st_centroid()
+
+dist = st_distance(
+  upstream_hybas_sf, 
+  upstream_hybas_sf2, 
+  by_element = TRUE
 )
 
+upstream_dt[,dist_km := dist |> set_units('km') |> drop_units()]
 
+# Temporarily not saving this as we may not need it anymore 
+#write.fst(upstream_dt, path = here("data-clean/watershed/upstream-dist-dt.fst"))
 
 
 

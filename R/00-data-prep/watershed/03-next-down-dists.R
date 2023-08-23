@@ -1,4 +1,5 @@
 # Script calculates the distance between centroids of watersheds 
+# from the next downstream watershed
 library(pacman)
 p_load(
   here, fst, data.table, sf, dplyr, janitor, units
@@ -39,39 +40,3 @@ hybas_dist_dt =
 
 # Saving results 
 write.fst(hybas_dist_dt, path = here("data-clean/watershed/hybas-dist-dt.fst"))
-
-
-upstream_dt = 
-  read.fst(
-    path = here("data-clean/watershed/upstream-dt-hydrobasin.fst"),
-    as.data.table = TRUE
-  )[order(hybas_id, hybas_id2)]
-
-upstream_hybas_sf = 
-  merge(
-    upstream_dt, 
-    hydrobasin_sf,
-    by = 'hybas_id'
-  )[order(hybas_id, hybas_id2)] |> 
-  st_as_sf() |>
-  st_centroid()
-upstream_hybas_sf2 = 
-  merge(
-    upstream_dt, 
-    hydrobasin_sf,
-    by.x = 'hybas_id2',
-    by.y = 'hybas_id'
-  )[order(hybas_id, hybas_id2)] |> 
-  st_as_sf() |>
-  st_centroid()
-
-dist = st_distance(
-  upstream_hybas_sf, 
-  upstream_hybas_sf2, 
-  by_element = TRUE
-)
-
-upstream_dt[,dist_km:=dist |> set_units('km') |> drop_units()]
-  
-write.fst(upstream_dt, path = here("data-clean/watershed/upstream-dist-dt.fst"))
-
