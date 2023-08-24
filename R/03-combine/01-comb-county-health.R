@@ -200,53 +200,6 @@ health_dt[,':='(
 )]
 health_dt[, pct_vent := calc_percent(tot_vent, tot_inf_births, scale = 100)]
 
-# Cohort linked infant mortality data
-inf_mort_dt = read.fst(
-  here("data-clean/inf-mort/cohort/inf_mort_1996_2011.fst"), 
-  as.data.table = TRUE
-) |> setkey(GEOID, year) %>% 
-.[,.(
-  year, GEOID,
-  tot_inf_deaths_wt = tot_inf_deaths_wt - tot_inf_deaths_wt_q1 + lag(tot_inf_deaths_wt_q1),
-  tot_inf_deaths_wt_q1 = lag(tot_inf_deaths_wt_q1),
-  tot_inf_deaths_wt_q2,         
-  tot_inf_deaths_wt_q3,         
-  tot_inf_deaths_wt_q4,         
-  tot_internal_inf_deaths_wt = tot_internal_inf_deaths_wt - tot_internal_inf_deaths_wt_q1 + lag(tot_internal_inf_deaths_wt_q1),
-  tot_internal_inf_deaths_wt_q1 = lag(tot_internal_inf_deaths_wt_q1),
-  tot_internal_inf_deaths_wt_q2,
-  tot_internal_inf_deaths_wt_q3,
-  tot_internal_inf_deaths_wt_q4,
-  tot_inf_births = tot_inf_births - tot_inf_births_q1 + lag(tot_inf_births_q1),
-  tot_inf_births_q1 = lag(tot_inf_births_q1),
-  tot_inf_births_q2,            
-  tot_inf_births_q3,            
-  tot_inf_births_q4
-)] %>% 
-.[,.(
-  year, GEOID,
-  inf_mort_cohort = calc_percent(tot_inf_deaths_wt, tot_inf_births),
-  inf_mort_int_cohort =  calc_percent(tot_internal_inf_deaths_wt, tot_inf_births),
-  inf_mort_ext_cohort = calc_percent(tot_inf_deaths_wt - tot_internal_inf_deaths_wt, tot_inf_births),
-  # Quarterly all IMR
-  inf_mort_q1_cohort = calc_percent(tot_inf_deaths_wt_q1, tot_inf_births_q1),
-  inf_mort_q2_cohort = calc_percent(tot_inf_deaths_wt_q2, tot_inf_births_q2),
-  inf_mort_q3_cohort = calc_percent(tot_inf_deaths_wt_q3, tot_inf_births_q3),
-  inf_mort_q4_cohort = calc_percent(tot_inf_deaths_wt_q4, tot_inf_births_q4),
-  # Quarterly internal IMR
-  inf_mort_int_q1_cohort = calc_percent(tot_internal_inf_deaths_wt_q1, tot_inf_births_q1),
-  inf_mort_int_q2_cohort = calc_percent(tot_internal_inf_deaths_wt_q2, tot_inf_births_q2),
-  inf_mort_int_q3_cohort = calc_percent(tot_internal_inf_deaths_wt_q3, tot_inf_births_q3),
-  inf_mort_int_q4_cohort = calc_percent(tot_internal_inf_deaths_wt_q4, tot_inf_births_q4),
-  # Quarterly external IMR
-  inf_mort_ext_q1_cohort = calc_percent(tot_inf_deaths_wt_q1-tot_internal_inf_deaths_wt_q1, tot_inf_births_q1),
-  inf_mort_ext_q2_cohort = calc_percent(tot_inf_deaths_wt_q2-tot_internal_inf_deaths_wt_q2, tot_inf_births_q2),
-  inf_mort_ext_q3_cohort = calc_percent(tot_inf_deaths_wt_q3-tot_internal_inf_deaths_wt_q3, tot_inf_births_q3),
-  inf_mort_ext_q4_cohort = calc_percent(tot_inf_deaths_wt_q4-tot_internal_inf_deaths_wt_q4, tot_inf_births_q4)
-  # Dont have Q1 lag for male/female yet
-  #inf_mort_male = calc_percent(tot_male_deaths_wt, tot_male_births), 
-  #inf_mort_female = calc_percent(tot_inf_deaths_wt-tot_male_deaths_wt, tot_inf_births-tot_male_births),
-)]
   
 # Combining health and county level data
 comb_health_dt = 
@@ -255,12 +208,7 @@ comb_health_dt =
     health_dt, 
     by = c("GEOID","year"),
     all = TRUE
-  ) |>
-  merge(
-    inf_mort_dt,
-    by = c("GEOID","year"),
-    all = TRUE
-  )
+  ) 
 
 # Saving the results 
 write.fst(

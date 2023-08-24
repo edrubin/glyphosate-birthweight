@@ -353,12 +353,13 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
   return(comb_dt[year %in% yr_start:yr_end])
 }
 
-
-comb_cnty_dt = create_comb_cnty_dt(
-  yr_start = 1990, 
-  yr_end = 2017,
-  water_exposure = FALSE
-)
+# Running it!
+comb_cnty_dt = 
+  create_comb_cnty_dt(
+    yr_start = 1990, 
+    yr_end = 2017,
+    water_exposure = FALSE
+  )
 write.fst(
   comb_cnty_dt,
   here("data-clean/comb-cnty-dt.fst")
