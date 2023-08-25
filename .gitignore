@@ -2,6 +2,8 @@
 data/
 data-clean/
 
+.Rprofile
+.vs-code/
 .DS_Store
 
 # History files
