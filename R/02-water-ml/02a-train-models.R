@@ -32,68 +32,61 @@ p_load(
   testing_dt = data_split |> testing() |> copy()
 
 # Cross validation ------------------------------------------------------------
-  # Range of penalties to test over
-  lambdas = 10^seq(from = 1, to = -3, length = 1e3)
-  # Setting up CV 
-  cv_splits = vfold_cv(training_dt, v = 5)
   # Manually create rolling splits in training dataset
-    initial = 12*1.25 # Months in analysis 
-    assess = 6 # Months in assessment
-    # Ordering backwards since we are predicting historially
-    training_dt |> setorder(-sample_date) 
-    data_dates = training_dt$sample_month %>% unique()
-    # Function to make the splits 
-    make_rolling_splits = function(i){
-      # Get time periods for analysis and assessment
-      analysis_dates = seq(
-        data_dates[i + initial - 1], 
-        data_dates[i], 
-        by = "month"
-      )
-      assess_dates = seq(
-        data_dates[i + initial + assess - 1], 
-        data_dates[i + initial],
-        by = "month"
-      )
-      # Indices of analysis and assessment
-      i_analysis = training_dt[sample_month %in% analysis_dates, which = T]
-      i_assess = training_dt[sample_month %in% assess_dates, which = T]
-      # Create the split
-      rolling_split = make_splits(
-        list(analysis = i_analysis, assessment = i_assess),
-        data = training_dt
-      )
-      return(rolling_split)
-    }
-    # Indices to pass to the make_rolling_split function
-    split_i = 1:(length(data_dates) - initial - assess + 1)
-    # Create list of the splits for each time period
-    rolling_splits = map(
-      split_i,
-      make_rolling_splits
+  initial = 15 # Months in analysis 
+  assess = 6 # Months in assessment
+  # Ordering backwards since we are predicting historially
+  training_dt |> setorder(-sample_date) 
+  data_dates = training_dt$sample_month %>% unique()
+  # Function to make the splits 
+  make_rolling_splits = function(i){
+    # Get time periods for analysis and assessment
+    analysis_dates = seq(
+      data_dates[i + initial - 1], 
+      data_dates[i], 
+      by = "month"
     )
-    # Combine the splits into an rset object
-    rolling_cv =
-      manual_rset(
-        splits = rolling_splits,
-        ids = paste0("rolling_split",split_i)
-      )
-    # Clean up
-    rm(rolling_splits, initial, assess, data_dates,i_test,i_train)
+    assess_dates = seq(
+      data_dates[i + initial + assess - 1], 
+      data_dates[i + initial],
+      by = "month"
+    )
+    # Indices of analysis and assessment
+    i_analysis = training_dt[sample_month %in% analysis_dates, which = T]
+    i_assess = training_dt[sample_month %in% assess_dates, which = T]
+    # Create the split
+    rolling_split = make_splits(
+      list(analysis = i_analysis, assessment = i_assess),
+      data = training_dt
+    )
+    return(rolling_split)
+  }
+  # Indices to pass to the make_rolling_split function
+  split_i = 1:(length(data_dates) - initial - assess + 1)
+  # Create list of the splits for each time period
+  rolling_splits = map(
+    split_i,
+    make_rolling_splits
+  )
+  # Combine the splits into an rset object
+  rolling_cv =
+    manual_rset(
+      splits = rolling_splits,
+      ids = paste0("rolling_split",split_i)
+    )
+  # Clean up
+  rm(rolling_splits, initial, assess, data_dates,i_test,i_train)
 
-  # Now more complicated versions for linear models 
+# Creating the recipes --------------------------------------------------------
   linear_recipe_base = 
     recipe(training_dt) |>
     update_role(
       contains('pred_glyphosate_awt'),
-      #contains('all_yield_diff_percentile_gmo_d'),
-      #contains('percentile_gm_acres'),
       contains('percentile_corn_acres'),
       contains('percentile_soy_acres'),
       contains('percentile_cotton_acres'),
       contains('percentile_other_acres'),
       contains('ppt'),
-      #contains('pct_irrigated'),
       contains('kffact'),
       contains('slopelen'),
       new_role = 'predictor'
@@ -156,31 +149,34 @@ p_load(
     step_interact(terms = ~ppt_growing_season_d200:slopelen_d200:kffact_d200:pred_glyphosate_awt_d200)|>
     step_interact(terms = ~ppt_growing_season_d250:slopelen_d250:kffact_d250:pred_glyphosate_awt_d250)|>
     step_interact(terms = ~ppt_growing_season_d300:slopelen_d300:kffact_d300:pred_glyphosate_awt_d300)
-    
-    glyph_recipe_linear_simple = 
-      linear_recipe_base |>
-      update_role(
-        gly_result, 
-        new_role = 'outcome'
-      )
-    glyph_recipe_linear_interactions = 
-      linear_recipe_interactions |>
-      update_role(
-        gly_result, 
-        new_role = 'outcome'
-      )
-    ampa_recipe_linear_simple = 
-      linear_recipe_base |>
-      update_role(
-        ampa_result, 
-        new_role = 'outcome'
-      )
-    ampa_recipe_linear_interactions = 
-      linear_recipe_interactions |>
-      update_role(
-        ampa_result, 
-        new_role = 'outcome'
-      )
+  # Now the actual recipes
+  glyph_recipe_base = 
+    linear_recipe_base |>
+    update_role(
+      gly_result, 
+      new_role = 'outcome'
+    )
+  ampa_recipe_base = 
+    linear_recipe_base |>
+    update_role(
+      ampa_result, 
+      new_role = 'outcome'
+    )
+  # With interactions
+  glyph_recipe_linear_interactions = 
+    linear_recipe_interactions |>
+    update_role(
+      gly_result, 
+      new_role = 'outcome'
+    )
+  ampa_recipe_linear_interactions = 
+    linear_recipe_interactions |>
+    update_role(
+      ampa_result, 
+      new_role = 'outcome'
+    )
+  
+# Setting up models and workflows ---------------------------------------------  
   # Define lasso model 
   model_lasso = 
     linear_reg(
@@ -188,164 +184,217 @@ p_load(
       mixture = 1
     ) |>
     set_engine("glmnet")
+  # Define RF model
+  model_rf = 
+    rand_forest(
+      mtry = tune(),
+      trees = 200,
+      min_n = tune()
+    ) |>
+    set_mode("regression") |>
+    set_engine(
+      "ranger", 
+      importance = "impurity"
+    )
   # Create workflows
-  wf_glyph_lasso_simple = 
-    workflow() |>
-    add_model(model_lasso) |>
-    add_recipe(glyph_recipe_linear_simple)
-  wf_glyph_lasso_interactions = 
+  wf_glyph_lasso = 
     workflow() |>
     add_model(model_lasso) |>
     add_recipe(glyph_recipe_linear_interactions)
-  wf_ampa_lasso_simple = 
-    workflow() |>
-    add_model(model_lasso) |>
-    add_recipe(ampa_recipe_linear_simple)
-  wf_ampa_lasso_interactions = 
+  wf_ampa_lasso = 
     workflow() |>
     add_model(model_lasso) |>
     add_recipe(ampa_recipe_linear_interactions)
-  # Doing cross validation
-  cv_glyph_lasso_simple = 
-    tune_grid(
-      object = wf_glyph_lasso_simple,
-      resamples = rolling_cv,
-      grid = data.frame(penalty = lambdas),
-      metrics = metric_set(rmse, rsq),
-      control = control_grid(save_pred = TRUE)
-    )
-  cv_glyph_lasso_interactions = 
-    tune_grid(
-      object = wf_glyph_lasso_interactions,
-      resamples = rolling_cv,
-      grid = data.frame(penalty = lambdas),
-      metrics = metric_set(rmse, rsq),
-      control = control_grid(save_pred = TRUE)
-    )
-  cv_ampa_lasso_simple = 
-    tune_grid(
-      object = wf_ampa_lasso_simple,
-      resamples = rolling_cv,
-      grid = data.frame(penalty = lambdas),
-      metrics = metric_set(rmse, rsq),
-      control = control_grid(save_pred = TRUE)
-    )
-  cv_ampa_lasso_interactions = 
-    tune_grid(
-      object = wf_ampa_lasso_interactions,
-      resamples = rolling_cv,
-      grid = data.frame(penalty = lambdas),
-      metrics = metric_set(rmse, rsq),
-      control = control_grid(save_pred = TRUE)
-    )
-    # Checking the results 
-    autoplot(cv_glyph_lasso_simple, metric = 'rmse') +
-      labs(y = 'RMSE', title = 'Glyphosate, no interactions') + 
-      theme_minimal() + 
-      scale_color_viridis_d()
-    autoplot(cv_glyph_lasso_interactions, metric = 'rmse') +
-      labs(y = 'RMSE', title = 'Glyphosate, with interactions') + 
-      theme_minimal() + 
-      scale_color_viridis_d()
-    autoplot(cv_ampa_lasso_simple, metric = 'rmse') +
-      labs(y = 'RMSE', title = 'AMPA, no interactions') + 
-      theme_minimal() + 
-      scale_color_viridis_d()
-    autoplot(cv_ampa_lasso_interactions, metric = 'rmse') +
-      labs(y = 'RMSE', title = 'AMPA, with interactions') + 
-      theme_minimal() + 
-      scale_color_viridis_d()
-# Checking results against test data
-  # First for simple model (no interactions)
-  best_glyph_lasso_simple = select_best(
-    cv_glyph_lasso_simple, 
-    metric = 'rmse'
-  )
-  final_glyph_wf_lasso_simple = 
-    wf_glyph_lasso_simple |> 
-    finalize_workflow(best_glyph_lasso_simple)
-  test_glyph_lasso_simple = 
-    final_glyph_wf_lasso_simple |> 
-    last_fit(data_split)
-  # Now for interacted model
-  best_glyph_lasso_interactions = select_best(
-    cv_glyph_lasso_interactions, 
-    metric = 'rmse'
-  )
-  final_glyph_wf_lasso_interactions = 
-    wf_glyph_lasso_interactions |> 
-    finalize_workflow(best_glyph_lasso_interactions)
-  test_glyph_lasso_interactions = 
-    final_glyph_wf_lasso_interactions |> 
-    last_fit(data_split)
-  # Checking fit 
-  collect_metrics(test_glyph_lasso_simple)
-  collect_metrics(test_glyph_lasso_interactions)
-  extract_fit_parsnip(test_glyph_lasso_simple) |>
-    tidy() |> 
-    print(n = 10000)
-# Fitting test AMPA model
-  # First the simple model 
-  best_ampa_lasso_simple = 
-    select_best(
-      cv_ampa_lasso_simple, 
-      metric = 'rmse'
-    )
-  final_ampa_wf_lasso_simple = 
-    wf_ampa_lasso_simple |> 
-    finalize_workflow(best_ampa_lasso_simple)
-  test_ampa_lasso_simple = 
-    final_ampa_wf_lasso_simple |> 
-    last_fit(data_split)
-  # Now the interactions
-  best_ampa_lasso_interactions = 
-    select_best(
-      cv_ampa_lasso_interactions, 
-      metric = 'rmse'
-    )
-  final_ampa_wf_lasso_interactions = 
-    wf_ampa_lasso_interactions |> 
-    finalize_workflow(best_ampa_lasso_interactions)
-  test_ampa_lasso_interactions = 
-    final_ampa_wf_lasso_interactions |> 
-    last_fit(data_split)
-  # Checking performance 
-  collect_metrics(test_ampa_lasso_simple)
-  collect_metrics(test_ampa_lasso_interactions)
-  extract_fit_parsnip(test_ampa_lasso_interactions) |>
-    tidy() |> 
-    print(n = 1000)
+  wf_glyph_rf = 
+    workflow() |>
+    add_model(model_rf) |>
+    add_recipe(glyph_recipe_base)
+  wf_ampa_rf = 
+    workflow() |>
+    add_model(model_rf) |>
+    add_recipe(ampa_recipe_base)
 
+# Runnning cross validation ---------------------------------------------------
+  # Picking parameters to tune over 
+  # Range of penalties in LASSO model
+  lambdas = 10^seq(from = 1, to = -3, length = 1e3)
+  # Find the number of predictor variables
+  n_glyph_pred = glyph_recipe_base %>%
+    prep() %$%
+    var_info %>%
+    filter(role == 'predictor') %>% 
+    nrow()
+  n_ampa_pred = ampa_recipe_base %>%
+    prep() %$%
+    var_info %>%
+    filter(role == 'predictor') %>% 
+    nrow()
+  # Create grid to tune over
+  rf_glyph_grid = grid_regular(
+    mtry(range = c(2, n_glyph_pred)),
+    min_n(range = c(1, 50)),
+    levels = c(round(n_glyph_pred/3, 0),10)
+  )
+  rf_ampa_grid = grid_regular(
+    mtry(range = c(2, n_ampa_pred)),
+    min_n(range = c(1, 50)),
+    levels = c(round(n_ampa_pred/3, 0),10)
+  )
+  # Running LASSO Cross validation
+  cv_glyph_lasso = 
+    tune_grid(
+      object = wf_glyph_lasso,
+      resamples = rolling_cv,
+      grid = data.frame(penalty = lambdas),
+      metrics = metric_set(rmse, rsq),
+      control = control_grid(save_pred = TRUE)
+    )
+  cv_ampa_lasso = 
+    tune_grid(
+      object = wf_ampa_lasso,
+      resamples = rolling_cv,
+      grid = data.frame(penalty = lambdas),
+      metrics = metric_set(rmse, rsq),
+      control = control_grid(save_pred = TRUE)
+    )
+  # Running Random Forest Cross validation
+  cv_glyph_rf =
+    tune_grid(
+      object = wf_glyph_rf,
+      resamples = rolling_cv,
+      grid = rf_glyph_grid,
+      metrics = metric_set(rmse, rsq),
+      control = control_grid(save_pred = TRUE)
+    )
+  cv_ampa_rf =
+    tune_grid(
+      object = wf_ampa_rf,
+      resamples = rolling_cv,
+      grid = rf_ampa_grid,
+      metrics = metric_set(rmse, rsq),
+      control = control_grid(save_pred = TRUE)
+    )  
+  # Checking the results 
+  autoplot(cv_glyph_rf, metric = 'rmse') +
+    labs(y = 'RMSE', title = 'Glyphosate, random forest') + 
+    theme_minimal() + 
+    scale_color_viridis_d()
+  autoplot(cv_glyph_lasso, metric = 'rmse') +
+    labs(y = 'RMSE', title = 'Glyphosate, LASSO') + 
+    theme_minimal() + 
+    scale_color_viridis_d()
+  autoplot(cv_ampa_rf, metric = 'rmse') +
+    labs(y = 'RMSE', title = 'AMPA, random forest') + 
+    theme_minimal() + 
+    scale_color_viridis_d()
+  autoplot(cv_ampa_lasso, metric = 'rmse') +
+    labs(y = 'RMSE', title = 'AMPA, LASSO') + 
+    theme_minimal() + 
+    scale_color_viridis_d()
+  # Choosing best parameters
+  best_glyph_rf = select_best(cv_glyph_rf, metric = 'rmse')
+  best_ampa_rf = select_best(cv_ampa_rf, metric = 'rmse')
+  best_glyph_lasso = select_best(cv_glyph_lasso, metric = 'rmse')
+  best_ampa_lasso = select_best(cv_ampa_lasso, metric = 'rmse')
+  # Creating final workflow
+  final_glyph_wf_rf = wf_glyph_rf |> finalize_workflow(best_glyph_rf)
+  final_ampa_wf_rf = wf_ampa_rf |> finalize_workflow(best_ampa_rf)
+  final_glyph_wf_lasso = wf_glyph_lasso |> finalize_workflow(best_glyph_lasso)
+  final_ampa_wf_lasso = wf_ampa_lasso |> finalize_workflow(best_ampa_lasso)
+  # Fitting on entire training set 
+  test_glyph_rf = final_glyph_wf_rf |> last_fit(data_split)
+  test_ampa_rf = final_ampa_wf_rf |> last_fit(data_split)
+  test_glyph_lasso = final_glyph_wf_lasso |> last_fit(data_split)
+  test_ampa_lasso = final_ampa_wf_lasso |> last_fit(data_split)
+  # Saving the test fit   
+  qsave(
+    x = test_glyph_rf,
+    file = here('data-clean/ml-water/test-glyph-fit-rf.qs')
+  )
+  qsave(
+    x = test_ampa_rf,
+    file = here('data-clean/ml-water/test-ampa-fit-rf.qs')
+  )
+  qsave(
+    x = test_glyph_lasso,
+    file = here('data-clean/ml-water/test-glyph-fit-lasso.qs')
+  )
+  qsave(
+    x = test_ampa_lasso,
+    file = here('data-clean/ml-water/test-ampa-fit-lasso.qs')
+  )
 
 # Finally, fitting on all data ------------------------------------------------
-ampa_fit_lasso = 
+  # LASSO Models 
+  ampa_fit_lasso = 
     workflow() |>
     add_model(
-        linear_reg(
-        penalty = best_ampa_lasso_interactions$penalty[1],
+      linear_reg(
+        penalty = best_ampa_lasso$penalty[1],
         mixture = 1
-        ) |>
-        set_engine("glmnet")
+      ) |>
+      set_engine("glmnet")
     ) |>
     add_recipe(ampa_recipe_linear_interactions) |>
     fit(data = sample_watershed_dt)
-glyph_fit_lasso = 
+  glyph_fit_lasso = 
     workflow() |>
     add_model(
-        linear_reg(
-        penalty = best_glyph_lasso_interactions$penalty[1],
+      linear_reg(
+        penalty = best_glyph_lasso$penalty[1],
         mixture = 1
-        ) |>
-        set_engine("glmnet")
+      ) |>
+      set_engine("glmnet")
     ) |>
     add_recipe(glyph_recipe_linear_interactions) |>
     fit(data = sample_watershed_dt)
-# Saving the results 
-qsave(
-  ampa_fit_lasso, 
-  here('data-clean/ml-water/ampa-lasso-final.qs')
-)
-qsave(
-  glyph_fit_lasso, 
-  here('data-clean/ml-water/glyph-lasso-final.qs')
-)
+  # Random forest models 
+  ampa_fit_rf = 
+    workflow() |>
+    add_model(
+      rand_forest(
+        mtry = best_ampa_rf$mtry[1],
+        trees = 200,
+        min_n = best_ampa_rf$min_n[1]
+      ) |>
+      set_mode("regression") |>
+      set_engine(
+        "ranger", 
+        importance = "impurity"
+      )
+    ) |>
+    add_recipe(ampa_recipe_base) |>
+    fit(data = sample_watershed_dt)
+  glyph_fit_rf = 
+    workflow() |>
+    add_model(
+      rand_forest(
+        mtry = best_glyph_rf$mtry[1],
+        trees = 200,
+        min_n = best_glyph_rf$min_n[1]
+      ) |>
+      set_mode("regression") |>
+      set_engine(
+        "ranger", 
+        importance = "impurity"
+      )
+    ) |>
+    add_recipe(glyph_recipe_base) |>
+    fit(data = sample_watershed_dt)
+  # Saving the results 
+  qsave(
+    ampa_fit_lasso, 
+    here('data-clean/ml-water/final-fit-lasso-ampa.qs')
+  )
+  qsave(
+    glyph_fit_lasso, 
+    here('data-clean/ml-water/final-fit-lasso-glyph.qs')
+  )
+  qsave(
+    ampa_fit_rf, 
+    here('data-clean/ml-water/final-fit-rf-ampa.qs')
+  )
+  qsave(
+    glyph_fit_rf, 
+    here('data-clean/ml-water/final-fit-rf-glyph.qs')
+  )
