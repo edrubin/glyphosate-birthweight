@@ -275,22 +275,42 @@ p_load(
       control = control_grid(save_pred = TRUE)
     )  
   # Checking the results 
-  autoplot(cv_glyph_rf, metric = 'rmse') +
-    labs(y = 'RMSE', title = 'Glyphosate, random forest') + 
-    theme_minimal() + 
-    scale_color_viridis_d()
-  autoplot(cv_glyph_lasso, metric = 'rmse') +
-    labs(y = 'RMSE', title = 'Glyphosate, LASSO') + 
-    theme_minimal() + 
-    scale_color_viridis_d()
-  autoplot(cv_ampa_rf, metric = 'rmse') +
-    labs(y = 'RMSE', title = 'AMPA, random forest') + 
-    theme_minimal() + 
-    scale_color_viridis_d()
-  autoplot(cv_ampa_lasso, metric = 'rmse') +
-    labs(y = 'RMSE', title = 'AMPA, LASSO') + 
-    theme_minimal() + 
-    scale_color_viridis_d()
+  ggsave(
+    autoplot(cv_glyph_rf, metric = 'rmse') +
+      labs(y = 'RMSE', title = 'Glyphosate, random forest') + 
+      theme_minimal() + 
+      scale_color_viridis_d(),
+    filename = here('figures/water-ml/cv-glyph-rf.jpeg'),
+    width =  7, height = 5,
+    bg = 'white'
+  )
+  ggsave(
+    autoplot(cv_glyph_lasso, metric = 'rmse') +
+      labs(y = 'RMSE', title = 'Glyphosate, LASSO') + 
+      theme_minimal() + 
+      scale_color_viridis_d(),
+    filename = here('figures/water-ml/cv-glyph-lasso.jpeg'),
+    width =  7, height = 5,
+    bg = 'white'
+  )
+  ggsave(
+    autoplot(cv_ampa_rf, metric = 'rmse') +
+      labs(y = 'RMSE', title = 'AMPA, random forest') + 
+      theme_minimal() + 
+      scale_color_viridis_d(),
+    filename = here('figures/water-ml/cv-ampa-rf.jpeg'),
+    width =  7, height = 5,
+    bg = 'white'
+  )
+  ggsave(
+    autoplot(cv_ampa_lasso, metric = 'rmse') +
+      labs(y = 'RMSE', title = 'AMPA, LASSO') + 
+      theme_minimal() + 
+      scale_color_viridis_d(),
+    filename = here('figures/water-ml/cv-ampa-lasso.jpeg'),
+    width =  7, height = 5,
+    bg = 'white'
+  )
   # Choosing best parameters
   best_glyph_rf = select_best(cv_glyph_rf, metric = 'rmse')
   best_ampa_rf = select_best(cv_ampa_rf, metric = 'rmse')
