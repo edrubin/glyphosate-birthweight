@@ -269,7 +269,7 @@
 
 # Individual watershed example ------------------------------------------------
   x_cnty = "17189"
-  x_options = area_weight_dt[geoid == x_cnty & year == 2000]$hybas_id
+  x_options = area_weight_dt[geoid == x_cnty]$hybas_id
   x = 7080577740
   wshd_example =   
     hydrobasin_sf |>
@@ -450,10 +450,10 @@
       begin = 0.2, 
       aesthetics = c('fill','color')
     ) +
-    coord_sf(crs = 2163) 
+    coord_sf(crs = 2163)  
   ggsave(
     filename = here("figures/watershed/washington_county_example.jpeg"),
-    plot = grid.arrange(pop_wt_cnty_ex_p,up_glyph_cnty_ex_p, ncol = 2),
+    plot = arrangeGrob(pop_wt_cnty_ex_p,up_glyph_cnty_ex_p, ncol = 2),
     height = 7, width = 15
   )
 
@@ -469,10 +469,10 @@
       county_exposure_dt[
         year == 2004 & month == '07',.(
           GEOID, 
-          pred_glyph = pred_glyph_in_water, 
-          pred_ampa = pred_ampa_in_water,
-          pred_glyph_percentile = frank(pred_glyph_in_water)/.N,
-          pred_ampa_percentile = frank(pred_ampa_in_water)/.N
+          pred_glyph = pred_glyph_in_water_lasso, 
+          pred_ampa = pred_ampa_in_water_lasso,
+          pred_glyph_percentile = frank(pred_glyph_in_water_lasso)/.N,
+          pred_ampa_percentile = frank(pred_ampa_in_water_lasso)/.N
       )],
       by = c("GEOID")
     ) |>

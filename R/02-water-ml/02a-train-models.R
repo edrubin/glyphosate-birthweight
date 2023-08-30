@@ -1,4 +1,5 @@
-# Training ML model: LASSO version 
+# Training ML model: both LASSO and RF models 
+# Runtime: 5 mins 
 library(pacman)
 p_load(
   here, fst, data.table, tidymodels, ranger, qs, vip, rpart.plot,

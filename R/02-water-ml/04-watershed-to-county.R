@@ -149,8 +149,10 @@ county_pred_dt =
     by = c("hybas_id"),
     allow.cartesian = TRUE
   )[,.(
-    pred_glyph_in_water = fsum(pred_glyph_in_water*pop_weight),
-    pred_ampa_in_water = fsum(pred_ampa_in_water*pop_weight)), 
+    pred_glyph_in_water_lasso = fsum(pred_glyph_in_water_lasso*pop_weight),
+    pred_ampa_in_water_lasso = fsum(pred_ampa_in_water_lasso*pop_weight),
+    pred_glyph_in_water_rf = fsum(pred_glyph_in_water_rf*pop_weight),
+    pred_ampa_in_water_rf = fsum(pred_ampa_in_water_rf*pop_weight)),  
     keyby = .(GEOID, year, month)
   ]
 
