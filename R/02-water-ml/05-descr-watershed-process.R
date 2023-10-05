@@ -344,8 +344,8 @@
   )
 
 # Now plotting weighting scheme for example -----------------------------------
-  pesticide_upstream_dt = read.fst(
-    path = here("data-clean/watershed/pesticide-upstream-dt.fst"), 
+  water_pred_dt = read.fst(
+    path = here('data-clean/ml-water/predictions-watershed.fst'),
     as.data.table = TRUE
   )
   # Loading the weights
@@ -372,26 +372,8 @@
     by = .(geoid,year)
   ] %>% 
     .[tot < 0.9999 | tot > 1.0001]
-  # Adding census year to pest/watershed data 
-  pesticide_upstream_dt[,
-    census_year := case_when(
-      year %in% 1990:1999 ~ 1990L,
-      year %in% 1999:2009 ~ 2000L,
-      year %in% 2010:2019 ~ 2010L,
-      TRUE ~ year
-    )
-  ]
-  pesticide_upstream_dt |> setkey(hybas_id,year, dist_km_bin)
+  water_pred_dt |> setkey(hybas_id,year, month)
   pop_weights |> setkey(hybas_id,year)
-  # Merging pop weights with the upstream/downstream glyphosate data 
-  pesticide_watershed_pop_dt = 
-    merge(
-      pesticide_upstream_dt,
-      pop_weights,
-      by.x = c("hybas_id"),#,"census_year"),
-      by.y =c("hybas_id"),#"year"),
-      allow.cartesian = TRUE
-    )
   # Plotting the example watershed
   pop_weight_ex_sf = 
     inner_join(
@@ -400,7 +382,7 @@
       by = "hybas_id"
     ) |>
     left_join(
-      pesticide_upstream_dt[year == 2006 & dist_km_bin == 'd50'],
+      water_pred_dt[year == 2004 & month == '07'],
       by = "hybas_id"
     )
   pop_wt_cnty_ex_p = 
@@ -431,7 +413,7 @@
     ggplot() + 
     geom_sf(
       data = pop_weight_ex_sf, 
-      aes(fill = glyph_km2_awt, color = glyph_km2_awt)
+      aes(fill = pred_ampa_in_water_lasso, color = pred_ampa_in_water_lasso)
     ) +
     geom_sf(
       data = hydrobasin_detailed_sf |> filter(hybas_id == x), 
@@ -446,7 +428,7 @@
       linewidth = 1.1
     ) +
     scale_fill_viridis_c(
-      "Pred Glyph", 
+      "Pred AMPA", 
       begin = 0.2, 
       aesthetics = c('fill','color')
     ) +
