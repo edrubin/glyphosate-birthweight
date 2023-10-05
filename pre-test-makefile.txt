@@ -1,0 +1,62 @@
+# Step 5: Figures and tables 
+
+# Step 4: Analysis
+
+# Step 3: Combine data
+
+# Step 2: Train Water ML model 
+
+# Step 1: Define treatment 
+
+# Step 0: Prep the data 
+
+# Cleaning data ---------------------------------------------------------------
+# Health Micro data **NEEDS TO MATCH ENTIRE FOLDER** (year in target and dependencies)
+data/health-restricted/period-clean: R/00-data-prep/health/01-period-micro-clean.R, R/00-data-prep/health/00-data-dictionary.R, data/health-restricted/NATLXXXXUS.AllCnty.txt, data/health-restricted/MULTXXXX.USAllCnty.txt, data/health-restricted/city_res_xwalk.csv, data-clean/city-water-dt.fst, data/spatial/state-fips-codes.csv, data/health-restricted/inf-icd-xwalk.csv
+	Rscript R/00-data-prep/health/01-period-micro-clean.R 
+# GAEZ suitability data **NEEDS TO MATCH ENTIRE FOLDER** (in dependency)
+data/gaez-suitability-index/hydrobasin-y-diff-dt.fst, data/gaez-suitability-index/y_diff_dt.fst: R/00-data-prep/farm/04-gaez-yield.R, data/gaez-suitability-index/attainable-yield
+	Rscript R/00-data-prep/farm/04-gaez-yield.R
+# Soil data 
+data-clean/watershed/usle-dt.fst: R/00-data-prep/soil/01-combine-soil-precip.R, data/spatial/soil-quality/watershed-soil-factors.csv, data-clean/watershed/ppt-season-wshd-dt.fst
+	Rscript R/00-data-prep/soil/01-combine-soil-precip.R
+# Raw soil data 
+data/spatial/soil-quality/watershed-soil-factors.csv, data-clean/xwalk-soil-watershed.fst: R/00-data-prep/soil/00a-merge-soil-watersheds.R, data/spatial/soil-quality/gNATSGO_mukey_grid/gNATSGO-mukey.tif, data/spatial/soil-quality/gNATSGO_Tabular_CSV/chorizon.csv, data/spatial/soil-quality/gNATSGO_Tabular_CSV/component.csv
+	Rscript R/00-data-prep/soil/00a-merge-soil-watersheds.R
+# Watershed things **NEEDS TO MATCH ENTIRE FOLDER** (in target)
+data-clean/watershed/weights/hydrobasin-pop-weightsXXXX.fst: R/00-data-prep/watershed/01-pop-weights-hydroshed.R
+	Rscript R/00-data-prep/watershed/01-pop-weights-hydroshed.R
+
+
+# BLS labor data
+data/bls-labforce/labor-dt.fst: R/00-data-prep/controls/02-bls-labor.R
+	Rscript R/00-data-prep/controls/02-bls-labor.R
+# Education data
+data/pop-area-empl/edu-dt.fst: R/00-data-prep/controls/03-education.R data/pop-area-empl/Education.xls
+	Rscript R/00-data-prep/controls/03-education.R	
+# PRISM data
+data-clean/watershed/ppt-qtr-wshd-dt.fst, data-clean/watershed/ppt-season-wshd-dt.fst, data-clean/watershed/ppt-yr-wshd-dt.fst: data/prism, R/00-data-prep/controls/05-prism-precip-aggregate.R
+	Rscript R/00-data-prep/controls/05-prism-precip-aggregate.R
+# Crop data 
+data/crops/all-crop-acre-dt.fst, data/crops/all-crop-yield-dt.fst, data/crops/all-crop-irrigated-dt.fst: data/crops/all_crop_acre_county.fst, data/crops/all_crop_yield_county.fst, data/crops/all_crop_irrigated_county.fst, R/00-data-prep/farm/03-crop-county-cleaning.R
+	Rscript R/00-data-prep/farm/03-crop-county-cleaning.R
+
+# Data download ---------------------------------------------------------------
+# FARM --------------------------------------------------------------
+# Pesticide data 
+data/pesticides/est_pest_use.csv, data/pesticides/est_pest_use.fst: R/00-data-prep/farm/01-usgs-chem-data.R
+	Rscript R/00-data-prep/farm/01-usgs-chem-data.R
+# USDA NASS data
+data/crops/all_crop_acre_county.fst, data/crops/all_crop_yield_county.fst, data/crops/all_crop_irrigated_county.fst, data/crops/census_crop_acre_county.fst: R/00-data-prep/farm/02-usda-nass-data.R
+	Rscript R/00-data-prep/farm/02-usda-nass-data.R
+
+# CONTROLS ----------------------------------------------------------
+# County area 
+data/pop-area-empl/cnty-area-dt.fst, data/pop-area-empl/cnty-pop-dt.fst: R/00-data-prep/controls/00-cnty-pop-area.R
+	Rscript R/00-data-prep/controls/00-cnty-pop-area.R
+# BEA employment
+data/pop-area-empl/farm-empl-dt.fst: R/00-data-prep/controls/01-bea-empl.R
+	Rscript R/00-data-prep/controls/01-bea-empl.R
+# PRISM data **NEEDS TO MATCH ENTIRE FOLDER** (in target)
+data/prism: R/00-data-prep/controls/04-prism-precip-download.R
+	Rscript R/00-data-prep/controls/04-prism-precip-download.R
