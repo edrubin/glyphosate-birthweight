@@ -72,4 +72,4 @@ write.fst(
   path = here("data/pop-area-empl/edu-dt.fst")
 )
 
-
+print('Education Done')
