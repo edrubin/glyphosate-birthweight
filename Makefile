@@ -23,8 +23,8 @@ data-download: \
  data/crops/census_crop_acre_county.fst \
  data/pop-area-empl/cnty-area-dt.fst \
  data/pop-area-empl/cnty-pop-dt.fst \
- data/pop-area-empl/farm-empl-dt.fst
- $(crop-cnty) \
+ data/pop-area-empl/farm-empl-dt.fst \
+ $(crop-cnty) 
 # Raw data we won't touch very often
 data-raw: \
  data/pop-area-empl/edu-dt.fst \
