@@ -72,8 +72,17 @@ data-clean/comb-cnty-dt.fst: \
  data-clean/fs-dt.fst
 	Rscript $<
 	@echo "Made comb-cnty-dt"
-# Other dependencies: data-clean/watershed/county-exposure-dt.fst data/pop-area-empl/cnty-area-dt.fst data/pop-area-empl/cnty-pop-dt.fst data/pop-area-empl/farm-empl-dt.fst data/pop-area-empl/ruralurbancodes2003.xls
-# data/pesticides/est_pest_use.fst data-clean/fs-dt.fst $(crop-dt) data/pop-area-empl/edu-dt.fst data/bls-labforce/labor-dt.fst 
+# Other dependencies: 
+# data-clean/watershed/county-exposure-dt.fst 
+# data/pop-area-empl/cnty-area-dt.fst 
+# data/pop-area-empl/cnty-pop-dt.fst 
+# data/pop-area-empl/farm-empl-dt.fst 
+# data/pop-area-empl/ruralurbancodes2003.xls
+# data/pesticides/est_pest_use.fst 
+# data-clean/fs-dt.fst 
+# $(crop-dt)
+# data/pop-area-empl/edu-dt.fst 
+# data/bls-labforce/labor-dt.fst 
 
 # First stage predictions
 data-clean/fs-dt.fst: \
@@ -82,7 +91,9 @@ data-clean/fs-dt.fst: \
  data/glyph-nat-dt.fst
 	Rscript $<
 	@echo "Made first stage predictions"
-# Other dependencies: data/pop-area-empl/cnty-area-dt.fst data/pesticides/est_pest_use.fst
+# Other dependencies: 
+# data/pop-area-empl/cnty-area-dt.fst 
+# data/pesticides/est_pest_use.fst
 
 # Shift share instruments 
 data/glyph-nat-dt.fst \
@@ -90,14 +101,19 @@ data/glyph-nat-dt.fst \
  R/01-define-treatment/00c-glyph-national.R
 	Rscript $<
 	@echo "Made shift share instruments"
-# Other dependencies: data-clean/watershed/weights/hydrobasin-area-weights.fst data-clean/watershed/upstream-dt-hydrobasin.fst data/pesticides/est_pest_use.fst
+# Other dependencies: 
+# data-clean/watershed/weights/hydrobasin-area-weights.fst 
+# data-clean/watershed/upstream-dt-hydrobasin.fst 
+# data/pesticides/est_pest_use.fst
 
 # Pre period acreage percentiles
 data/crops/crop-acre-percentile-90-95.fst: \
  R/01-define-treatment/00b-crop-acre-percentiles.R
 	Rscript $<
 	@echo "Made crop acreage percentiles"
-# Other dependencies: data/pop-area-empl/cnty-area-dt.fst data/crops/all-crop-acre-dt.fst
+# Other dependencies: 
+# data/pop-area-empl/cnty-area-dt.fst 
+# data/crops/all-crop-acre-dt.fst
 
 # Treatment definitions
 data-clean/trt-dt.fst: R/01-define-treatment/00-define-treatment.R
@@ -145,7 +161,9 @@ data/pesticides/est_pest_use.csv \
 	@echo "Downloaded pesticide data"
 
 # USDA NASS data
-$(crop-cnty) data/crops/census_crop_acre_county.fst &: R/00-data-prep/farm/02-usda-nass-data.R
+$(crop-cnty) \
+ data/crops/census_crop_acre_county.fst &: \
+ R/00-data-prep/farm/02-usda-nass-data.R
 	Rscript $<
 	@echo "Downloaded USDA NASS"
 
@@ -268,7 +286,9 @@ data/spatial/soil-quality/watershed-soil-factors.csv: \
 $(prism-fp) &: R/00-data-prep/controls/05-prism-precip-aggregate.R
 	Rscript $<
 	@echo "Ran PRISM aggregate"
-# Other dependencies data/prism/* data/spatial/hydrobasins/hybas_lake_na_lev08_v1c.shp
+# Other dependencies: 
+# data/prism/* 
+# data/spatial/hydrobasins/hybas_lake_na_lev08_v1c.shp
 
 
 # -----------------------------------------------------------------------------
