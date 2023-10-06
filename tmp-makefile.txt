@@ -1,3 +1,79 @@
+
+
+# Combining all county data into one table
+data-clean/comb-cnty-dt.fst: R/03-combine/00-combine-cnty.R
+	data-clean/trt-dt.fst data/pesticides/est_pest_use.fst data-clean/fs-dt.fst $(crop-dt) data/pop-area-empl/edu-dt.fst data/bls-labforce/labor-dt.fst data-clean/watershed/county-exposure-dt.fst
+# Other dependencies: data/pop-area-empl/cnty-area-dt.fst data/pop-area-empl/cnty-pop-dt.fst data/pop-area-empl/farm-empl-dt.fst data/pop-area-empl/ruralurbancodes2003.xls
+	Rscript R/03-combine/01-combine-cnty.R
+	echo "Made comb-cnty-dt"
+
+# First stage predictions
+data-clean/fs-dt.fst: R/01-define-treatment/01-first-stage.R data/pesticides/est_pest_use.fst data/crops/crop-acre-percentile-90-95.fst data/glyph-nat-dt.fst
+# Other dependencies: data/pop-area-empl/cnty-area-dt.fst
+	Rscript R/01-define-treatment/01-first-stage.R
+	echo "Made first stage predictions"
+
+# Shift share instruments 
+data/glyph-nat-dt.fst data/glyph-nat-watershed-dt.fst: R/01-define-treatment/00c-glyph-national.R data/pesticides/est_pest_use.fst
+# Other dependencies: data-clean/watershed/weights/hydrobasin-area-weights.fst data-clean/watershed/upstream-dt-hydrobasin.fst
+	Rscript R/01-define-treatment/00c-glyph-national.R
+	echo "Made shift share instruments"
+
+# Pre period acreage percentiles
+data/crops/crop-acre-percentile-90-95.fst: R/01-define-treatment/00b-crop-acre-percentiles.R data/crops/all-crop-acre-dt.fst
+# Other dependencies data/pop-area-empl/cnty-area-dt.fst
+	Rscript R/01-define-treatment/00b-crop-acre-percentiles.R
+	echo "Made crop acreage percentiles"
+
+# Treatment definitions
+data-clean/trt-dt.fst: R/01-define-treatment/00-define-treatment.R
+	Rscript R/01-define-treatment/00-define-treatment.R
+	echo "Made treatment definitions"
+# data/gaez-suitability-index/y_diff_dt.fst
+
+# NEED TO WRITE THESE TARGETS =============================
+#data/pop-area-empl/cnty-area-dt.fst 
+#data/pop-area-empl/cnty-pop-dt.fst 
+#data/pop-area-empl/farm-empl-dt.fst
+#data/pop-area-empl/ruralurbancodes2003.xls
+## Watershed stuff 
+#data-clean/watershed/county-exposure-dt.fst: 
+#data-clean/watershed/weights/hydrobasin-area-weights.fst 
+#data-clean/watershed/upstream-dt-hydrobasin.fst
+#$(prism-fp): data/prism R/00-data-prep/controls/05-prism-precip-aggregate.R
+#	Rscript R/00-data-prep/controls/05-prism-precip-aggregate.R
+#	echo "Ran PRISM aggregate"
+# =========================================================
+
+# Cleaning data ---------------------------------------------------------------
+# GAEZ suitability data
+data/gaez-suitability-index/hydrobasin-y-diff-dt.fst data/gaez-suitability-index/y_diff_dt.fst: R/00-data-prep/farm/04-gaez-yield.R 
+$(wildcard data/gaez-suitability-index/attainable-yield/ylLr_*.tif)
+	Rscript R/00-data-prep/farm/04-gaez-yield.R
+# Pesticide data
+data/pesticides/est_pest_use.csv data/pesticides/est_pest_use.fst: R/00-data-prep/farm/01-usgs-chem-data.R
+	Rscript R/00-data-prep/farm/01-usgs-chem-data.R
+	echo "Made pesticide data"
+# Education data
+data/pop-area-empl/edu-dt.fst: R/00-data-prep/controls/03-education.R data/pop-area-empl/Education.xls
+	Rscript R/00-data-prep/controls/03-education.R
+	echo "Made education data"
+# BLS labor data
+data/bls-labforce/labor-dt.fst: R/00-data-prep/controls/02-bls-labor.R
+	Rscript R/00-data-prep/controls/02-bls-labor.R
+	echo "Made bls labor data"
+# Crop data
+$(crop-dt): R/00-data-prep/farm/03-crop-county-cleaning.R $(crop-cnty)
+	Rscript R/00-data-prep/farm/03-crop-county-cleaning.R
+	echo "Made crop data"
+
+
+
+
+# =========================================================
+# =========================================================
+# =========================================================
+# =========================================================
 # Step 5: Figures and tables 
 
 # Step 4: Analysis
@@ -43,9 +119,7 @@ data/crops/all-crop-acre-dt.fst, data/crops/all-crop-yield-dt.fst, data/crops/al
 
 # Data download ---------------------------------------------------------------
 # FARM --------------------------------------------------------------
-# Pesticide data 
-data/pesticides/est_pest_use.csv, data/pesticides/est_pest_use.fst: R/00-data-prep/farm/01-usgs-chem-data.R
-	Rscript R/00-data-prep/farm/01-usgs-chem-data.R
+
 # USDA NASS data
 data/crops/all_crop_acre_county.fst, data/crops/all_crop_yield_county.fst, data/crops/all_crop_irrigated_county.fst, data/crops/census_crop_acre_county.fst: R/00-data-prep/farm/02-usda-nass-data.R
 	Rscript R/00-data-prep/farm/02-usda-nass-data.R
