@@ -1,0 +1,9 @@
+
+
+# Health Micro data **NEEDS TO MATCH ENTIRE FOLDER** (year in target and dependencies)
+data/health-restricted/period-clean: R/00-data-prep/health/01-period-micro-clean.R, R/00-data-prep/health/00-data-dictionary.R, data/health-restricted/NATLXXXXUS.AllCnty.txt, data/health-restricted/MULTXXXX.USAllCnty.txt, data/health-restricted/city_res_xwalk.csv, data-clean/city-water-dt.fst, data/spatial/state-fips-codes.csv, data/health-restricted/inf-icd-xwalk.csv
+	Rscript R/00-data-prep/health/01-period-micro-clean.R 
+
+# PRISM data **NEEDS TO MATCH ENTIRE FOLDER** (in target)
+data/prism: R/00-data-prep/controls/04-prism-precip-download.R
+	Rscript R/00-data-prep/controls/04-prism-precip-download.R

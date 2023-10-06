@@ -282,7 +282,9 @@ map(
 )
 
 
-
+  # Codes from:
+  # https://www-doh.state.nj.us/doh-shad/query/ICDInf130.htm
+  # https://wonder.cdc.gov/wonder/sci_data/natal/linked/type_txt/cohort99/130Cause99.pdf
 # Function to clean the icd-code crosswalk
 get_icd_xwalk = function(file_year){
   # Loading the data
@@ -469,9 +471,6 @@ clean_mortality = function(file_year, mortality_dct, dt_out = FALSE){
   
   # Now categorizing the death codes 
   mort_raw_dt[,ucod := str_pad(ucod, 4,'right','0')]
-  # Codes from:
-  # https://www-doh.state.nj.us/doh-shad/query/ICDInf130.htm
-  # https://wonder.cdc.gov/wonder/sci_data/natal/linked/type_txt/cohort99/130Cause99.pdf
   # Getting crosswalk for icd-9 codes
   inf_icd_crosswalk = get_icd_xwalk(file_year)
   if(file_year < 1999){
