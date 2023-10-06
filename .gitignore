@@ -2,6 +2,8 @@
 data/
 data-clean/
 
+notes/
+
 .Rprofile
 .vs-code/
 .DS_Store
