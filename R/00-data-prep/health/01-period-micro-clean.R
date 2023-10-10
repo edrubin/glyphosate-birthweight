@@ -10,7 +10,7 @@ p_load(
 # Loading state fips codes
 state_fips = 
   fread(
-    here("data/spatial/state-fips-codes.csv"),
+    here("data/download-manual/state-fips-codes.csv"),
     colClasses = "character"
   )[,.(
     state_abb, 
@@ -29,7 +29,7 @@ clean_natality = function(file_year, dt_out = FALSE){
   natality_dct_yr = natality_dct[year == file_year]
   # Setting filepath for natality data
   natality_filepath = here(paste0(
-    "data/health-restricted/NATL",file_year,"US.AllCnty.txt"
+    "data/health-restricted/raw/NATL",file_year,"US.AllCnty.txt"
   ))
   # Reading Natality (denominator) File
   natality_raw_dt = read_fwf(
@@ -225,7 +225,7 @@ clean_natality = function(file_year, dt_out = FALSE){
     # Loading the list of cities 
     city_dt =
       read.fst(
-        path = here('data-clean/city-water-dt.fst'),
+        path = here('data/download-manual/city-water-dt.fst'),
         as.data.table = TRUE
       )
     # Loading the manual crosswalk
@@ -384,7 +384,7 @@ clean_mortality = function(file_year, mortality_dct, dt_out = FALSE){
   mort_dct = mortality_dct[year == file_year]
   # Now we can read the Fixed Width CDC data files
   mort_filepath = here::here(
-    paste0("data/health-restricted/MULT",file_year,".USAllCnty.txt")
+    paste0("data/health-restricted/raw/MULT",file_year,".USAllCnty.txt")
     )
   # Reading Numerator File (deaths)
   mort_raw_dt = 

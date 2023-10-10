@@ -111,9 +111,9 @@ crop_years_irrigated =
   )
 
 # Filtering to same time as health data and crops not already downloaded
-path_survey = "data/crops/crop_yr/survey/acres-planted"
-path_survey_yield = "data/crops/crop_yr/survey/yield"
-path_survey_irrigated = "data/crops/crop_yr/survey/irrigated"
+path_survey = "data/download-script/nass-survey/acres-planted"
+path_survey_yield = "data/download-script/nass-survey/yield"
+path_survey_irrigated = "data/download-script/nass-survey/irrigated"
 
 crop_years_survey = 
   crop_years |> 
@@ -202,41 +202,8 @@ all_crop_acre_irrigated =
       )
     }
   )
-# Reading all of the results in together
-all_crop_acre = map_dfr(
-  here(paste0(path_survey,"/",list.files(path = here(path_survey)))),
-  read.fst,
-  as.data.table = T
-)
-
-all_crop_acre %<>% clean_names()
-
-all_crop_yield = map_dfr(
-  here(paste0(path_survey_yield,"/",list.files(path = here(path_survey_yield)))),
-  read.fst,
-  as.data.table = T
-)
-
-all_crop_irrigated = map_dfr(
-  here(paste0(path_survey_irrigated,"/",list.files(path = here(path_survey_irrigated)))),
-  read.fst,
-  as.data.table = T
-)
 
 
-# Saving the results
-write.fst(
-  all_crop_acre, 
-  path = here("data/crops/all_crop_acre_county.fst")
-)
-write.fst(
-  all_crop_yield, 
-  path = here("data/crops/all_crop_yield_county.fst")
-)
-write.fst(
-  all_crop_irrigated, 
-  path = here("data/crops/all_crop_irrigated_county.fst")
-)
 
 #-------------------------------------------------------
 # Census data (5yrs)
@@ -318,7 +285,7 @@ crop_years_census_all =
 # Filtering to same time as health data
 # Not actually doing anything because 
 # these are only years loaded in API
-path_census = "data/crops/crop_yr/census"
+path_census = "data/download-script/nass-census"
 
 crop_years_census = 
   crop_years_census_all |> 
@@ -351,19 +318,3 @@ census_crop_acre =
       )
     }
   )
-
-
-# Reading all of the results in together
-census_crop_acre = map_dfr(
-  here(paste0(path_census,"/",list.files(path = here(path_census)))),
-  read.fst,
-  as.data.table = T
-)
-
-census_crop_acre %<>% clean_names()
-
-# Saving the results
-write.fst(
-  census_crop_acre, 
-  path = here("data/crops/census_crop_acre_county.fst")
-)

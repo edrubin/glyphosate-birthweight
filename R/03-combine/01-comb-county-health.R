@@ -23,7 +23,7 @@ calc_percent = function(numerator, denominator, scale = 1000){
 # Reading the other county level data
 comb_cnty_dt =
   read.fst(  
-    here("data-clean/comb-cnty-dt.fst"),
+    here("data/clean/comb-cnty-dt.fst"),
     as.data.table = TRUE
   )
 
@@ -213,9 +213,9 @@ comb_health_dt =
 # Saving the results 
 write.fst(
   comb_health_dt,
-  here("data-clean/comb-cnty-health-dt.fst")
+  here("data/clean/comb-cnty-health-dt.fst")
 )
 write.fst(
   health_dt,
-  here("data-clean/health-dt.fst")
+  here("data/clean/health-dt.fst")
 )

@@ -10,33 +10,18 @@ p_load(
 )
 options(tigris_use_cache =TRUE)
 
-
-# TODO: Finish classifying the pesticides 
 #-------------------------------------------------------
 
-# Now getting the pesticide data, 1992-2012 data from website
-pest_urls = paste0(
-  "https://water.usgs.gov/nawqa/pnsp/usage/maps/county-level/PesticideUseEstimates/EPest.county.estimates.", 
-  1992:2012, 
-  ".txt"
+# Reading files from earlier years
+pest = read.fst(
+  here('data/download-script/usgs-pesticides-raw.fst'),
+  as.data.table = TRUE
 )
-
-# Reading files from each year
-pest = 
-  lapply(
-    pest_urls, 
-    fread, 
-    colClasses = c(
-      "STATE_FIPS_CODE"="character",
-      "COUNTY_FIPS_CODE"="character")
-  ) |>
-  rbindlist() |>
-  clean_names()
 
 # 2013-2017 Data is in it's own file
 pest2 = 
   fread(
-    here('data/pesticides/est_pest_use_raw_2013_2017.txt'),
+    here('data/download-manual/est_pest_use_raw_2013_2017.txt'),
     colClasses = c(
       "STATE_FIPS_CODE"="character",
       "COUNTY_FIPS_CODE"="character"), 
@@ -50,7 +35,7 @@ pest_all = rbind(pest, pest2, use.names = TRUE)
 
 # Loading table with insecticide/herbicide/fungicide classifications
 pest_class = 
-  fread(here("data/pesticides/pesticide_classification.txt"),header = F, sep = "~") |>
+  fread(here("data/download-manual/pesticide_classification.txt"),header = F, sep = "~") |>
   setnames(new = c("compound","class"))
 
 
@@ -142,8 +127,11 @@ for (j in names(pest_dt_balanced)[-(1:2)]) {
 
 
 # Saving the data
-fwrite(pest_dt_balanced, here("data/pesticides/est_pest_use.csv"))
+fwrite(
+  pest_dt_balanced, 
+  here("data/raw/est_pest_use.csv")
+)
 write.fst(
   pest_dt_balanced, 
-  here("data/pesticides/est_pest_use.fst")
+  here("data/raw/est_pest_use.fst")
 )

@@ -19,7 +19,7 @@
 # Load data --------------------------------------------------------------------
   # GAEZ suitability data
   si_dt = read.fst(
-    path = here("data/gaez-suitability-index/y_diff_dt.fst"),
+    path = here("data/raw/y_diff_dt.fst"),
     as.data.table = TRUE
   )
   # County shapefiles
@@ -155,7 +155,7 @@
   # Saving table but with gmo and e100 indicators
   write.fst(
     si_dt, 
-    path = here("data/gaez-suitability-index/y_diff_e100m_dt.fst")
+    path = here("data/raw/y_diff_e100m_dt.fst")
   )
 
 # Define treatment variable(s) -------------------------------------------------
@@ -314,47 +314,47 @@
   # Save the treatment definitions 
   write_fst(
     x = trt_dt,
-    path = here('data-clean/trt-dt.fst')
+    path = here('data/clean/trt-dt.fst')
   )
 
 # Plot treatment definitions ---------------------------------------------------
-   # Merge treatment/suitability dataset with county data
-   trt_sf = 
-     left_join(
-       county_sf,
-       trt_dt,
-       by = "GEOID"
-     )
-   # Map: T/C for all US (median cut)
-   p1 = ggplot(data = trt_sf, aes(fill = as.character(all_yield_diff_gmo_50_0))) +
-     geom_sf(size = 0.1, color = NA) +
-     scale_fill_manual(
-       name = "", 
-       values = c("#5f6880","#ec7662"),
-       labels = c("Control","Treated"),
-       na.value = "#B4BCC2"
-     ) +
-     theme_minimal()
-   # Map: T/C east of 100th meridian (median cut)
-   p2 = ggplot(data = trt_sf, aes(fill = as.character(e100m_yield_diff_gmo_50_0))) +
-     geom_sf(size = 0.1, color = NA) + 
-     scale_fill_manual(
-       name = "", 
-       values = c("#5f6880","#ec7662"),
-       labels = c("Control","Treated"),
-       na.value = "#B4BCC2"
-     ) +
-     theme_minimal()
-   # Map: T/C east of 100th meridian (median cut) with 'separation'
-   p3 = ggplot(data = trt_sf, aes(fill = as.character(e100m_yield_diff_gmo_50_10))) +
-     geom_sf(size = 0.1, color = NA) + 
-     scale_fill_manual(
-       name = "", 
-       values = c("#5f6880","#ec7662"),
-       labels = c("Control","Treated"),
-       na.value = "#B4BCC2"
-     ) +
-     theme_minimal()
+  #  # Merge treatment/suitability dataset with county data
+  #  trt_sf = 
+  #    left_join(
+  #      county_sf,
+  #      trt_dt,
+  #      by = "GEOID"
+  #    )
+  #  # Map: T/C for all US (median cut)
+  #  p1 = ggplot(data = trt_sf, aes(fill = as.character(all_yield_diff_gmo_50_0))) +
+  #    geom_sf(size = 0.1, color = NA) +
+  #    scale_fill_manual(
+  #      name = "", 
+  #      values = c("#5f6880","#ec7662"),
+  #      labels = c("Control","Treated"),
+  #      na.value = "#B4BCC2"
+  #    ) +
+  #    theme_minimal()
+  #  # Map: T/C east of 100th meridian (median cut)
+  #  p2 = ggplot(data = trt_sf, aes(fill = as.character(e100m_yield_diff_gmo_50_0))) +
+  #    geom_sf(size = 0.1, color = NA) + 
+  #    scale_fill_manual(
+  #      name = "", 
+  #      values = c("#5f6880","#ec7662"),
+  #      labels = c("Control","Treated"),
+  #      na.value = "#B4BCC2"
+  #    ) +
+  #    theme_minimal()
+  #  # Map: T/C east of 100th meridian (median cut) with 'separation'
+  #  p3 = ggplot(data = trt_sf, aes(fill = as.character(e100m_yield_diff_gmo_50_10))) +
+  #    geom_sf(size = 0.1, color = NA) + 
+  #    scale_fill_manual(
+  #      name = "", 
+  #      values = c("#5f6880","#ec7662"),
+  #      labels = c("Control","Treated"),
+  #      na.value = "#B4BCC2"
+  #    ) +
+  #    theme_minimal()
    # Plot together
    #p1 / p2 / p3
    #ggsave(

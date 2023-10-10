@@ -13,7 +13,7 @@ options(tigris_use_cache = TRUE)
   # glyphosate 
   pest_dt = 
     read.fst(
-      here("data/pesticides/est_pest_use.fst"),
+      here("data/raw/est_pest_use.fst"),
       as.data.table = TRUE
     )[,census_year := str_sub(year, 1,3)]
   # County and state shapes
@@ -40,7 +40,7 @@ options(tigris_use_cache = TRUE)
     st_transform(crs = 2163) 
 
 # Calculating distance between every county -----------------------------------
-if(!file.exists(here('data/pop-area-empl/county-dist-dt.fst'))){
+if(!file.exists(here('data/raw/county-dist-dt.fst'))){
   county_dist_mat = st_distance(county_sf, county_sf)
   # Converting to long data table 
   county_dist_dt = data.table(county_dist_mat)
@@ -61,13 +61,13 @@ if(!file.exists(here('data/pop-area-empl/county-dist-dt.fst'))){
   # Saving 
   write.fst(
     county_dist_dt, 
-    here('data/pop-area-empl/county-dist-dt.fst')
+    here('data/raw/county-dist-dt.fst')
   )
 }else{
   # Read the already calculated distance file
   county_dist_dt = 
     read.fst(
-      here('data/pop-area-empl/county-dist-dt.fst'),
+      here('data/raw/county-dist-dt.fst'),
       as.data.table = TRUE
     )
 }
@@ -76,7 +76,7 @@ if(!file.exists(here('data/pop-area-empl/county-dist-dt.fst'))){
   # County to hybas crosswalk
   area_weight_dt = 
     read_fst(
-      here("data-clean/watershed/weights/hydrobasin-area-weights.fst"),
+      here("data/watershed/weights/hydrobasin-area-weights.fst"),
       as.data.table = TRUE
     )[,.(
       hybas_id, 
@@ -87,7 +87,7 @@ if(!file.exists(here('data/pop-area-empl/county-dist-dt.fst'))){
   # Upstream watersheds
   upstream_dt = 
     read.fst(
-      path = here("data-clean/watershed/upstream-dt-hydrobasin.fst"), 
+      path = here("data/watershed/upstream-dt-hydrobasin.fst"), 
       as.data.table = TRUE
     )[ # Filtering to just upstream. Picking out relevant columns
       dist_km > 0 & local == FALSE,.(
@@ -167,7 +167,7 @@ if(!file.exists(here('data/pop-area-empl/county-dist-dt.fst'))){
 # Saving the results 
 write.fst(
   shift_share_dt, 
-  here('data/glyph-nat-dt.fst')
+  here('data/clean/glyph-nat-dt.fst')
 )
 
 # Now making a watershed level version
@@ -188,7 +188,7 @@ write.fst(
   # saving the result 
   write.fst(
     watershed_shift_share_dt, 
-    here('data/glyph-nat-watershed-dt.fst')
+    here('data/watershed/glyph-nat-watershed-dt.fst')
   )
 
 

@@ -7,7 +7,7 @@ p_load(
 # Precipitation data -- Grabbing growing vs non-growing, casting into wide format
 rain_dt = 
   read.fst(
-    here('data-clean/watershed/ppt-season-wshd-dt.fst'), 
+    here('data/watershed/ppt-season-wshd-dt.fst'), 
     as.data.table = TRUE
   ) %>% 
   .[,hybas_id := as.character(hybas_id)] |>
@@ -20,7 +20,7 @@ rain_dt =
     new = c('ppt_growing_season', 'ppt_off_season')
   )
 # Soil data
-soil_dt = fread(here('data/spatial/soil-quality/watershed-soil-factors.csv'))[,.(
+soil_dt = fread(here('data/watershed/soil-quality/watershed-soil-factors.csv'))[,.(
   hybas_id = as.character(HYBAS_ID), 
   kffact, slopelen = slopelenusle_r,
   kls = kffact*slopelenusle_r
@@ -44,6 +44,6 @@ usle_dt =
 # Saving the results 
 write.fst(
   usle_dt, 
-  here('data-clean/watershed/usle-dt.fst')
+  here('data/watershed/usle-dt.fst')
 )
 
