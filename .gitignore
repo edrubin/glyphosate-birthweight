@@ -1,11 +1,12 @@
 
+# Folders we don't want
 data/
 data-clean/
-
 notes/
 
 .Rprofile
 .vs-code/
+.vscode/
 .DS_Store
 
 # History files
