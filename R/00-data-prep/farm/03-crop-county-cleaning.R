@@ -5,11 +5,16 @@ p_load(
   here, fst, data.table, magrittr, readr
 )
 
+
 # ALL crop acreage
-all_crop_acre = read.fst(
-  here("data/crops/all_crop_acre_county.fst"), 
-  as.data.table = TRUE
-)
+path_survey = "data/download-script/nass-survey/acres-planted"
+all_crop_acre = 
+  map_dfr(
+    here(paste0(path_survey,"/",list.files(path = here(path_survey)))),
+    read.fst,
+    as.data.table = TRUE
+  ) |> 
+  clean_names()
 
 # Aggregating crops and casting to wide format
 all_crop_acre_dt = 
@@ -43,12 +48,14 @@ all_crop_acre_dt =
 # Saving the results
 write.fst(
   all_crop_acre_dt,
-  here('data/crops/all-crop-acre-dt.fst')
+  here('data/raw/all-crop-acre-dt.fst')
 )
 
 # Now running yield data
-all_crop_yield = read.fst(
-  here("data/crops/all_crop_yield_county.fst"), 
+path_survey_yield = "data/download-script/nass-survey/yield"
+all_crop_yield = map_dfr(
+  here(paste0(path_survey_yield,"/",list.files(path = here(path_survey_yield)))),
+  read.fst,
   as.data.table = TRUE
 )
 
@@ -83,13 +90,15 @@ all_crop_yield_dt =
 
 write.fst(
   all_crop_yield_dt,
-  here('data/crops/all-crop-yield-dt.fst')
+  here('data/raw/all-crop-yield-dt.fst')
 )
 
 
 # ALL crop acreage
-all_crop_irrigated = read.fst(
-  here("data/crops/all_crop_irrigated_county.fst"), 
+path_survey_irrigated = "data/download-script/nass-survey/irrigated"
+all_crop_irrigated = map_dfr(
+  here(paste0(path_survey_irrigated,"/",list.files(path = here(path_survey_irrigated)))),
+  read.fst,
   as.data.table = TRUE
 )
 
@@ -143,5 +152,19 @@ all_crop_irrigated_dt[,':='(
 
 write.fst(
   all_crop_irrigated_dt,
-  here('data/crops/all-crop-irrigated-dt.fst')
+  here('data/raw/all-crop-irrigated-dt.fst')
+)
+
+
+# Reading all of the results in together
+census_crop_acre = map_dfr(
+  here(paste0(path_census,"/",list.files(path = here(path_census)))),
+  read.fst,
+  as.data.table = TRUE
+) |> clean_names()
+
+# Saving the results
+write.fst(
+  census_crop_acre, 
+  path = here("data/raw/census_crop_acre_county.fst")
 )

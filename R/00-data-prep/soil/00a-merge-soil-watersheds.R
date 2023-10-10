@@ -14,11 +14,11 @@
 # Load data -------------------------------------------------------------------
   # Load the soil-data raster of cell IDs
   id_r = here(
-    'data', 'spatial', 'soil-quality', 'gNATSGO_mukey_grid', 'gNATSGO-mukey.tif'
+    'data', 'watershed', 'soil-quality', 'gNATSGO_mukey_grid', 'gNATSGO-mukey.tif'
   ) %>% terra::rast()
   # Load the HUC-8-level watershed shapefile
   water_sf = here(
-    'data', 'spatial', 'hydrobasins', 'hybas_lake_na_lev08_v1c.shp'
+    'data', 'watershed', 'hydrobasins', 'hybas_lake_na_lev08_v1c.shp'
   ) %>% st_read(
     query = 'SELECT HYBAS_ID FROM "hybas_lake_na_lev08_v1c"'
   )
@@ -52,7 +52,7 @@
   # Save the crosswalk
   write_fst(
     x = xwalk_dt,
-    path = here('data-clean', 'xwalk-soil-watershed.fst'),
+    path = here('data', 'watershed', 'xwalk-soil-watershed.fst'),
     compress = 100
   )
   # Clean up
@@ -63,7 +63,7 @@
 # Load the crosswalk ----------------------------------------------------------
   # Load the crosswalk
   xwalk_dt = read_fst(
-    path = here('data-clean', 'xwalk-soil-watershed.fst'),
+    path = here('data', 'watershed', 'xwalk-soil-watershed.fst'),
     as.data.table = TRUE
   )
   # Drop missing mukeys (generally from watersheds outside of CONUS)
@@ -73,11 +73,11 @@
 # Load soil data --------------------------------------------------------------
   # Load 'chorizon' file
   ch_dt = here(
-    'data', 'spatial', 'soil-quality', 'gNATSGO_Tabular_CSV', 'chorizon.csv'
+    'data', 'watershed', 'soil-quality', 'gNATSGO_Tabular_CSV', 'chorizon.csv'
   ) %>% vroom::vroom(col_select = c('cokey', 'kwfact', 'kffact'))
   # Load 'component' file
   comp_dt = here(
-    'data', 'spatial', 'soil-quality', 'gNATSGO_Tabular_CSV', 'component.csv'
+    'data', 'watershed', 'soil-quality', 'gNATSGO_Tabular_CSV', 'component.csv'
   ) %>% vroom::vroom(
     col_select = c('mukey', 'cokey', 'comppct_r')
   )
@@ -129,7 +129,7 @@
   # Save the table
   fwrite(
     x = hy_dt,
-    file = here('data', 'spatial', 'soil-quality', 'watershed-soil-factors.csv')
+    file = here('data', 'watershed', 'soil-quality', 'watershed-soil-factors.csv')
   )
   # Save as shapefile
   setDT(water_sf)
@@ -137,7 +137,7 @@
   water_sf %<>% st_as_sf()
   st_write(
     water_sf,
-    here('data', 'spatial', 'soil-quality', 'huc8-soil-shp', 'huc8-soil-shp.shp')
+    here('data', 'watershed', 'soil-quality', 'huc8-soil-shp', 'huc8-soil-shp.shp')
   )
 
 

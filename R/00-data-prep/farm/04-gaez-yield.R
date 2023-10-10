@@ -7,7 +7,7 @@ p_load(
 options(tigris_use_cache = TRUE)
 # Getting one file to convert crs to
 y_soy_h = read_stars(here(
-  "data/gaez-suitability-index/attainable-yield/ylHr_soy.tif"
+  "data/download-manual/attainable-yield/ylHr_soy.tif"
 ))
 # Going to transform everything into this CRS
 y_crs = st_crs(y_soy_h)
@@ -43,10 +43,10 @@ aggregate_gaez_county = function(crop){
   # Reading in the raster
   yield_rast = c(
     rast(here(paste0( # low yield
-      "data/gaez-suitability-index/attainable-yield/ylLr_",crop,".tif"
+      "data/download-manual/attainable-yield/ylLr_",crop,".tif"
     ))), 
     rast(here(paste0( # high yield
-      "data/gaez-suitability-index/attainable-yield/ylHr_",crop,".tif"
+      "data/download-manual/attainable-yield/ylHr_",crop,".tif"
     )))
   )
   # Now we can aggregate to the county level 
@@ -70,7 +70,7 @@ aggregate_gaez_county = function(crop){
   write.fst(
     y_diff_dt, 
     path = here(paste0(
-      "data/gaez-suitability-index/attainable-yield-county/y-diff-",
+      "data/raw/attainable-yield-county/y-diff-",
       crop,"-dt.fst"
     ))
   )
@@ -78,11 +78,11 @@ aggregate_gaez_county = function(crop){
 }  
   
 # Grabbing the crops we have to aggregate
-crop_list = list.files(here("data/gaez-suitability-index/attainable-yield")) |>
+crop_list = list.files(here("data/download-manual/attainable-yield")) |>
   str_extract("(?<=_)\\w{3}(?=\\.)") |>
   unique()
 already_run = list.files(here(
-  "data/gaez-suitability-index/attainable-yield-county"
+  "data/raw/attainable-yield-county"
   )) |>
   str_extract("(?<=y-diff-)\\w{3}(?=-dt)") |>
   unique()
@@ -98,7 +98,7 @@ y_diff_dt  =
 y_diff_dt = 
   map_dfr(
     list.files(
-      here("data/gaez-suitability-index/attainable-yield-county"),
+      here("data/raw/attainable-yield-county"),
       full.names = TRUE
     ),
     \(x){read.fst(path = x, as.data.table = TRUE)}
@@ -107,13 +107,13 @@ y_diff_dt =
 # Saving the result   
 write.fst(
   y_diff_dt, 
-  here("data/gaez-suitability-index/y_diff_dt.fst")
+  here("data/raw/y_diff_dt.fst")
 )
 
 # Now doing it again for watersheds
   # Hydrobasin data
   hydrobasin_sf = 
-    read_sf(here("data/spatial/hydrobasins/hybas_lake_na_lev08_v1c.shp")) |>
+    read_sf(here("data/watersheds/hydrobasins/hybas_lake_na_lev08_v1c.shp")) |>
     clean_names() |>
     filter(lake == 0) |>
     st_make_valid()
@@ -122,10 +122,10 @@ write.fst(
     # Reading in the raster
     yield_rast = c(
       rast(here(paste0( # low yield
-        "data/gaez-suitability-index/attainable-yield/ylLr_",crop,".tif"
+        "data/download-manual/attainable-yield/ylLr_",crop,".tif"
       ))), 
       rast(here(paste0( # high yield
-        "data/gaez-suitability-index/attainable-yield/ylHr_",crop,".tif"
+        "data/download-manual/attainable-yield/ylHr_",crop,".tif"
       )))
     )
     # Now we can aggregate to the county level 
@@ -149,18 +149,18 @@ write.fst(
     write.fst(
       y_diff_dt, 
       path = here(paste0(
-        "data/gaez-suitability-index/attainable-yield-hybas/y-diff-",
+        "data/watershed/attainable-yield-hybas/y-diff-",
         crop,"-dt.fst"
       ))
     )
     return(y_diff_dt)
   }  
   # Grabbing the crops we have to aggregate
-  crop_list = list.files(here("data/gaez-suitability-index/attainable-yield")) |>
+  crop_list = list.files(here("data/download-manual/attainable-yield")) |>
     str_extract("(?<=_)\\w{3}(?=\\.)") |>
     unique()
   already_run = list.files(here(
-    "data/gaez-suitability-index/attainable-yield-hybas"
+    "data/watershed/attainable-yield-hybas"
     )) |>
     str_extract("(?<=y-diff-)\\w{3}(?=-dt)") |>
     unique()
@@ -175,7 +175,7 @@ write.fst(
   y_diff_dt = 
     map_dfr(
       list.files(
-        here("data/gaez-suitability-index/attainable-yield-hybas"),
+        here("data/watershed/attainable-yield-hybas"),
         full.names = TRUE
       ),
       \(x){read.fst(path = x, as.data.table = TRUE)}
@@ -293,6 +293,6 @@ write.fst(
   # Saving the result   
   write.fst(
     y_diff_dt, 
-    here("data/gaez-suitability-index/hydrobasin-y-diff-dt.fst")
+    here("data/watershed/hydrobasin-y-diff-dt.fst")
   )
 

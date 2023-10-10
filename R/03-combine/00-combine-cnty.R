@@ -53,18 +53,18 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
   # Size of county 
   cnty_area_dt = 
     read.fst(
-      path = here("data/pop-area-empl/cnty-area-dt.fst"),
+      path = here("data/raw/cnty-area-dt.fst"),
       as.data.table = TRUE
     )[census_year == '201', .(GEOID, area_km2)]
   # Treatment
   trt_dt = read.fst(
-      path = here('data-clean/trt-dt.fst'),
+      path = here('data/clean/trt-dt.fst'),
       as.data.table = TRUE
     )
   # Pesticide data
   pest_dt = 
     read.fst(
-      here("data/pesticides/est_pest_use.fst"),
+      here("data/raw/est_pest_use.fst"),
       as.data.table = TRUE
     )[,census_year := str_sub(year, 1,3)] |>
     merge(
@@ -84,7 +84,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
   )]
   # First stage 
   fs_dt = read.fst(
-    path = here("data-clean/fs-dt.fst"),
+    path = here("data/clean/fs-dt.fst"),
     as.data.table = TRUE
   )[year %in% yr_start:yr_end, .(
     GEOID, year, 
@@ -96,7 +96,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
   # Now for crop data ---------------------------------------------------------------
   # ALL crop acreage
   all_crop_acre_dt = read.fst(
-    here('data/crops/all-crop-acre-dt.fst'), 
+    here('data/raw/all-crop-acre-dt.fst'), 
     as.data.table = TRUE
   )[year %in% yr_start:yr_end]
   # Fixing wrong codes 
@@ -108,7 +108,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
   ]
   # Crop yields 
   all_crop_yield_dt = read.fst(
-    here("data/crops/all-crop-yield-dt.fst"), 
+    here("data/raw/all-crop-yield-dt.fst"), 
     as.data.table = TRUE
   )[year %in% yr_start:yr_end & str_sub(GEOID,1,2) != '15']
   # Fixing wrong codes 
@@ -119,7 +119,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
     )
   ]
   all_crop_irrigated_dt = read.fst(
-    here("data/crops/all-crop-irrigated-dt.fst"), 
+    here("data/raw/all-crop-irrigated-dt.fst"), 
     as.data.table = TRUE
   )[year %in% yr_start:yr_end]
   # Fixing wrong codes 
@@ -137,7 +137,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
   # Rest of data --------------------------------------------------------------------
   # County population
   cnty_pop_dt = read.fst(
-    here("data/pop-area-empl/cnty-pop-dt.fst"),
+    here("data/raw/cnty-pop-dt.fst"),
     as.data.table = TRUE
   )[year %in% yr_start:yr_end] 
   # Fixing wrong codes 
@@ -157,7 +157,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
   
   # Now employment data
   farm_empl_dt = read.fst(
-    here("data/pop-area-empl/farm-empl-dt.fst"),
+    here("data/raw/farm-empl-dt.fst"),
     as.data.table = TRUE
   ) %>% 
     .[!(str_sub(GEOID, 1,2) %in% c("02","15","60","66","69","72","78"))] %>%
@@ -167,14 +167,14 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
   
   # Now education data
   edu_dt = read.fst(
-    here("data/pop-area-empl/edu-dt.fst"),
+    here("data/raw/edu-dt.fst"),
     as.data.table = TRUE
   ) %>% 
     .[census_year %in% str_sub(yr_start:yr_end,1,3)]
   
   # Labor force data
   labor_dt = read.fst(
-    here("data/bls-labforce/labor-dt.fst"),
+    here("data/raw/labor-dt.fst"),
     as.data.table = TRUE
   ) %>% 
     .[year %in% yr_start:yr_end]
@@ -186,7 +186,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
   ]
   # Rural Urban Codes 
   rural_dt = 
-    data.table(read_xls(here("data/pop-area-empl/ruralurbancodes2003.xls")))[,.(
+    data.table(read_xls(here("data/download-manual/ruralurbancodes2003.xls")))[,.(
       GEOID = `FIPS Code`,
       ruc = `2003 Rural-urban Continuum Code`
     )] 
@@ -325,8 +325,8 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
     # Upstream/downstream Exposure data
     county_exposure_dt = 
       read.fst(
-        path = here("data-clean/watershed/county-exposure-dt.fst"), 
-        as.data.table = T
+        path = here("data/watershed/county-exposure-dt.fst"), 
+        as.data.table = TRUE
       ) 
     # Merging 
     comb_dt = 
@@ -334,7 +334,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
         comb_dt,
         county_exposure_dt, 
         by = c("GEOID","year"),
-        all = T
+        all = TRUE
       ) 
     # Setting missing to zero 
     water_vars = colnames(county_exposure_dt)[-(1:2)]
@@ -362,6 +362,6 @@ comb_cnty_dt =
   )
 write.fst(
   comb_cnty_dt,
-  here("data-clean/comb-cnty-dt.fst")
+  here("data/clean/comb-cnty-dt.fst")
 )
 

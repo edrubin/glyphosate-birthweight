@@ -8,11 +8,10 @@ options(tigris_use_cache=TRUE)
 sf_use_s2(FALSE)
 
 # List of the monthly file names 
-all_files = list.files(here('data/prism'))
+all_files = list.files(here('data/watershed/prism'), full.names = TRUE)
 all_months = str_extract(all_files, "(?<=4kmM3_)\\d{6}(?=_bil)")
-
 file_paths = here(paste0(
-  "data/prism/", 
+  "data/watershed/prism/", 
   all_files,
   "/PRISM_ppt_stable_4kmM3_",all_months,"_bil.bil"
 ))
@@ -39,7 +38,7 @@ cont_sf = st_union(states_sf) |> st_as_sf() |> mutate(in_us = TRUE)
 
 # Loading HydroBASINS data limiting to those in the CONUS
 watershed_sf = 
-  read_sf(here("data/spatial/hydrobasins/hybas_lake_na_lev08_v1c.shp")) |>
+  read_sf(here("data/watershed/hydrobasins/hybas_lake_na_lev08_v1c.shp")) |>
   st_transform(crs =  st_crs(ppt_month_st)) |>
   clean_names() |>
   st_join(cont_sf) |>
@@ -89,15 +88,15 @@ ppt_yr_wshd_dt =
 # Saving the results
 write.fst(
   ppt_qtr_wshd_dt,
-  here('data-clean/watershed/ppt-qtr-wshd-dt.fst')
+  here('data/watershed/ppt-qtr-wshd-dt.fst')
 )
 write.fst(
   ppt_season_wshd_dt,
-  here('data-clean/watershed/ppt-season-wshd-dt.fst')
+  here('data/watershed/ppt-season-wshd-dt.fst')
 )
 write.fst(
   ppt_yr_wshd_dt,
-  here('data-clean/watershed/ppt-yr-wshd-dt.fst')
+  here('data/watershed/ppt-yr-wshd-dt.fst')
 )
 
 # Seems like 600 watersheds have missing data: 

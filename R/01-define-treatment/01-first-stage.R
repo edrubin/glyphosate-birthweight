@@ -11,12 +11,12 @@ p_load(
   # glyphosate 
   pest_dt = 
     read.fst(
-      here("data/pesticides/est_pest_use.fst"),
+      here("data/raw/est_pest_use.fst"),
       as.data.table = TRUE
     )[,census_year := str_sub(year, 1,3)]
   # attainable yield
   trt_dt = read.fst( 
-      path = here("data-clean/trt-dt.fst"),
+      path = here("data/clean/trt-dt.fst"),
       as.data.table = TRUE
   )[,.(
     GEOID,
@@ -34,19 +34,19 @@ p_load(
   # Crop data 
   crop_dt = 
     read.fst(
-      path = here('data/crops/crop-acre-percentile-90-95.fst'), 
+      path = here('data/clean/crop-acre-percentile-90-95.fst'), 
       as.data.table = TRUE
     )
   # National glyphosate trends 
   glyph_nat_dt =  
     read.fst(
-      here('data/glyph-nat-dt.fst'),
+      here('data/clean/glyph-nat-dt.fst'),
       as.data.table = TRUE
     )
   # Size of county 
   cnty_area_dt = 
     read.fst(
-      path = here("data/pop-area-empl/cnty-area-dt.fst"),
+      path = here("data/raw/cnty-area-dt.fst"),
       as.data.table = TRUE
     )[census_year == '201', .(GEOID, area_km2)]
 
@@ -163,7 +163,7 @@ mod_fs = feols(
 # Saving the results
 qsave(
   x = mod_fs,
-  file = here("data-clean/results/20230823/mod-fs.qs")
+  file = here("data/results/20230823/mod-fs.qs")
 )
 
 # Grabbing predictions --------------------------------------------------
@@ -176,6 +176,6 @@ fs_dt[,
 # Saving the results  ---------------------------------------------------
 write.fst(
   fs_dt, 
-  path = here("data-clean/fs-dt.fst")
+  path = here("data/clean/fs-dt.fst")
 )
 

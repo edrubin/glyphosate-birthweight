@@ -5,7 +5,7 @@ p_load(
 )
 
 # Setting the folder where the data should be stored
-options(prism.path = here('data/prism'))
+options(prism.path = here('data/watershed/prism'))
 
 # Downloading monthly data from 1990-2019
 get_prism_monthlys(
@@ -13,13 +13,4 @@ get_prism_monthlys(
   years = 1990:2019,
   mon = 1:12
 )
-
-# Checking 
-ppt_example = read_stars(here(
-  "data/prism/PRISM_ppt_stable_4kmM3_199001_bil/PRISM_ppt_stable_4kmM3_199001_bil.bil"
-))
-
-plot(ppt_example)
-
-
 

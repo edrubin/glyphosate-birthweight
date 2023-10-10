@@ -7,12 +7,12 @@ p_load(
 
 # Loading crop data
 crop_acre_dt = read.fst(
-    here('data/crops/all-crop-acre-dt.fst'), 
+    here('data/raw/all-crop-acre-dt.fst'), 
     as.data.table = TRUE
 )
 # Loading county sizes 
 cnty_area_dt = read.fst(
-    here('data/pop-area-empl/cnty-area-dt.fst'),
+    here('data/raw/cnty-area-dt.fst'),
     as.data.table = TRUE
 )[census_year == 201,.(GEOID, area_km2)]
 
@@ -68,7 +68,7 @@ setnames(
 # Saving the results 
 write.fst(
     x = crop_instr_dt, 
-    path = here('data/crops/crop-acre-percentile-90-95.fst')
+    path = here('data/clean/crop-acre-percentile-90-95.fst')
 )
 
 

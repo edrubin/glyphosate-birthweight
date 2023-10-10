@@ -35,7 +35,6 @@ stl_sfc = st_sfc(st_point(x = c(-90.400708,38.669813))) |>
 
 # Function to get county shapefiles by state/year
 get_cnty_area = function(state_fips, yr){
-  
   # Getting the shapefiles
   cnty_area_raw = 
     counties(
@@ -43,17 +42,14 @@ get_cnty_area = function(state_fips, yr){
       cb = TRUE,
       year = yr
     ) |> st_transform(crs = 4326)
-  
   # Calculating area
   cnty_area_raw %<>% 
     mutate(
       area_km2 = st_area(cnty_area_raw) |> set_units(km^2) |> drop_units(),
       dist_stl_km = st_distance(cnty_area_raw, stl_sfc) |> set_units(km) |> drop_units()
     )
-  
   # Converting to datatable
   cnty_area_raw = cnty_area_raw |> data.table() |> select(-geometry)
-  
   # Cleaning data
   if(yr == 1990 | yr == 2000){
     cnty_area =
@@ -64,7 +60,6 @@ get_cnty_area = function(state_fips, yr){
         area_km2,
         dist_stl_km
       )]
-
   }else if(yr == 2010){
     # Area is in sq mi
     cnty_area =
@@ -76,11 +71,9 @@ get_cnty_area = function(state_fips, yr){
         dist_stl_km
       )]
   } else {
-    print("YEAR IS WRONG")
+    stop("YEAR IS WRONG")
   }
-  
   print(paste(yr, state_fips, "done"))
-  
   return(cnty_area)
 }
 
@@ -108,7 +101,7 @@ cnty_area_dt =
 # Saving the results
 write.fst(
   cnty_area_dt, 
-  path = here("data/pop-area-empl/cnty-area-dt.fst")
+  path = here("data/raw/cnty-area-dt.fst")
 )
 
 #-------------------------------------------------------
@@ -168,7 +161,7 @@ cnty_pop_90_dt = cnty_pop_90_dt[year != "199"]
 # Saving the results
 write.fst(
   cnty_pop_90_dt, 
-  path = here("data/pop-area-empl/cnty-pop-90.fst")
+  path = here("data/raw/cnty-pop-90.fst")
 )
 
 #-------------------------------------------------------
@@ -225,7 +218,7 @@ cnty_pop_00_dt =
 # Saving the results
 write.fst(
   cnty_pop_00_dt, 
-  path = here("data/pop-area-empl/cnty-pop-00.fst")
+  path = here("data/raw/cnty-pop-00.fst")
 )
 
 #-------------------------------------------------------
@@ -284,7 +277,7 @@ cnty_pop_10_dt =
 # Saving the results
 write.fst(
   cnty_pop_10_dt, 
-  path = here("data/pop-area-empl/cnty-pop-10.fst")
+  path = here("data/raw/cnty-pop-10.fst")
 )
 #-------------------------------------------------------
 # Combining all of the results 
@@ -309,7 +302,7 @@ cnty_pop_dt =
 # Saving the results
 write.fst(
   cnty_pop_dt, 
-  path = here("data/pop-area-empl/cnty-pop-dt.fst")
+  path = here("data/raw/cnty-pop-dt.fst")
 )
 
 
