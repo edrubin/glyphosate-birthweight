@@ -285,7 +285,7 @@ crop_years_census_all =
 # Filtering to same time as health data
 # Not actually doing anything because 
 # these are only years loaded in API
-path_census = "data/crops/crop_yr/census"
+path_census = "data/download-script/nass-census"
 
 crop_years_census = 
   crop_years_census_all |> 

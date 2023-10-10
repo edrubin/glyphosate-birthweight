@@ -2,7 +2,7 @@
 # Takes raw crop acreage/yield/irrigation data and turns it into county-year panel
 library(pacman)
 p_load(
-  here, fst, data.table, magrittr, readr
+  here, fst, data.table, magrittr, readr, janitor, purrr
 )
 
 
@@ -155,10 +155,10 @@ write.fst(
   here('data/raw/all-crop-irrigated-dt.fst')
 )
 
-
+path_census = "data/download-script/nass-census"
 # Reading all of the results in together
 census_crop_acre = map_dfr(
-  here(paste0(path_census,"/",list.files(path = here(path_census)))),
+  list.files(path = here(path_census), full.names = TRUE),
   read.fst,
   as.data.table = TRUE
 ) |> clean_names()

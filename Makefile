@@ -2,8 +2,8 @@
 # Options 
 R_OPTS=--vanilla
 # Directories 
-dman-dir = data/downloads-manual/
-dscr-dir = data/downloads-script/
+dman-dir = data/download-manual/
+dscr-dir = data/download-script/
 raw-dir = data/raw/
 clean-dir = data/clean/
 result-dir = data/results/
@@ -12,7 +12,6 @@ health-dir = data/health-restricted/
 # Variables
 crop-names := acre yield irrigated
 crop-dt := $(crop-names:%=$(raw-dir)all-crop-%-dt.fst)
-crop-cnty := $(crop-names:%=$(raw-dir)all_crop_%_county.fst)
 # For watershed data
 mods := lasso-glyph rf-glyph lasso-ampa rf-ampa
 water-mods := $(mods:%=$(result-dir)ml-water/final-fit-%.qs)
@@ -24,20 +23,22 @@ pop-grids := $(pop-wt-yrs:%=$(water-dir)us-pop-grid/uspop%.tif)
 
 # -----------------------------------------------------------------------------
 # Setting up higher level targets
-all: data-download data-raw data-clean water
+all:  data-raw data-clean # water data-download
 # Downloading data from web or API
 data-download: \
- $(raw-dir)est_pest_use.csv \
- $(raw-dir)est_pest_use.fst \
- $(raw-dir)census_crop_acre_county.fst \
- $(raw-dir)cnty-area-dt.fst \
- $(raw-dir)cnty-pop-dt.fst \
- $(raw-dir)farm-empl-dt.fst \
- $(crop-cnty) 
+ $(dscr-dir)usgs-pesticides-raw.fst \
+ $(dscr-dir)cnty-area-dt.fst \
+ $(dscr-dir)cnty-pop-dt.fst \
+ $(dscr-dir)farm-empl-dt.fst \
+ download-crops
 # Raw data we won't touch very often
 data-raw: \
+ $(raw-dir)est_pest_use.csv \
+ $(raw-dir)est_pest_use.fst \
  $(raw-dir)edu-dt.fst \
  $(raw-dir)labor-dt.fst \
+ $(raw-dir)census_crop_acre_county.fst \
+ $(raw-dir)y_diff_dt.fst \
  $(crop-dt)
 # Intermediate files that may get updated often
 data-clean: \
@@ -45,7 +46,8 @@ data-clean: \
  $(clean-dir)comb-cnty-dt.fst \
  $(clean-dir)fs-dt.fst \
  $(clean-dir)crop-acre-percentile-90-95.fst \
- $(clean-dir)trt-dt.fst
+ $(clean-dir)trt-dt.fst \
+ $(clean-dir)glyph-nat-dt.fst
 # Watershed modeling 
 water: \
  $(water-dir)county-exposure-dt.fst \
@@ -57,9 +59,6 @@ water: \
 # Targets for predict-bw
 
 
-# -----------------------------------------------------------------------------
-# Targets for data-clean
-
 # Micro natality clean 
 $(clean-dir)natality-micro.fst: \
  R/04-analysis/00-build-natality-twfe.R \
@@ -67,10 +66,14 @@ $(clean-dir)natality-micro.fst: \
 	Rscript $<
 	@echo "Built natality micro data"
 
+# -----------------------------------------------------------------------------
+# Targets for data-clean
+
 # County level health data 
 $(clean-dir)health-dt.fst: \
  R/03-combine/01-comb-county-health.R \
- $(clean-dir)comb-cnty-dt.fst $(clean-dir)glyph-nat-dt.fst
+ $(clean-dir)comb-cnty-dt.fst \
+ $(wildcard $(health-dir)period-clean/*.fst)
 	Rscript $<
 	@echo "Made health-dt"
 
@@ -78,65 +81,72 @@ $(clean-dir)health-dt.fst: \
 $(clean-dir)comb-cnty-dt.fst: \
  R/03-combine/00-combine-cnty.R \
  $(clean-dir)trt-dt.fst \
- $(clean-dir)fs-dt.fst
+ $(clean-dir)fs-dt.fst \
+ $(raw-dir)est_pest_use.fst \
+ $(raw-dir)edu-dt.fst \
+ $(raw-dir)labor-dt.fst \
+ $(crop-dt)
 	Rscript $<
 	@echo "Made comb-cnty-dt"
 # Other dependencies: 
 # $(water-dir)county-exposure-dt.fst 
-# $(raw-dir)cnty-area-dt.fst 
-# $(raw-dir)cnty-pop-dt.fst 
-# $(raw-dir)farm-empl-dt.fst 
-# $(raw-dir)ruralurbancodes2003.xls
-# $(raw-dir)est_pest_use.fst 
-# $(clean-dir)fs-dt.fst 
-# $(crop-dt)
-# $(raw-dir)edu-dt.fst 
-# $(raw-dir)labor-dt.fst 
+# $(dscr-dir)cnty-area-dt.fst 
+# $(dscr-dir)cnty-pop-dt.fst 
+# $(dscr-dir)farm-empl-dt.fst 
+# $(dman-dir)ruralurbancodes2003.xls
 
 # First stage predictions
 $(clean-dir)fs-dt.fst: \
  R/01-define-treatment/01-first-stage.R \
  $(clean-dir)crop-acre-percentile-90-95.fst \
- $(clean-dir)glyph-nat-dt.fst
+ $(clean-dir)glyph-nat-dt.fst \
+ $(raw-dir)est_pest_use.fst
 	Rscript $<
 	@echo "Made first stage predictions"
 # Other dependencies: 
-# $(raw-dir)cnty-area-dt.fst 
-# $(raw-dir)est_pest_use.fst
+# $(dscr-dir)cnty-area-dt.fst 
 
 # Shift share instruments 
 $(clean-dir)glyph-nat-dt.fst \
  $(water-dir)glyph-nat-watershed-dt.fst &: \
- R/01-define-treatment/00c-glyph-national.R
+ R/01-define-treatment/00c-glyph-national.R \
+ $(raw-dir)est_pest_use.fst
 	Rscript $<
 	@echo "Made shift share instruments"
 # Other dependencies: 
 # $(water-dir)weights/hydrobasin-area-weights.fst 
 # $(water-dir)upstream-dt-hydrobasin.fst 
-# $(raw-dir)est_pest_use.fst
 
 # Pre period acreage percentiles
 $(clean-dir)crop-acre-percentile-90-95.fst: \
- R/01-define-treatment/00b-crop-acre-percentiles.R
+ R/01-define-treatment/00b-crop-acre-percentiles.R \
+ $(raw-dir)all-crop-acre-dt.fst
 	Rscript $<
 	@echo "Made crop acreage percentiles"
 # Other dependencies: 
-# $(raw-dir)cnty-area-dt.fst 
-# data/crops/all-crop-acre-dt.fst
+# $(dscr-dir)cnty-area-dt.fst 
 
 # Treatment definitions
-$(clean-dir)trt-dt.fst: R/01-define-treatment/00-define-treatment.R
+$(clean-dir)trt-dt.fst: \
+ R/01-define-treatment/00-define-treatment.R \
+ $(raw-dir)y_diff_dt.fst
 	Rscript $<
 	@echo "Made treatment definitions"
-# Other dependencies $(raw-dir)y_diff_dt.fst
 
 # -----------------------------------------------------------------------------
 # Targets for data-raw
+# Pesticide data
+$(raw-dir)est_pest_use.csv \
+ $(raw-dir)est_pest_use.fst &: \
+ R/00-data-prep/farm/01-usgs-chem-data.R 
+	Rscript $<
+	@echo "Cleaned pesticide data"
+# Other dependencies:
+# $(dscr-dir)usgs-pesticides-raw.fst
+# $(dman-dir)est_pest_use_raw_2013_2017.txt
 
 # GAEZ suitability data
-$(water-dir)hydrobasin-y-diff-dt.fst \
- $(raw-dir)y_diff_dt.fst &: \
- R/00-data-prep/farm/04-gaez-yield.R 
+$(raw-dir)y_diff_dt.fst &: R/00-data-prep/farm/04-gaez-yield.R 
 	Rscript $<
 	@echo "Made suitability data"
 # Other dependencies: 
@@ -146,45 +156,42 @@ $(water-dir)hydrobasin-y-diff-dt.fst \
 $(raw-dir)edu-dt.fst: R/00-data-prep/controls/03-education.R 
 	Rscript $<
 	@echo "Made education data"
-# Other dependencies $(raw-dir)Education.xls
+# Other dependencies $(dman-dir)Education.xls
 
 # BLS labor data
 $(raw-dir)labor-dt.fst: R/00-data-prep/controls/02-bls-labor.R
 	Rscript $<
 	@echo "Made bls labor data"
+# Other dependencies $(wildcard $(dman-dir)bls-labforce-raw/*.xlsx)
 
 # Crop data
-$(crop-dt) &: R/00-data-prep/farm/03-crop-county-cleaning.R 
+$(crop-dt) &: R/00-data-prep/farm/03-crop-county-cleaning.R
 	Rscript $<
 	@echo "Made crop data"
-# Other dependencies: $(crop-cnty)
+# Other dependencies: $(wildcard $(dscr-dir)nass-*/*/*.fst) # Recursive?
 
 # -----------------------------------------------------------------------------
 # Targets for data-download
 
-# Pesticide data
-$(raw-dir)est_pest_use.csv \
- $(raw-dir)est_pest_use.fst &: \
- R/00-data-prep/farm/01-usgs-chem-data.R
+# Dowloading pesticide data from earlier years 
+$(dscr-dir)usgs-pesticides-raw.fst: R/00-data-prep/farm/01a-usgs-chem-download.R
 	Rscript $<
 	@echo "Downloaded pesticide data"
 
 # USDA NASS data
-$(crop-cnty) \
- $(raw-dir)census_crop_acre_county.fst &: \
- R/00-data-prep/farm/02-usda-nass-data.R
+download-crops: R/00-data-prep/farm/02-usda-nass-data.R
 	Rscript $<
 	@echo "Downloaded USDA NASS"
 
-# County area 
-$(raw-dir)cnty-area-dt.fst \
- $(raw-dir)cnty-pop-dt.fst &: \
+# County population from census and county area
+$(dscr-dir)cnty-area-dt.fst \
+ $(dscr-dir)cnty-pop-dt.fst &: \
  R/00-data-prep/controls/00-cnty-pop-area.R
 	Rscript $<
 	@echo "Calculated county area and pop"
 
 # BEA employment
-$(raw-dir)farm-empl-dt.fst: R/00-data-prep/controls/01-bea-empl.R
+$(dscr-dir)farm-empl-dt.fst: R/00-data-prep/controls/01-bea-empl.R
 	Rscript $<
 	@echo "Downloaded BEA data"
 
@@ -299,6 +306,12 @@ $(prism-fp) &: R/00-data-prep/controls/05-prism-precip-aggregate.R
 # $(water-dir)prism/* 
 # $(water-dir)hydrobasins/hybas_lake_na_lev08_v1c.shp
 
+# Calculating attainable yield by watershed
+$(water-dir)hydrobasin-y-diff-dt.fst: R/00-data-prep/farm/04b-gaez-yield-watershed.R 
+	Rscript $<
+	@echo "Made suitability data"
+# Other dependencies: 
+# $(wildcard $(dman-dir)/attainaible-yield/yl*r_*.tif)
 
 # -----------------------------------------------------------------------------
 # Helpers

@@ -225,7 +225,7 @@ clean_natality = function(file_year, dt_out = FALSE){
     # Loading the list of cities 
     city_dt =
       read.fst(
-        path = here('data/clean/city-water-dt.fst'),
+        path = here('data/download-manual/city-water-dt.fst'),
         as.data.table = TRUE
       )
     # Loading the manual crosswalk

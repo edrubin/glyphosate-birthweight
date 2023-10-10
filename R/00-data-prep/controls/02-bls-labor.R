@@ -25,7 +25,7 @@ clean_labor = function(file){
     )
   # Adding year, removing empty column and unempl rate 
   labor_raw_dt[,':='(
-    year = as.integer(file_yr), 
+    year = file_yr, 
     x = NULL, 
     unemploy_ment_rate_percent = NULL
   )]
@@ -34,7 +34,7 @@ clean_labor = function(file){
     !is.na(county_fips_code) 
     & !(county_fips_code %in% c("County","FIPS","Code")), .(
       GEOID = paste0(state_fips_code, county_fips_code),
-      year,
+      year = as.integer(year),
       labor_force = as.numeric(labor_force), 
       employed = as.numeric(employed),
       unemployed = as.numeric(unemployed),

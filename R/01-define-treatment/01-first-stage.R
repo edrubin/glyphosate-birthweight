@@ -46,7 +46,7 @@ p_load(
   # Size of county 
   cnty_area_dt = 
     read.fst(
-      path = here("data/raw/cnty-area-dt.fst"),
+      path = here("data/download-script/cnty-area-dt.fst"),
       as.data.table = TRUE
     )[census_year == '201', .(GEOID, area_km2)]
 

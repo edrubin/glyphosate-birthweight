@@ -53,7 +53,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
   # Size of county 
   cnty_area_dt = 
     read.fst(
-      path = here("data/raw/cnty-area-dt.fst"),
+      path = here("data/download-script/cnty-area-dt.fst"),
       as.data.table = TRUE
     )[census_year == '201', .(GEOID, area_km2)]
   # Treatment
@@ -137,7 +137,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
   # Rest of data --------------------------------------------------------------------
   # County population
   cnty_pop_dt = read.fst(
-    here("data/raw/cnty-pop-dt.fst"),
+    here("data/download-script/cnty-pop-dt.fst"),
     as.data.table = TRUE
   )[year %in% yr_start:yr_end] 
   # Fixing wrong codes 
@@ -157,7 +157,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
   
   # Now employment data
   farm_empl_dt = read.fst(
-    here("data/raw/farm-empl-dt.fst"),
+    here("data/download-script/farm-empl-dt.fst"),
     as.data.table = TRUE
   ) %>% 
     .[!(str_sub(GEOID, 1,2) %in% c("02","15","60","66","69","72","78"))] %>%

@@ -101,7 +101,7 @@ cnty_area_dt =
 # Saving the results
 write.fst(
   cnty_area_dt, 
-  path = here("data/raw/cnty-area-dt.fst")
+  path = here("data/download-script/cnty-area-dt.fst")
 )
 
 #-------------------------------------------------------
@@ -161,7 +161,7 @@ cnty_pop_90_dt = cnty_pop_90_dt[year != "199"]
 # Saving the results
 write.fst(
   cnty_pop_90_dt, 
-  path = here("data/raw/cnty-pop-90.fst")
+  path = here("data/download-script/cnty-pop-90.fst")
 )
 
 #-------------------------------------------------------
@@ -218,7 +218,7 @@ cnty_pop_00_dt =
 # Saving the results
 write.fst(
   cnty_pop_00_dt, 
-  path = here("data/raw/cnty-pop-00.fst")
+  path = here("data/download-script/cnty-pop-00.fst")
 )
 
 #-------------------------------------------------------
@@ -277,7 +277,7 @@ cnty_pop_10_dt =
 # Saving the results
 write.fst(
   cnty_pop_10_dt, 
-  path = here("data/raw/cnty-pop-10.fst")
+  path = here("data/download-script/cnty-pop-10.fst")
 )
 #-------------------------------------------------------
 # Combining all of the results 
@@ -302,7 +302,7 @@ cnty_pop_dt =
 # Saving the results
 write.fst(
   cnty_pop_dt, 
-  path = here("data/raw/cnty-pop-dt.fst")
+  path = here("data/download-script/cnty-pop-dt.fst")
 )
 
 

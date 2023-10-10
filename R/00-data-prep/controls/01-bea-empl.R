@@ -216,7 +216,7 @@ farm_empl_dt[,':='(
 # Saving the results 
 write.fst(
   farm_empl_dt, 
-  path = here("data/raw/farm-empl-dt.fst")
+  path = here("data/download-script/farm-empl-dt.fst")
 )
 
 

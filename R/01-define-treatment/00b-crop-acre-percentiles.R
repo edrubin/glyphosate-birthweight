@@ -12,7 +12,7 @@ crop_acre_dt = read.fst(
 )
 # Loading county sizes 
 cnty_area_dt = read.fst(
-    here('data/raw/cnty-area-dt.fst'),
+    here('data/download-script/cnty-area-dt.fst'),
     as.data.table = TRUE
 )[census_year == 201,.(GEOID, area_km2)]
 
