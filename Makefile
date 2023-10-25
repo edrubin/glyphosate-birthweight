@@ -9,6 +9,7 @@ clean-dir = data/clean/
 result-dir = data/results/
 water-dir = data/watershed/
 health-dir = data/health-restricted/
+fig-desc-dir = figures/descriptive/
 # Variables
 crop-names := acre yield irrigated
 crop-dt := $(crop-names:%=$(raw-dir)all-crop-%-dt.fst)
@@ -53,7 +54,29 @@ water: \
  $(water-dir)county-exposure-dt.fst \
  $(water-dir)county-exposure-pred-dt.fst
 # Predicting birthweights
-# predict-bw: 
+# predict-bw:
+# Descriptive figs 
+desc-figs: \
+	$(fig-descr-dir)glyph-km2-diff-9512.jpeg \
+	$(wildcard $(fig-descr-dir)ts-*.jpeg) \
+	$(wildcard $(fig-descr-dir)yield-diff-percentile/*.jpeg)
+
+
+# -----------------------------------------------------------------------------
+# Targets for descriptive results 
+$(fig-descr-dir)glyph-km2-diff-9512.jpeg \
+ $(wildcard $(fig-descr-dir)yield-diff-percentile/*.jpeg): \
+ R/05-results/descr-maps.R \
+ $(clean-dir)comb-cnty-dt.fst
+	Rscript $< 
+	@echo "Made descriptive maps"
+
+$(wildcard $(fig-descr-dir)ts-*.jpeg): \
+ R/05-results/descr-time-series.R \
+ $(clean-dir)comb-cnty-dt.fst
+	Rscript $<
+	@echo "Made descriptive time series"
+
 
 # -----------------------------------------------------------------------------
 # Targets for predict-bw
