@@ -55,15 +55,21 @@ water: \
  $(water-dir)county-exposure-pred-dt.fst
 # Predicting birthweights
 # predict-bw:
+
 # Descriptive figs 
 desc-figs: \
 	$(fig-descr-dir)glyph-km2-diff-9512.jpeg \
 	$(wildcard $(fig-descr-dir)ts-*.jpeg) \
 	$(wildcard $(fig-descr-dir)yield-diff-percentile/*.jpeg)
+# County Level Analysis
+cnty-results: 
+
+# -----------------------------------------------------------------------------
+# Targets for county level analysis
 
 
 # -----------------------------------------------------------------------------
-# Targets for descriptive results 
+# Targets for descriptive figures
 $(fig-descr-dir)glyph-km2-diff-9512.jpeg \
  $(wildcard $(fig-descr-dir)yield-diff-percentile/*.jpeg): \
  R/05-results/descr-maps.R \
