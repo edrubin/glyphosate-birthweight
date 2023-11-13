@@ -28,13 +28,13 @@ comb_cnty_health_dt = read_fst(
 comb_cnty_health_dt %<>% .[between(year, 1990, 2013)]
 
 # Function to estimate Event Study and DiD ------------------------------------
-est_twfe_cnty = function(outcomes_in, trt_in, est_dt, rural_in = TRUE, date_in = today(), name){
+est_twfe_cnty = function(outcomes_in, trt_in, est_dt, rural_in = TRUE, name){
   # Filtering to rural if specified 
   if(rural_in == TRUE){
     est_dt = est_dt[rural == TRUE]
-    path = paste0('data/results/',date_in,'/rural/',name)
+    path = paste0('data/results/county-level/rural/',name)
   }else{
-    path = paste0('data/results/',date_in,'/all/',name)
+    path = paste0('data/results/county-level/all/',name)
   }
   # Creating directory to put results in
   if(!dir.exists(here(path))) dir.create(here(path), recursive = TRUE)
@@ -174,28 +174,28 @@ trt_main = 'all_yield_diff_percentile_gmo'
 est_twfe_cnty(
   health_outcomes, 
   trt, 
-  comb_cnty_health_dt, 
+  comb_cnty_health_dt,
   rural_in = TRUE, 
   name = 'cnty-main'
 )
 est_twfe_cnty(
   c(alt_health_outcomes, alt_outcomes, pesticides),  
   trt_main, 
-  comb_cnty_health_dt, 
+  comb_cnty_health_dt,
   rural_in = TRUE, 
   name = 'cnty-alt'
 )
 est_twfe_cnty(
   health_outcomes, 
   trt, 
-  comb_cnty_health_dt, 
+  comb_cnty_health_dt,
   rural_in = FALSE, 
   name = 'cnty-main'
 )
 est_twfe_cnty(
   c(alt_health_outcomes, alt_outcomes, pesticides),  
   trt_main, 
-  comb_cnty_health_dt, 
+  comb_cnty_health_dt,
   rural_in = FALSE, 
   name = 'cnty-alt'
 )
