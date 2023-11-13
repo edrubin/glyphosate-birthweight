@@ -69,11 +69,9 @@ cnty-results:
 # -----------------------------------------------------------------------------
 # Targets for county level analysis
 
-# TSLS and DiD tables 
-
-
 # Event study figures
-$(wildcard $(fig-cnty-dir)*.jpeg): \
+$(wildcard $(fig-cnty-dir)rural/*.jpeg) \
+$(wildcard $(fig-cnty-dir)all/*.jpeg): \
  R/05-results/county-event-study-figs.R
  $(result-dir)county-level/rural/cnty-main/event-mods.qs
 	Rscript  $<
