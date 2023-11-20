@@ -28,8 +28,8 @@ plot_county_health_outcome = function(outcome_in, trt_in, coef_dt, path_in){
     theme_minimal(base_size = 16) + 
     labs(
       x = 'Year', 
-      y = 'Estimate and 95% CI', 
-      caption= 'Standard errors clustered by county and year.'
+      y = 'Estimate and 95% CI'
+      #,caption= 'Standard errors clustered by county and year.'
     )
   out_p
   ggsave(
@@ -62,8 +62,8 @@ make_cnty_event_study_figs = function(rural_in){
   # Getting everything into a nice table 
   coef_dt = 
     rbind(
-      data.table(coeftable(main_event_mods, cluster = ~GEOID + year)),
-      data.table(coeftable(alt_event_mods, cluster = ~GEOID + year)),
+      data.table(coeftable(main_event_mods, se= 'het')),#cluster = ~GEOID + year)),
+      data.table(coeftable(alt_event_mods, se= 'het')),#cluster = ~GEOID + year)),
       use.names = TRUE,
       fill = TRUE
     ) |>
