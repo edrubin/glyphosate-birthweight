@@ -4,6 +4,9 @@ data/
 data-clean/
 notes/
 
+# Scratch code we don't need to keep track of
+R/scratch/
+
 .Rprofile
 .vs-code/
 .vscode/
