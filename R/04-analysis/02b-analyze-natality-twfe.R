@@ -6,7 +6,41 @@
 # Todo list --------------------------------------------------------------------
 #   TODO Add a way to keep sample constant (due to missing demog controls)
 #   TODO Add ability to have multiple instruments (and interaction?)
-
+#   TODO Inegrate below code to do spline heterogeneity 
+  # # Adding bsplines to data
+  # p_load(splines)
+  # spline_df = 5
+  # spline_cols = paste0('pred_spline_',1:spline_df)
+  # natality_dt = 
+  #   cbind(
+  #     natality_dt,
+  #     bs(
+  #       x = natality_dt$dbwt_pred_pctl_pre, 
+  #       df = spline_df,
+  #       intercept = TRUE
+  #     ) |> 
+  #     data.table() |>
+  #     setnames(new = spline_cols)
+  #   )
+  # # 2SLS: Event study instruments with splines
+  # tsls_spline_mod = feols(
+  #   data = natality_dt, 
+  #   cluster = ~year + state_fips,
+  #   fml = dbwt ~ 
+  #     # Controls  
+  #     alachlor_km2 + atrazine_km2 + cyanazine_km2 + fluazifop_km2 + 
+  #     metolachlor_km2 + metribuzin_km2 + nicosulfuron_km2 + 
+  #     unemployment_rate +
+  #     # Fixed effects have to be interacted splines as controls
+  #     .[paste0('i(year_month, ',spline_cols,')')] + 
+  #     .[paste0('i(fips_res, ',spline_cols,')')] + 
+  #     .[paste0('i(fips_occ, ',spline_cols,')')]
+  #     | # IV
+  #     .[paste0('I(glyph_km2*',spline_cols,')')] ~ 
+  #       .[paste0(
+  #         'i(year, I(all_yield_diff_percentile_gmo*',spline_cols,'), ref = 1995)'
+  #       )]
+  # )
 
 # Setup ------------------------------------------------------------------------
   # Load packages
