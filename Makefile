@@ -72,7 +72,7 @@ cnty-results:
 # Event study figures
 $(wildcard $(fig-cnty-dir)rural/*.jpeg) \
 $(wildcard $(fig-cnty-dir)all/*.jpeg): \
- R/05-results/county-event-study-figs.R
+ R/05-results/county-event-study-figs.R \
  $(result-dir)county-level/rural/cnty-main/event-mods.qs
 	Rscript  $<
 	@echo "Made county event study figs"
