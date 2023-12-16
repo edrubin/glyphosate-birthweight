@@ -4,7 +4,7 @@
 library(pacman)
 p_load(
   fastverse, fixest, fst, qs, patchwork, magrittr, here, dplyr, 
-  purrr
+  purrr, readr, collapse
 )
 fastverse_extend(topics = c('ST', 'DT', 'VI'))
 

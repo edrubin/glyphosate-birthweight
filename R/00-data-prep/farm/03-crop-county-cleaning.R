@@ -23,6 +23,12 @@ asd_county_xwalk =
     name = str_split_i(X4, '\\\t{3,6}', i = 1), 
     historical = str_split_i(X4, '\\\t{3,6}', i = 2)
   )]
+asd_county_xwalk[,
+  GEOID := fcase(
+    GEOID == '46102', '46113',
+    GEOID != '46102', GEOID
+  )
+]
 # Getting table of counties that have switched asd codes 
 asd_county_xwalk[,n := .N,by = .(GEOID)]
 asd_switch = 
@@ -95,6 +101,13 @@ clean_nass_data = function(type, asd_county_xwalk, asd_switch, cnty_area_dt){
       total = sum(value_int)),
       by = .(year, state_fips, county_fips, GEOID, asd_code, crop, irrigated)
     ]
+  # Fixing wrong codes 
+  raw_all_crop_dt[,
+    GEOID := fcase(
+      GEOID == '46102', '46113',
+      GEOID != '46102', GEOID
+    )
+  ]
   # Allocate district level:
   # Merging county-level to full list 
   county_crop_dt = 
@@ -212,6 +225,7 @@ clean_nass_data = function(type, asd_county_xwalk, asd_switch, cnty_area_dt){
       '-dt.fst'
     ))
   )
+  # Now aggregating to 
 }
 
 # Running it! 

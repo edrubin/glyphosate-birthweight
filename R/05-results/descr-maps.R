@@ -4,6 +4,7 @@ p_load(
   here, fst, data.table, sf, tigris, janitor, dplyr, purrr,
   ggplot2, tidyr, scales, stringr, collapse
 )
+options(tigris_use_cache = TRUE)
 # Setting the theme 
   theme_set(
     theme_void(base_size = 14) +
@@ -39,7 +40,7 @@ p_load(
     st_transform(crs = 2163) 
   # County level data
   comb_cnty_dt = read.fst(
-    here("data-clean/comb-cnty-dt.fst"),
+    here("data/clean/comb-cnty-dt.fst"),
     as.data.table = TRUE
   )
 
