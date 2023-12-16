@@ -10,3 +10,6 @@ The following API keys are required, save them to .Renviron with with `usethis::
 - [Census API](https://api.census.gov/data/key_signup.html) saved in .Renviron as `CENSUS_KEY`  
 - [BEA API](https://apps.bea.gov/API/signup/) saved in .Renvoron as `BEA_KEY`  
 
+### Other Data 
+
+Ag district to county crosswalk from [here](https://www.nass.usda.gov/Data_and_Statistics/County_Data_Files/Frequently_Asked_Questions/county_list.txt).
