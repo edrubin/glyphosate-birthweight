@@ -59,30 +59,45 @@ water: \
 
 # Descriptive figs 
 desc-figs: \
-	$(fig-desc-dir)glyph-km2-diff-9512.jpeg \
-	$(wildcard $(fig-desc-dir)ts-*.jpeg) \
-	$(wildcard $(fig-desc-dir)yield-diff-percentile/*.jpeg)
+ $(fig-desc-dir)glyph-km2-diff-9512.jpeg \
+ $(wildcard $(fig-desc-dir)ts-*.jpeg) \
+ $(wildcard $(fig-desc-dir)yield-diff-percentile/*.jpeg)
 # County Level Analysis
-cnty-results: 
-	$(wildcard $(fig-cnty-dir)*.jpeg)
+cnty-results: \
+ $(wildcard $(fig-cnty-dir)rural/*.jpeg) \
+ $(wildcard $(fig-cnty-dir)all/*.jpeg) \
+ $(wildcard $(fig-cnty-dir)ag-district/*.jpeg)
 
 # -----------------------------------------------------------------------------
 # Targets for county level analysis
 
 # Event study figures
+$(wildcard $(fig-cnty-dir)ag-district/*.jpeg) \
 $(wildcard $(fig-cnty-dir)rural/*.jpeg) \
 $(wildcard $(fig-cnty-dir)all/*.jpeg): \
  R/05-results/county-event-study-figs.R \
- $(result-dir)county-level/rural/cnty-main/event-mods.qs
+ $(result-dir)county-level/rural/cnty-main/event-mods.qs \
+ $(result-dir)county-level/all/cnty-main/event-mods.qs \
+ $(result-dir)county-level/ag-district/asd-main/event-mods.qs 
 	Rscript  $<
 	@echo "Made county event study figs"
 
 # Running and saving the models 
 # TODO: make this target be for all mods not just one of them 
+$(result-dir)county-level/all/cnty-main/event-mods.qs \
 $(result-dir)county-level/rural/cnty-main/event-mods.qs: \
- R/04-analysis/02a-analyze-county-twfe.R
+ R/04-analysis/02a-analyze-county-twfe.R \
+ $(clean-dir)comb-cnty-dt.fst
 	Rscript $<
 	@echo "Estimated county level mods"
+
+# Ag district farm variables
+$(result-dir)county-level/ag-district/asd-main/event-mods.qs: \
+ R/04-analysis/02e-analyze-district-twfe.R \
+ $(clean-dir)comb-cnty-dt.fst
+	Rscript $<
+	@echo "Estimated ag district level mods"
+
 
 
 # -----------------------------------------------------------------------------

@@ -99,36 +99,16 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
     here('data/raw/all-crop-acre-dt.fst'), 
     as.data.table = TRUE
   )[year %in% yr_start:yr_end]
-  # Fixing wrong codes 
-  all_crop_acre_dt[,
-    GEOID := fcase(
-      GEOID == '46102', '46113',
-      GEOID != '46102', GEOID
-    )
-  ]
   # Crop yields 
   all_crop_yield_dt = read.fst(
     here("data/raw/all-crop-yield-dt.fst"), 
     as.data.table = TRUE
   )[year %in% yr_start:yr_end & str_sub(GEOID,1,2) != '15']
-  # Fixing wrong codes 
-  all_crop_yield_dt[,
-    GEOID := fcase(
-      GEOID == '46102', '46113',
-      GEOID != '46102', GEOID
-    )
-  ]
+  # Percent irrigated
   all_crop_irrigated_dt = read.fst(
     here("data/raw/all-crop-irrigated-dt.fst"), 
     as.data.table = TRUE
   )[year %in% yr_start:yr_end]
-  # Fixing wrong codes 
-  all_crop_irrigated_dt[,
-    GEOID := fcase(
-      GEOID == '46102', '46113',
-      GEOID != '46102', GEOID
-    )
-  ]
   setnames(
     all_crop_irrigated_dt,
     old = c('tot_acres_corn','tot_acres_cotton','tot_acres_soy'),

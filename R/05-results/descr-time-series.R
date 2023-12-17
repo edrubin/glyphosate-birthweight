@@ -10,7 +10,7 @@ theme_set(theme_minimal(base_size = 16))
 
 # Reading the data 
 comb_dt = read.fst(
-  here("data-clean/comb-cnty-dt.fst"),
+  here("data/clean/comb-cnty-dt.fst"),
   as.data.table = TRUE
 )
 
