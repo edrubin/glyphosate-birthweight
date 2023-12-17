@@ -65,21 +65,26 @@ desc-figs: \
 # County Level Analysis
 cnty-results: \
  $(wildcard $(fig-cnty-dir)rural/*.jpeg) \
- $(wildcard $(fig-cnty-dir)all/*.jpeg)
+ $(wildcard $(fig-cnty-dir)all/*.jpeg) \
+ $(wildcard $(fig-cnty-dir)ag-district/*.jpeg)
 
 # -----------------------------------------------------------------------------
 # Targets for county level analysis
 
 # Event study figures
+$(wildcard $(fig-cnty-dir)ag-district/*.jpeg) \
 $(wildcard $(fig-cnty-dir)rural/*.jpeg) \
 $(wildcard $(fig-cnty-dir)all/*.jpeg): \
  R/05-results/county-event-study-figs.R \
- $(result-dir)county-level/rural/cnty-main/event-mods.qs
+ $(result-dir)county-level/rural/cnty-main/event-mods.qs \
+ $(result-dir)county-level/all/cnty-main/event-mods.qs \
+ $(result-dir)county-level/ag-district/asd-main/event-mods.qs 
 	Rscript  $<
 	@echo "Made county event study figs"
 
 # Running and saving the models 
 # TODO: make this target be for all mods not just one of them 
+$(result-dir)county-level/all/cnty-main/event-mods.qs \
 $(result-dir)county-level/rural/cnty-main/event-mods.qs: \
  R/04-analysis/02a-analyze-county-twfe.R \
  $(clean-dir)comb-cnty-dt.fst

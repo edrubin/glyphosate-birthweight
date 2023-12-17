@@ -58,11 +58,12 @@ clean_nass_data = function(type, asd_county_xwalk, asd_switch, cnty_area_dt){
   )
   # Reading the raw data
   raw_all_crop = 
-    map_dfr(
+    map(
       here(paste0(path_survey,"/",list.files(path = here(path_survey)))),
       read.fst,
       as.data.table = TRUE
-    ) |> 
+    ) |>
+    rbindlist(use.names = TRUE) |> 
     clean_names()
   # Fixing asd codes for places that have changed
   raw_all_crop =
@@ -81,7 +82,10 @@ clean_nass_data = function(type, asd_county_xwalk, asd_switch, cnty_area_dt){
     raw_all_crop[
       # Excluding silage and pima cotton (no GM for pima)
       str_detect(short_desc, "SILAGE", negate = TRUE) &
-      str_detect(short_desc, 'PIMA', negate = TRUE)
+      str_detect(short_desc, 'PIMA', negate = TRUE) & 
+      # Excluding rye and sunflower because they stop reporting in 2008
+      str_detect(commodity_desc, 'SUNFLOWER', negate = TRUE)& 
+      str_detect(commodity_desc, 'RYE', negate = TRUE)
       , .(
       year = as.numeric(year), 
       state_fips = state_fips_code, 
@@ -98,7 +102,7 @@ clean_nass_data = function(type, asd_county_xwalk, asd_switch, cnty_area_dt){
       irrigated = prodn_practice_desc == 'IRRIGATED', 
       value_int = parse_number(as.character(value))
     )][,.(
-      total = sum(value_int)),
+      total = sum(value_int, na.rm = TRUE)),
       by = .(year, state_fips, county_fips, GEOID, asd_code, crop, irrigated)
     ]
   # Fixing wrong codes 

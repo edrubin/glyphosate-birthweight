@@ -68,6 +68,7 @@ aggregate_cnty_to_asd = function(comb_cnty_health_dt){
     corn_yield = corn_tot_yield/corn_acres,
     soy_yield = soy_tot_yield/soy_acres,
     cotton_yield = cotton_tot_yield/cotton_acres,
+    csc_acres = corn_acres + soy_acres + cotton_acres,
     GEOID_asd = paste0(state_fips, asd_code)
   )]
   return(comb_asd_dt)
@@ -112,8 +113,10 @@ alt_outcomes = c(
   # Farm varibles
   'soy_acres', 
   'corn_acres', 
+  'cotton_acres', 
   'tot_acres', 
   'other_acres',
+  'csc_acres',
   'soy_yield', 
   'corn_yield', 
   'cotton_yield'
@@ -167,3 +170,4 @@ est_twfe_asd(
   comb_asd_dt, 
   name = 'asd-main'
 )
+
