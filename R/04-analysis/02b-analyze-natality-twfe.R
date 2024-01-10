@@ -183,7 +183,7 @@
   # Repeat using predicted birthweights
   ecdf_pred_pre = natality_dt[year < 1996, dbwt_pred %>% ecdf()]
   natality_dt[, dbwt_pred_pctl_pre := ecdf_pred_pre(dbwt_pred)]
-  # Add quintiles, quartiles, terciles
+  # Add quintiles, quartiles, terciles, deciles
   natality_dt[, `:=`(
     pred_q5 = cut(
       x = dbwt_pred_pctl_pre,
@@ -199,7 +199,13 @@
       x = dbwt_pred_pctl_pre,
       breaks = 3,
       labels = 1:3, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
-    )
+    ),
+    pred_q10 = cut(
+      x = dbwt_pred_pctl_pre,
+      breaks = 10,
+      labels = 1:10, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
+    ),
+    pred_q13 = NULL
   )]
 
 
@@ -225,7 +231,6 @@
     iv_shift = 'glyphosate_nat_100km',
     spatial_subset = 'rural',
     het_split = NULL,
-    het_spline_var = NULL,
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
     controls = c(0, 3),
@@ -267,8 +272,7 @@
       'dbwt_pred',
       'dbwt_pctl_pre',
       'dbwt_pred_pctl_pre',
-      het_split,
-      het_spline_var
+      het_split
     )
     # Enforce spatial subsets (essentially rural, urban, or all)
     if (is.null(spatial_subset)) {
@@ -394,8 +398,6 @@
       ) %>% as.formula()
     }
 
-    # Formula: 2SLS 
-
     # Make folder for the results
     dir_today = here('data-clean', 'results', today() %>% str_remove_all('-'))
     dir_today %>% dir.create()
@@ -517,7 +519,6 @@
       rm(est_2sls); invisible(gc())
     }
 
-# TODO: Monthly heterogeneity
     # Return something
     return('done')
   }
@@ -586,7 +587,7 @@
   )
 
 
-# Estimates: Heterogeneity by predicted quintile -------------------------------
+# Estimates: Heterogeneity by predicted quintile and month --------------------
   # Yield diff percentile GMO
   est_twfe(
     outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
@@ -629,6 +630,38 @@
     controls = c(0, 3),
     clustering = c('year', 'state_fips')
   )
+  # More refined heterogeneity splits: Deciles 
+  est_twfe(
+    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
+    iv = 'all_yield_diff_percentile_gmo',
+    spatial_subset = 'rural',
+    het_split = 'pred_q10',
+    base_fe = c('year', 'fips', 'month'),
+    fes = c(0, 3),
+    controls = c(0, 3),
+    clustering = c('year', 'state_fips')
+  )
+  # More refined heterogeneity splits: Deciles with top/bottom 1%, 5% separate)
+  est_twfe(
+    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
+    iv = 'all_yield_diff_percentile_gmo',
+    spatial_subset = 'rural',
+    het_split = 'pred_q13',
+    base_fe = c('year', 'fips', 'month'),
+    fes = c(0, 3),
+    controls = c(0, 3),
+    clustering = c('year', 'state_fips')
+  )
+  # Heterogeneity by month of birth
+  est_twfe(
+    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
+    iv = 'all_yield_diff_percentile_gmo',
+    spatial_subset = 'rural',
+    het_split = 'month',
+    base_fe = c('year', 'fips'),
+    fes = c(0, 3),
+    controls = c(0, 3),
+    clustering = c('year', 'state_fips')
+  )
 
-  
-
+# Non-linearities in glyph effect ---------------------------------------------
