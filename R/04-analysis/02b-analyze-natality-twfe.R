@@ -204,8 +204,12 @@
       x = dbwt_pred_pctl_pre,
       breaks = 10,
       labels = 1:10, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
-    ),
-    pred_q13 = NULL
+    )
+    pred_q14 = cut(
+      x = dbwt_pred_pctl_pre,
+      breaks = c(0,0.01,0.05,seq(0.1,0.9,0.1),0.95, 0.99,1),
+      labels = 1:14, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
+    )
   )]
 
 
@@ -217,6 +221,18 @@
   )]
   # Add month of sample
   natality_dt[, year_month := paste0(year, '-', month)]
+  # Add whether glyph_km2 is above median 
+  natality_dt[, above_median_glyph_km2 := glyph_km2 > median(glyph_km2)]
+  # Same for main instrument 
+  # TODO: do this for all of treatment variables (?)
+  natality_dt[,':='( 
+    above_median_all_yield_diff_percentile_gmo = 
+      all_yield_diff_percentile_gmo > median(all_yield_diff_percentile_gmo),
+    all_yield_diff_percentile_gmo_sq = all_yield_diff_percentile_gmo_sq^2,
+    above_median_glyphosate_nat_100km = 
+      glyphosate_nat_100km > median(glyphosate_nat_100km),
+    glyphosate_nat_100km_sq = glyphosate_nat_100km^2
+  )]
 
 
 # Function: Run TFWE analysis --------------------------------------------------
@@ -235,6 +251,8 @@
     fes = c(0, 3),
     controls = c(0, 3),
     clustering = c('year', 'state_fips'),
+    gly_nonlinear = NULL,
+    iv_nonlinear = FALSE
     ...
   ) {
 
@@ -256,16 +274,44 @@
     econ_controls = c(
       'unemployment_rate'
     )
-    # Collecting glyphosate variables 
+    # Collecting glyphosate variables
     glyph_vars = c(
       'glyph_km2',
-      names(comb_cnty_dt) |> 
-        str_subset('high_kls_ppt_growing_glyph') |> 
-        str_subset('local', negate = TRUE)
-    )
-    # Collecting IV vars
+      names(comb_cnty_dt) |>
+        str_subset('high_kls_ppt_growing_glyph') |>
+        str_subset('local', negate = TRUE),
+      fifelse(gly_nonlinear == 'median', 'above_median_glyph_km2', NA)
+    ) |> 
+    na.omit() |> 
+    as.vector()
     # iv_vars = comb_cnty_dt %>% names() %>% str_subset(iv)
-    iv_vars = c(iv, iv_shift)
+    iv_vars = 
+      c(
+        iv, 
+        iv_shift,
+        fifelse(
+          iv_nonlinear == TRUE & gly_nonlinear == 'median', 
+          paste0('above_median_',iv), 
+          NA_character_
+        ),
+        fifelse(
+          iv_nonlinear == TRUE & gly_nonlinear == 'quadratic', 
+          paste0(iv,'_sq'), 
+          NA_character_
+        ),
+        fifelse(
+          iv_nonlinear == TRUE & gly_nonlinear == 'median' & !is.null(iv_shift), 
+          paste0('above_median_',iv_shift), 
+          NA_character_
+        ),
+        fifelse(
+          iv_nonlinear == TRUE & gly_nonlinear == 'quadratic' & !is.null(iv_shift), 
+          paste0(iv_shift,'_sq'), 
+          NA_character_
+        )
+      ) |>
+      na.omit() |>
+      as.vector()
     # Heterogeneity variables
     het_vars = c(
       'dbwt',
@@ -302,6 +348,14 @@
     )
 
     # Build the requested pieces of the formula...
+    # Glyph variable 
+    fml_gly = fcase(
+      is.null(gly_nonlinear), 'glyph_km2',
+      gly_nonlinear == 'quadratic', 'glyph_km2 + I(glyph_km2^2)',
+      gly_nonlinear == 'median', 'glyph_km2 + glyph_km2:above_median_glyph_km2', 
+      default = 'glyph_km2'
+    )
+    
     # Outcome(s)
     fml_y = paste0(
       'c(',
@@ -309,17 +363,38 @@
       ')'
     )
     # Instruments: Without shift-share (event study)
-    fml_iv = paste0(
-      '1 + i(year, ',
-      iv,
-      ', ref = 1995)'
+    fml_iv = fcase(
+      iv_nonlinear == FALSE | is.null(gly_nonlinear), 
+        paste0('1 + i(year, ', iv, ', ref = 1995)'),
+      iv_nonlinear == TRUE & gly_nonlinear == 'quadratic',  
+        paste0(
+          '1 + i(year, ', iv,', ref = 1995)',
+          '+ i(year, ', iv,'_sq, ref = 1995)'
+        ),
+      iv_nonlinear == TRUE & gly_nonlinear == 'median', 
+        paste0(
+          '1 + i(year, ', iv,', ref = 1995)',
+          '+ i(year, ', iv,':above_median_', iv,', ref = 1995)'
+        )
     )
     # Instruments: Shift-share approach (if iv_shift is defined)
     if (!is.null(iv_shift)) {
-      fml_iv_ss = paste0(
-        iv_shift, ' + ',
-        iv_shift, ':', iv
-      )
+      fml_iv_ss = paste0(iv_shift, ' + ', iv_shift, ':', iv)
+        fcase(
+          iv_nonlinear == FALSE | is.null(gly_nonlinear), 
+            paste0(iv_shift, ' + ', iv_shift, ':', iv),
+          iv_nonlinear == TRUE & gly_nonlinear == 'quadratic',  
+            paste0(
+              iv_shift, ' + ', iv_shift, ':', iv,
+              iv_shift, '_sq + ', iv_shift, '_sq:', iv
+            ),
+          iv_nonlinear == TRUE & gly_nonlinear == 'median', 
+            paste0(
+              iv_shift, ' + ', iv_shift, ':', iv, ' + ',
+              iv_shift,':above_median_', iv_shift, ' + ',
+              iv_shift,':above_median_', iv_shift, ':', iv
+            )
+        )
     }
     # Controls
     fml_controls = paste0(
@@ -401,7 +476,19 @@
     # Make folder for the results
     dir_today = here('data-clean', 'results', today() %>% str_remove_all('-'))
     dir_today %>% dir.create()
-
+    # Base filename with all options 
+    base_name = paste0(
+      '_outcome-', paste(str_remove_all(outcomes, '[^a-z]'), collapse = '-'),
+      '_fe-', paste0(fes, collapse = ''),
+      '_controls-', paste0(controls, collapse = ''),
+      '_spatial-', spatial_subset,
+      '_het-', het_split %>% str_remove_all('[^0-9a-z]'),
+      '_iv-', iv %>% str_remove_all('[^0-9a-z]'),
+      '_cl-', clustering %>% str_remove_all('[^a-z]') %>% paste0(collapse = ''),
+      '_glynl-', gly_nonlinear,
+      '_ivnl-', iv_nonlinear,
+      '.qs'
+    )
     # Estimate with or without heterogeneity splits
     if (!is.null(het_split)) {
       est_rf = feols(
@@ -422,20 +509,7 @@
     # Save
     qsave(
       est_rf,
-      file.path(
-        dir_today,
-        paste0(
-          'est_rf',
-          '_outcome-', paste(str_remove_all(outcomes, '[^a-z]'), collapse = '-'),
-          '_fe-', paste0(fes, collapse = ''),
-          '_controls-', paste0(controls, collapse = ''),
-          '_spatial-', spatial_subset,
-          '_het-', het_split %>% str_remove_all('[^0-9a-z]'),
-          '_iv-', iv %>% str_remove_all('[^0-9a-z]'),
-          '_cl-', clustering %>% str_remove_all('[^a-z]') %>% paste0(collapse = ''),
-          '.qs'
-        )
-      ),
+      file.path(dir_today, paste0('est_rf', base_name)),
       preset = 'fast'
     )
     rm(est_rf); invisible(gc())
@@ -461,20 +535,7 @@
     # Save
     qsave(
       est_2sls,
-      file.path(
-        dir_today,
-        paste0(
-          'est_2sls',
-          '_outcome-', paste(str_remove_all(outcomes, '[^a-z]'), collapse = '-'),
-          '_fe-', paste0(fes, collapse = ''),
-          '_controls-', paste0(controls, collapse = ''),
-          '_spatial-', spatial_subset,
-          '_het-', het_split %>% str_remove_all('[^0-9a-z]'),
-          '_iv-', iv %>% str_remove_all('[^0-9a-z]'),
-          '_cl-', clustering %>% str_remove_all('[^a-z]') %>% paste0(collapse = ''),
-          '.qs'
-        )
-      ),
+      file.path(dir_today, paste0('est_2sls', base_name)),
       preset = 'fast'
     )
     rm(est_2sls); invisible(gc())
@@ -500,20 +561,7 @@
       # Save
       qsave(
         est_2sls_ss,
-        file.path(
-          dir_today,
-          paste0(
-            'est_2sls_ss',
-            '_outcome-', paste(str_remove_all(outcomes, '[^a-z]'), collapse = '-'),
-            '_fe-', paste0(fes, collapse = ''),
-            '_controls-', paste0(controls, collapse = ''),
-            '_spatial-', spatial_subset,
-            '_het-', het_split %>% str_remove_all('[^0-9a-z]'),
-            '_iv-', iv %>% str_remove_all('[^0-9a-z]'),
-            '_cl-', clustering %>% str_remove_all('[^a-z]') %>% paste0(collapse = ''),
-            '.qs'
-          )
-        ),
+        file.path(dir_today, paste0('est_2sls_ss', base_name)),
         preset = 'fast'
       )
       rm(est_2sls); invisible(gc())
@@ -646,7 +694,7 @@
     outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
     iv = 'all_yield_diff_percentile_gmo',
     spatial_subset = 'rural',
-    het_split = 'pred_q13',
+    het_split = 'pred_q14',
     base_fe = c('year', 'fips', 'month'),
     fes = c(0, 3),
     controls = c(0, 3),
@@ -665,3 +713,32 @@
   )
 
 # Non-linearities in glyph effect ---------------------------------------------
+  # NOTE: These only work for iv = 'all_yield_diff_percentile_gmo' for now
+  # Quadratic in glyphosate with IV nonlinear as well
+  est_twfe(
+    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
+    iv = 'all_yield_diff_percentile_gmo',
+    iv_shift = 'glyphosate_nat_100km',
+    spatial_subset = 'rural',
+    het_split = NULL,
+    base_fe = c('year', 'fips', 'month'),
+    fes = c(0, 3),
+    controls = c(0, 3),
+    clustering = c('year', 'state_fips'),
+    gly_nonlinear = 'quadratic',
+    iv_nonlinear = TRUE
+  )
+  # Split glyphosate at median
+  est_twfe(
+    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
+    iv = 'all_yield_diff_percentile_gmo',
+    iv_shift = 'glyphosate_nat_100km',
+    spatial_subset = 'rural',
+    het_split = NULL,
+    base_fe = c('year', 'fips', 'month'),
+    fes = c(0, 3),
+    controls = c(0, 3),
+    clustering = c('year', 'state_fips'),
+    gly_nonlinear = 'median',
+    iv_nonlinear = TRUE
+  )
