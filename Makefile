@@ -61,7 +61,8 @@ water: \
 desc-figs: \
  $(fig-desc-dir)glyph-km2-diff-9512.jpeg \
  $(wildcard $(fig-desc-dir)ts-*.jpeg) \
- $(wildcard $(fig-desc-dir)yield-diff-percentile/*.jpeg)
+ $(wildcard $(fig-desc-dir)yield-diff-percentile/*.jpeg) \
+ $(wildcard $(fig-desc-dir)/gaez-acreage/*.jpeg)
 # County Level Analysis
 cnty-results: \
  $(wildcard $(fig-cnty-dir)rural/*.jpeg) \
@@ -114,6 +115,12 @@ $(wildcard $(fig-desc-dir)ts-*.jpeg): \
  $(clean-dir)comb-cnty-dt.fst
 	Rscript $<
 	@echo "Made descriptive time series"
+
+$(wildcard $(fig-desc-dir)/gaez-acreage/*.jpeg): \
+ R/05-results/descr-appendix.R \
+ $(clean-dir)comb-cnty-dt.fst
+	Rscript $<
+	@echo "Made descriptive appendix plots"
 
 
 # -----------------------------------------------------------------------------
