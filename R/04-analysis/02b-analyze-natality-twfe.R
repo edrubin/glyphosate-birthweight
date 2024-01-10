@@ -54,23 +54,23 @@
 # Load data --------------------------------------------------------------------
   # Yield-potential treatment definitions
   comb_cnty_dt = here(
-    'data-clean', 'comb-cnty-dt.fst'
+    'data/clean', 'comb-cnty-dt.fst'
   ) %>% read_fst(as.data.table = TRUE)
   # Pre-period county-level crop yield percentiles
   pctl_dt = here(
-    'data', 'crops', 'crop-acre-percentile-90-95.fst'
+    'data/clean', 'crop-acre-percentile-90-95.fst'
   ) |> read_fst(as.data.table = TRUE)
   # Shift-share data
   share_dt = here(
-    'data', 'glyph-nat-dt.fst'
+    'data/clean', 'glyph-nat-dt.fst'
   ) %>% read_fst(as.data.table = TRUE)
   # Natality data: Raw
   natality_dt = here(
-    'data-clean', 'natality-micro.fst'
+    'data/clean', 'natality-micro.fst'
   ) %>% read_fst(as.data.table = TRUE)
   # Natality data: Predictions
   prediction_dt = here(
-    'data-clean', 'natality-micro-rf-noind.fst'
+    'data/clean', 'natality-micro-rf-noind.fst'
   ) %>% read_fst(
     as.data.table = TRUE,
     columns = c('row', 'dbwt', 'dbwt_pred')
@@ -131,6 +131,18 @@
     by = c('GEOID', 'year'),
     all = TRUE
   )
+  # Add whether glyph_km2 is above median 
+  comb_cnty_dt[, above_median_glyph_km2 := glyph_km2 > fmedian(glyph_km2)]
+  # Same for main instrument 
+  # TODO: do this for all of treatment variables (?)
+  comb_cnty_dt[,':='( 
+    above_median_all_yield_diff_percentile_gmo = 
+      all_yield_diff_percentile_gmo > fmedian(all_yield_diff_percentile_gmo),
+    all_yield_diff_percentile_gmo_sq = all_yield_diff_percentile_gmo^2,
+    above_median_glyphosate_nat_100km = 
+      glyphosate_nat_100km > fmedian(glyphosate_nat_100km),
+    glyphosate_nat_100km_sq = glyphosate_nat_100km^2
+  )]
 
 
 # Define 'rural' counties ------------------------------------------------------
@@ -175,6 +187,11 @@
     )
   )]
 
+# If testing without real data ------------------------------------------------
+  # natality_dt = read.fst(
+  #   here('data/clean/mini-data.fst'),
+  #   as.data.table = TRUE
+  # )
 
 # Add birthweight percentiles --------------------------------------------------
   # Add percentiles for birthweight (based upon pre-1996 births)
@@ -204,7 +221,7 @@
       x = dbwt_pred_pctl_pre,
       breaks = 10,
       labels = 1:10, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
-    )
+    ),
     pred_q14 = cut(
       x = dbwt_pred_pctl_pre,
       breaks = c(0,0.01,0.05,seq(0.1,0.9,0.1),0.95, 0.99,1),
@@ -221,19 +238,6 @@
   )]
   # Add month of sample
   natality_dt[, year_month := paste0(year, '-', month)]
-  # Add whether glyph_km2 is above median 
-  natality_dt[, above_median_glyph_km2 := glyph_km2 > median(glyph_km2)]
-  # Same for main instrument 
-  # TODO: do this for all of treatment variables (?)
-  natality_dt[,':='( 
-    above_median_all_yield_diff_percentile_gmo = 
-      all_yield_diff_percentile_gmo > median(all_yield_diff_percentile_gmo),
-    all_yield_diff_percentile_gmo_sq = all_yield_diff_percentile_gmo_sq^2,
-    above_median_glyphosate_nat_100km = 
-      glyphosate_nat_100km > median(glyphosate_nat_100km),
-    glyphosate_nat_100km_sq = glyphosate_nat_100km^2
-  )]
-
 
 # Function: Run TFWE analysis --------------------------------------------------
   est_twfe = function(
@@ -275,15 +279,20 @@
       'unemployment_rate'
     )
     # Collecting glyphosate variables
-    glyph_vars = c(
-      'glyph_km2',
-      names(comb_cnty_dt) |>
-        str_subset('high_kls_ppt_growing_glyph') |>
-        str_subset('local', negate = TRUE),
-      fifelse(gly_nonlinear == 'median', 'above_median_glyph_km2', NA)
-    ) |> 
-    na.omit() |> 
-    as.vector()
+    glyph_vars = 
+      c(
+        'glyph_km2',
+        names(comb_cnty_dt) |>
+          str_subset('high_kls_ppt_growing_glyph') |>
+          str_subset('local', negate = TRUE),
+        fifelse(
+          gly_nonlinear == 'median', 
+          'above_median_glyph_km2', 
+          NA_character_
+        )
+      ) |> 
+      na.omit() |> 
+      as.vector()
     # iv_vars = comb_cnty_dt %>% names() %>% str_subset(iv)
     iv_vars = 
       c(
@@ -374,7 +383,7 @@
       iv_nonlinear == TRUE & gly_nonlinear == 'median', 
         paste0(
           '1 + i(year, ', iv,', ref = 1995)',
-          '+ i(year, ', iv,':above_median_', iv,', ref = 1995)'
+          '+ i(year, ', iv,'*above_median_', iv,', ref = 1995)'
         )
     )
     # Instruments: Shift-share approach (if iv_shift is defined)
@@ -451,7 +460,8 @@
       ' | ',
       fml_fes,
       ' | ',
-      'glyph_km2 ~ ',
+      fml_gly,
+      ' ~ ',
       fml_iv
     ) %>% as.formula()
 
@@ -474,7 +484,7 @@
     }
 
     # Make folder for the results
-    dir_today = here('data-clean', 'results', today() %>% str_remove_all('-'))
+    dir_today = here('data', 'results', today() %>% str_remove_all('-'))
     dir_today %>% dir.create()
     # Base filename with all options 
     base_name = paste0(
@@ -485,7 +495,7 @@
       '_het-', het_split %>% str_remove_all('[^0-9a-z]'),
       '_iv-', iv %>% str_remove_all('[^0-9a-z]'),
       '_cl-', clustering %>% str_remove_all('[^a-z]') %>% paste0(collapse = ''),
-      '_glynl-', gly_nonlinear,
+      '_glynl-', ifelse(is.null(gly_nonlinear), 'linear', gly_nonlinear),
       '_ivnl-', iv_nonlinear,
       '.qs'
     )
