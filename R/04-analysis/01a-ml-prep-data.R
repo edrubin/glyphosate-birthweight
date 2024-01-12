@@ -13,8 +13,10 @@
 
 # Setup ----------------------------------------------------------------------------------
   # Load packages
-  pacman::p_load(tidymodels, readxl, fastverse, fixest, parallel, here)
-  fastverse_extend(topics = c('ST', 'VI'))
+  pacman::p_load(
+    tidymodels, readxl, fastverse, fst, stringr,
+    fixest, parallel, here
+  )
 
 
 # Load data: Natality --------------------------------------------------------------------
