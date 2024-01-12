@@ -31,8 +31,8 @@ short_desc_acres_survey =
     short_desc_acres_survey_raw |> str_detect("ACRES PLANTED$") &
     !(short_desc_acres_survey_raw |> str_detect("IRRIGATED")) &
     !(short_desc_acres_survey_raw |> str_detect("OIL")) &
-    !(short_desc_acres_survey_raw |> str_detect("WINTER")) &
-    !(short_desc_acres_survey_raw |> str_detect("SPRING")) &
+    !(short_desc_acres_survey_raw |> str_detect("WHEAT - ")) &
+    #!(short_desc_acres_survey_raw |> str_detect("SPRING")) &
       !(short_desc_acres_survey_raw |> str_detect("FOLLOWING ANOTHER CROP"))&
       !(short_desc_acres_survey_raw |> str_detect("CL CHICKPEAS"))
   ]
@@ -41,8 +41,8 @@ short_desc_yield_survey =
     short_desc_acres_survey_raw |> str_detect("YIELD.*/ ACRE$") &
       !(short_desc_acres_survey_raw |> str_detect("IRRIGATED")) &
       !(short_desc_acres_survey_raw |> str_detect("OIL")) &
-      !(short_desc_acres_survey_raw |> str_detect("WINTER")) &
-      !(short_desc_acres_survey_raw |> str_detect("SPRING")) &
+    !(short_desc_acres_survey_raw |> str_detect("WHEAT - ")) &
+    #!(short_desc_acres_survey_raw |> str_detect("SPRING")) &
       !(short_desc_acres_survey_raw |> str_detect("CL CHICKPEAS")) &
       !(short_desc_acres_survey_raw |> str_detect("ALFALFA"))&
       !(short_desc_acres_survey_raw |> str_detect("FOLLOWING ANOTHER CROP"))
