@@ -69,6 +69,28 @@ cnty-results: \
  $(wildcard $(fig-cnty-dir)rural/*.jpeg) \
  $(wildcard $(fig-cnty-dir)all/*.jpeg) \
  $(wildcard $(fig-cnty-dir)ag-district/*.jpeg)
+# Micro analysis 
+micro-results: \
+ $(wildcard $(result-dir)micro/est_rf_*.qs) \
+ $(wildcard $(result-dir)micro/est_2sls_*.qs) \
+ $(wildcard $(result-dir)micro/est_2sls_ss_*.qs)
+
+# -----------------------------------------------------------------------------
+
+# TODO: Code for micro results 
+
+# Targets for micro analysis 
+$(wildcard $(result-dir)micro/est_rf_*.qs) \
+$(wildcard $(result-dir)micro/est_2sls_*.qs) \
+$(wildcard $(result-dir)micro/est_2sls_ss_*.qs):
+ R/04-analysis/02a-analyze-natality-twfe.R \
+ $(clean-dir)comb-cnty-dt.fst \
+ $(clean-dir)crop-acre-percentile-90-95.fst \
+ $(clean-dir)glyph-nat-dt.fst \
+ $(clean-dir)natality-micro.fst \
+ $(clean-dir)natality-micro-rf-train80-noindicators-0-full-cv.fst
+	Rscript $<
+	@echo "Ran main analysis"
 
 # -----------------------------------------------------------------------------
 # Targets for county level analysis
@@ -126,13 +148,14 @@ $(wildcard $(fig-desc-dir)/gaez-acreage/*.jpeg): \
 # Targets for predict-bw
 
 # Summary tables of predictions
-$(clean-dir)prediction/summaries/*.fst: \
+$(wildcard $(clean-dir)prediction/summaries/*.fst): \
  R/04-analysis/01d-ml-train-models.R \
  $(clean-dir)natality-micro-rf-train80-noindicators-0-full-cv.fst
 	Rscript $<
 	@echo "Made Pred BW summary tables"
 
 # Training the model and making predictions
+# TODO: Is this the right file name? seems like not
 $(clean-dir)natality-micro-rf-train80-noindicators-0-full-cv.fst: \
  R/04-analysis/01d-ml-train-models.R \
  R/04-analysis/01c-ml-tune-params.R \
