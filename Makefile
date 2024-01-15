@@ -55,8 +55,9 @@ water: \
  $(water-dir)county-exposure-dt.fst \
  $(water-dir)county-exposure-pred-dt.fst
 # Predicting birthweights
-# predict-bw:
-
+predict-bw: \
+ $(clean-dir)prediction/summaries/*.fst \
+ $(clean-dir)natality-micro-rf-train80-noindicators-0-full-cv.fst
 # Descriptive figs 
 desc-figs: \
  $(fig-desc-dir)glyph-km2-diff-9512.jpeg \
@@ -99,8 +100,6 @@ $(result-dir)county-level/ag-district/asd-main/event-mods.qs: \
 	Rscript $<
 	@echo "Estimated ag district level mods"
 
-
-
 # -----------------------------------------------------------------------------
 # Targets for descriptive figures
 $(fig-desc-dir)glyph-km2-diff-9512.jpeg \
@@ -126,6 +125,26 @@ $(wildcard $(fig-desc-dir)/gaez-acreage/*.jpeg): \
 # -----------------------------------------------------------------------------
 # Targets for predict-bw
 
+# Summary tables of predictions
+$(clean-dir)prediction/summaries/*.fst: \
+ R/04-analysis/01d-ml-train-models.R \
+ $(clean-dir)natality-micro-rf-train80-noindicators-0-full-cv.fst
+	Rscript $<
+	@echo "Made Pred BW summary tables"
+
+# Training the model and making predictions
+$(clean-dir)natality-micro-rf-train80-noindicators-0-full-cv.fst: \
+ R/04-analysis/01d-ml-train-models.R \
+ R/04-analysis/01c-ml-tune-params.R \
+ R/04-analysis/01b-ml-setup-models.R \
+ R/04-analysis/01a-ml-prep-data.R \
+ $(clean-dir)natality-micro.fst \
+ $(clean-dir)comb-cnty-dt.fst
+	Rscript $<
+	@echo "Trained BW prediction model"
+# Other Dependencies 
+# $(dman-dir)ruralurbancodes2003.xls
+# $(clean-dir)prediction/tuning/rf-cv-grid-train80-noindicators-0.qs
 
 # Micro natality clean 
 $(clean-dir)natality-micro.fst: \
@@ -383,5 +402,5 @@ $(water-dir)hydrobasin-y-diff-dt.fst: R/00-data-prep/farm/04b-gaez-yield-watersh
 
 # -----------------------------------------------------------------------------
 # Helpers
-.PHONY: all data-clean data-raw data-download water FORCE
+.PHONY: all data-clean data-raw data-download water desc-figs cnty-results predict-bw FORCE
 FORCE:
