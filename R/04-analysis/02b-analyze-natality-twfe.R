@@ -46,7 +46,8 @@
   # Load packages
   pacman::p_load(
     fastverse, qs, patchwork,
-    fixest, splines, parallel, magrittr, here
+    fixest, splines, parallel, magrittr, here, 
+    fst
   )
   fastverse_extend(topics = c('ST', 'DT', 'VI'))
 
@@ -256,7 +257,7 @@
     controls = c(0, 3),
     clustering = c('year', 'state_fips'),
     gly_nonlinear = NULL,
-    iv_nonlinear = FALSE
+    iv_nonlinear = FALSE,
     ...
   ) {
 
@@ -590,7 +591,7 @@
     iv_shift = 'glyphosate_nat_100km',
     spatial_subset = 'rural',
     het_split = NULL,
-    base_fe = c('year', 'fips', 'month'),
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
     controls = c(0, 3),
     clustering = c('year', 'state_fips')
@@ -602,7 +603,7 @@
     iv_shift = 'glyphosate_nat_100km',
     spatial_subset = 'rural',
     het_split = NULL,
-    base_fe = c('year', 'fips', 'month'),
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
     controls = c(0, 3),
     clustering = c('year', 'state_fips')
@@ -614,7 +615,7 @@
     iv_shift = 'glyphosate_nat_100km',
     spatial_subset = 'rural',
     het_split = NULL,
-    base_fe = c('year', 'fips', 'month'),
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
     controls = c(0, 3),
     clustering = c('year', 'state_fips')
@@ -626,7 +627,7 @@
     iv_shift = 'glyphosate_nat_100km',
     spatial_subset = 'rural',
     het_split = NULL,
-    base_fe = c('year', 'fips', 'month'),
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
     controls = c(0, 3),
     clustering = c('year', 'state_fips')
@@ -638,7 +639,7 @@
     iv_shift = 'glyphosate_nat_100km',
     spatial_subset = 'rural',
     het_split = NULL,
-    base_fe = c('year', 'fips', 'month'),
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
     controls = c(0, 3),
     clustering = c('year', 'state_fips')
@@ -652,7 +653,7 @@
     iv = 'e100m_yield_diff_percentile_gmo',
     spatial_subset = 'rural',
     het_split = 'pred_q5',
-    base_fe = c('year', 'fips', 'month'),
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
     controls = c(0, 3),
     clustering = c('year', 'state_fips')
@@ -662,7 +663,7 @@
     iv = 'all_yield_diff_percentile_gmo',
     spatial_subset = 'rural',
     het_split = 'pred_q5',
-    base_fe = c('year', 'fips', 'month'),
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
     controls = c(0, 3),
     clustering = c('year', 'state_fips')
@@ -673,7 +674,7 @@
     iv = 'all_yield_diff_percentile_gmo_max',
     spatial_subset = 'rural',
     het_split = 'pred_q5',
-    base_fe = c('year', 'fips', 'month'),
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
     controls = c(0, 3),
     clustering = c('year', 'state_fips')
@@ -683,7 +684,7 @@
     iv = 'all_yield_diff_percentile_gmo_max',
     spatial_subset = 'rural',
     het_split = 'pred_q5',
-    base_fe = c('year', 'fips', 'month'),
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
     controls = c(0, 3),
     clustering = c('year', 'state_fips')
@@ -694,7 +695,7 @@
     iv = 'all_yield_diff_percentile_gmo',
     spatial_subset = 'rural',
     het_split = 'pred_q10',
-    base_fe = c('year', 'fips', 'month'),
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
     controls = c(0, 3),
     clustering = c('year', 'state_fips')
@@ -705,7 +706,7 @@
     iv = 'all_yield_diff_percentile_gmo',
     spatial_subset = 'rural',
     het_split = 'pred_q14',
-    base_fe = c('year', 'fips', 'month'),
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
     controls = c(0, 3),
     clustering = c('year', 'state_fips')
@@ -731,7 +732,7 @@
     iv_shift = 'glyphosate_nat_100km',
     spatial_subset = 'rural',
     het_split = NULL,
-    base_fe = c('year', 'fips', 'month'),
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
     controls = c(0, 3),
     clustering = c('year', 'state_fips'),
@@ -745,7 +746,7 @@
   #   iv_shift = 'glyphosate_nat_100km',
   #   spatial_subset = 'rural',
   #   het_split = NULL,
-  #   base_fe = c('year', 'fips', 'month'),
+  #   base_fe = c('year_month', 'fips_res', 'fips_occ'),
   #   fes = c(0, 3),
   #   controls = c(0, 3),
   #   clustering = c('year', 'state_fips'),
