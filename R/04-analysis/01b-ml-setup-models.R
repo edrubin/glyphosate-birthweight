@@ -64,7 +64,7 @@
   # Run 0:
   rf_grid = grid_regular(
     mtry(range = c(3, 15)),
-    trees(range = c(50, 100)),
+    trees(range = c(100, 150)),
     min_n(range = c(3, 2), trans = log10_trans()),
     levels = c(
       5,
