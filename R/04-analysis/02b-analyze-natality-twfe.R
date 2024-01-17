@@ -738,17 +738,17 @@
     gly_nonlinear = 'quadratic',
     iv_nonlinear = TRUE
   )
-  # Split glyphosate at median
-  est_twfe(
-    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
-    iv = 'all_yield_diff_percentile_gmo',
-    iv_shift = 'glyphosate_nat_100km',
-    spatial_subset = 'rural',
-    het_split = NULL,
-    base_fe = c('year', 'fips', 'month'),
-    fes = c(0, 3),
-    controls = c(0, 3),
-    clustering = c('year', 'state_fips'),
-    gly_nonlinear = 'median',
-    iv_nonlinear = TRUE
-  )
+  # # Split glyphosate at median
+  # est_twfe(
+  #   outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
+  #   iv = 'all_yield_diff_percentile_gmo',
+  #   iv_shift = 'glyphosate_nat_100km',
+  #   spatial_subset = 'rural',
+  #   het_split = NULL,
+  #   base_fe = c('year', 'fips', 'month'),
+  #   fes = c(0, 3),
+  #   controls = c(0, 3),
+  #   clustering = c('year', 'state_fips'),
+  #   gly_nonlinear = 'median',
+  #   iv_nonlinear = TRUE
+  # )
