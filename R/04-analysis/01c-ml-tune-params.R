@@ -35,7 +35,7 @@
     x = rf_cv,
     file = here(
       'data-clean', 'prediction', 'tuning',
-      'rf-cv-grid-train80-noindicators-0.qs'
+      'rf-cv-grid-train80-noindicators-2.qs'
     ),
     preset = 'fast'
   )
