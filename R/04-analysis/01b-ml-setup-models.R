@@ -12,7 +12,7 @@
 
 # Run scripts: Prep data -----------------------------------------------------------------
   # Run the script that loads and preps data
-  source(here::here('R', '04-analysis', 'did', '01a-ml-prep-data.R'))
+  source(here::here('R', '04-analysis', '01a-ml-prep-data.R'))
 
 
 # RF: Set up recipe ----------------------------------------------------------------------
@@ -61,17 +61,17 @@
 
 # RF: Set up tuning grid -----------------------------------------------------------------
   # Create grid to tune over
-  # Run 0:
-  rf_grid = grid_regular(
-    mtry(range = c(3, 15)),
-    trees(range = c(100, 150)),
-    min_n(range = c(3, 2), trans = log10_trans()),
-    levels = c(
-      5,
-      2,
-      2
-    )
-  )
+  # # Run 0:
+  # rf_grid = grid_regular(
+  #   mtry(range = c(3, 15)),
+  #   trees(range = c(50, 100)),
+  #   min_n(range = c(3, 2), trans = log10_trans()),
+  #   levels = c(
+  #     5,
+  #     2,
+  #     2
+  #   )
+  # )
   # # Run 1:
   # rf_grid = grid_regular(
   #   mtry(range = c(3, 12)),
@@ -83,6 +83,17 @@
   #     2
   #   )
   # )
+  # Run 2:
+  rf_grid = grid_regular(
+    mtry(range = c(3, 15)),
+    trees(range = 150),
+    min_n(range = c(4, 2), trans = log10_trans()),
+    levels = c(
+      5,
+      1,
+      3
+    )
+  )
 
 
 # Cleaning -------------------------------------------------------------------------------

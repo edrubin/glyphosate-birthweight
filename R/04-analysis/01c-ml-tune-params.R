@@ -12,7 +12,7 @@
 
 # Run scripts: Prep data and set up models -----------------------------------------------
   # Run the preceding scripts
-  source(here::here('R', '04-analysis', 'did', '01b-ml-setup-models.R'))
+  source(here::here('R', '04-analysis', '01b-ml-setup-models.R'))
 
 
 # RF: Tune with CV -----------------------------------------------------------------------

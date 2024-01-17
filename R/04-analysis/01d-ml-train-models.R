@@ -24,7 +24,7 @@
   # RF: Load CV hyperparameter grid
   rf_cv = here(
     'data-clean', 'prediction', 'tuning',
-    'rf-cv-grid-train80-noindicators-0.qs'
+    'rf-cv-grid-train80-noindicators-2.qs'
   ) %>% qs::qread()
 # NOTE Increasing trees to 200 did not improve performance (see *-noindicators-1.qs)
 
@@ -155,7 +155,7 @@ tictoc::tic()
         path = here(
           'data-clean',
           paste0(
-            'natality-micro-rf-train80-noindicators-0-full-cvpred-split',
+            'natality-micro-rf-train80-noindicators-2-full-cvpred-split',
             i,
             '.fst'
           )
@@ -179,7 +179,7 @@ tictoc::toc()
     x = natality_dt,
     path = here(
       'data-clean',
-      'natality-micro-rf-train80-noindicators-0-full-cv.fst'
+      'natality-micro-rf-train80-noindicators-2-full-cv.fst'
     ),
     compress = 100
   )
