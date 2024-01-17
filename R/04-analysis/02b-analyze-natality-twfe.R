@@ -485,7 +485,7 @@
     }
 
     # Make folder for the results
-    dir_today = here('data', 'results', today() %>% str_remove_all('-'))
+    dir_today = here('data', 'results', 'micro')#today() %>% str_remove_all('-'))
     dir_today %>% dir.create()
     # Base filename with all options 
     base_name = paste0(
