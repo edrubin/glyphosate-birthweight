@@ -16,8 +16,8 @@
 
 # Run scripts: Prep data; set up and tune models -----------------------------------------
   # Run the preceding scripts
-  source(here::here('R', '04-analysis', '01c-ml-tune-params.R'))
-  # source(here::here('R', '04-analysis', '01b-ml-setup-models.R'))
+  # source(here::here('R', '04-analysis', '01c-ml-tune-params.R'))
+  source(here::here('R', '04-analysis', '01b-ml-setup-models.R'))
 
 
 # Load tuning data -----------------------------------------------------------------------
@@ -79,29 +79,47 @@
   ) |> as.integer()
   # Combine the two datasets
   natality_full = rbindlist(list(natality_pre, natality_post), use.names = TRUE, fill = TRUE)
-  rm(natality_pre, natality_post, natality_split, natality_test, natality_train, natality_dt)
+  rm(natality_pre, natality_post, natality_split, natality_test, natality_train)
+  rm(natality_dt)
   invisible(gc())
+  # Find indices of post years (1996 and beyond)
+  indices_post = natality_full[year >= 1996, which = TRUE]
   # Build the rsample object
   indices = list(
     list(
-      analysis = setdiff(1:natality_full[,.N], which(sampled_folds == 1)),
-      assessment = which(sampled_folds == 1)
+      analysis = setdiff(
+        x = 1:natality_full[,.N],
+        y = c(which(sampled_folds == 1), indices_post)
+      ),
+      assessment = c(which(sampled_folds == 1), indices_post)
     ),
     list(
-      analysis = setdiff(1:natality_full[,.N], which(sampled_folds == 2)),
-      assessment = which(sampled_folds == 2)
+      analysis = setdiff(
+        x = 1:natality_full[,.N],
+        y = c(which(sampled_folds == 2), indices_post)
+      ),
+      assessment = c(which(sampled_folds == 2), indices_post)
     ),
     list(
-      analysis = setdiff(1:natality_full[,.N], which(sampled_folds == 3)),
-      assessment = which(sampled_folds == 3)
+      analysis = setdiff(
+        x = 1:natality_full[,.N],
+        y = c(which(sampled_folds == 3), indices_post)
+      ),
+      assessment = c(which(sampled_folds == 3), indices_post)
     ),
     list(
-      analysis = setdiff(1:natality_full[,.N], which(sampled_folds == 4)),
-      assessment = which(sampled_folds == 4)
+      analysis = setdiff(
+        x = 1:natality_full[,.N],
+        y = c(which(sampled_folds == 4), indices_post)
+      ),
+      assessment = c(which(sampled_folds == 4), indices_post)
     ),
     list(
-      analysis = setdiff(1:natality_full[,.N], which(sampled_folds == 5)),
-      assessment = which(sampled_folds == 5)
+      analysis = setdiff(
+        x = 1:natality_full[,.N],
+        y = c(which(sampled_folds == 5), indices_post)
+      ),
+      assessment = c(which(sampled_folds == 5), indices_post)
     )
   )
   # Make the splits
@@ -127,8 +145,6 @@
     parameters = select_best(rf_cv, metric = 'rmse')
   )
 
-
-tictoc::tic()
   # Iterating over splits: Generate out-of-sample predictions
   blah = lapply(
     X = seq_along(indices),
@@ -169,11 +185,18 @@ tictoc::tic()
       return('success')
     }
   )
-tictoc::toc()
+
+  # Load the splits
+  rf_pred = lapply(
+    X = here('data-clean') |> dir(pattern = 'noindicators-2.*split[0-9]\\.fst'),
+    FUN = function(x) {
+      here('data-clean', x) |> read_fst(as.data.table = TRUE)
+    }
+  ) |> rbindlist(use.names = TRUE, fill = TRUE)
 
 
   # Add predictions to natality dataset
-  natality_dt[, dbwt_pred := rf_pred$.pred]
+  natality_full[, dbwt_pred := rf_pred$.pred]
   # Save
   write_fst(
     x = natality_dt,
