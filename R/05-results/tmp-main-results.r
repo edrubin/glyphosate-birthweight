@@ -668,3 +668,42 @@ height_in = 3
       device = cairo_pdf, 
       width = width_in, height = height_in
     )
+
+
+
+
+
+library(pacman)
+p_load(
+  here, data.table, fst, magrittr, collapse
+)
+co_dt = here('data/clean/comb-cnty-health-dt.fst') %>% read_fst(as.data.table = TRUE)
+
+
+yr_dt = co_dt[
+  rural == TRUE,.(
+    mean_bwt = fmean(mean_birth_wt, w = tot_inf_births),
+    mean_glyph_km2 = fmean(glyph_km2)
+  ),
+  keyby = .(
+    pre = fcase(
+      year <= 1995, TRUE,
+      year > 2008, FALSE
+    ))
+]
+
+beta = -943.8
+se = 217.1
+
+fdiff(yr_dt[!is.na(pre)])[,.(
+  gly_effect_pct_l = ((beta + qnorm(0.025)*se) * mean_glyph_km2)/mean_bwt,
+  gly_effect_pct = (beta * mean_glyph_km2)/mean_bwt,
+  gly_effect_pct_h = ((beta + qnorm(0.975)*se) * mean_glyph_km2)/mean_bwt
+)]
+
+
+fdiff(yr_dt[year %in% c(1992, 2013)])[,.(
+  gly_effect_pct_l = ((beta + qnorm(0.025)*se) * mean_glyph_km2)/mean_bwt,
+  gly_effect_pct = (beta * mean_glyph_km2)/mean_bwt,
+  gly_effect_pct_h = ((beta + qnorm(0.975)*se) * mean_glyph_km2)/mean_bwt
+)]
