@@ -11,11 +11,11 @@
 # Load data --------------------------------------------------------------------
   # Yield-potential treatment definitions
   comb_cnty_dt = here(
-    'data-clean', 'comb-cnty-dt.fst'
+    'data', 'clean', 'comb-cnty-dt.fst'
   ) %>% read_fst(as.data.table = TRUE, columns = c('GEOID', 'year', 'rural'))
   # Natality data: Raw
   natality_dt = here(
-    'data-clean', 'natality-micro.fst'
+    'data', 'clean', 'natality-micro.fst'
   ) %>% read_fst(as.data.table = TRUE)
   # Drop years prior to 1992
   natality_dt %<>% .[year >= 1992]

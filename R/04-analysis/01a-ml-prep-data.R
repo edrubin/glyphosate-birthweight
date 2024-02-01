@@ -22,7 +22,7 @@
 # Load data: Natality --------------------------------------------------------------------
   # Natality data
   natality_dt = here(
-    'data-clean', 'natality-micro.fst'
+    'data', 'clean', 'natality-micro.fst'
   ) %>% read_fst(as.data.table = TRUE)
   # Create row ID for later joins
   natality_dt[, row := 1:.N]
@@ -41,7 +41,7 @@
 #       two measures of 'rural births'
   # Yield-potential treatment definitions
   comb_cnty_dt = here(
-    'data-clean', 'comb-cnty-dt.fst'
+    'data', 'clean', 'comb-cnty-dt.fst'
   ) %>% read_fst(as.data.table = TRUE)
   # Change 'GEOID' to 'fips'
   setnames(comb_cnty_dt, old = 'GEOID', new = 'fips')

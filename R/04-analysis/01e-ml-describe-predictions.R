@@ -12,14 +12,15 @@
 # Load data --------------------------------------------------------------------
   # Natality data: Raw (only need a few variables)
   natality_dt = here(
-    'data-clean', 'natality-micro.fst'
+    'data', 'clean', 'natality-micro.fst'
   ) %>% read_fst(
     as.data.table = TRUE,
     columns = c('dbwt', 'apgar5', 'gestation')
   )
   # Natality data: Predictions
   prediction_dt = here(
-    'data-clean', 'natality-micro-rf-train80-noindicators-2-full-cvpred.fst'
+    'data', 'clean', 'prediction', 'output',
+    'natality-micro-rf-train80-noindicators-2-full-cvpred.fst'
   ) %>% read_fst(
     as.data.table = TRUE
   )

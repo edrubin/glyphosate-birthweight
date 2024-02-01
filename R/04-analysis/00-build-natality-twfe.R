@@ -65,7 +65,7 @@
   write_fst(
     x = natality_dt,
     path = here(
-      'data-clean',
+      'data', 'clean',
       'natality-micro.fst'
     ),
     compress = 100

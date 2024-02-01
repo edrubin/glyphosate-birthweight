@@ -14,11 +14,11 @@
 # Load data --------------------------------------------------------------------
   # Yield-potential treatment definitions
   comb_cnty_dt = here(
-    'data-clean', 'comb-cnty-dt.fst'
+    'data', 'clean', 'comb-cnty-dt.fst'
   ) %>% read_fst(as.data.table = TRUE)
   # Natality data
   natality_dt = here(
-    'data-clean', 'natality-micro.fst'
+    'data', 'clean', 'natality-micro.fst'
   ) %>% read_fst(as.data.table = TRUE)
   # City-month (predicted) GLY water exposures dataset
   water_dt = here(

@@ -23,7 +23,7 @@
 # Load tuning data -----------------------------------------------------------------------
   # RF: Load CV hyperparameter grid
   rf_cv = here(
-    'data-clean', 'prediction', 'tuning',
+    'data', 'clean', 'prediction', 'tuning',
     'rf-cv-grid-train80-noindicators-2.qs'
   ) %>% qs::qread()
 # NOTE Increasing trees to 200 did not improve performance (see *-noindicators-1.qs)
@@ -61,7 +61,7 @@
 #   write_fst(
 #     x = natality_dt,
 #     path = here(
-#       'data-clean',
+#       'data', 'clean',
 #       'natality-micro-rf-train80-noindicators-0-full.fst'
 #     ),
 #     compress = 100
@@ -170,7 +170,7 @@
       write_fst(
         x = pred_i,
         path = here(
-          'data-clean',
+          'data', 'clean', 'prediction', 'output',
           paste0(
             'natality-micro-rf-train80-noindicators-2-full-cvpred-split',
             i,
@@ -189,11 +189,15 @@
 
   # Load the splits' predictions
   rf_pred = mclapply(
-    X = here('data-clean') |> dir(pattern = 'noindicators-2.*split[0-9]\\.fst'),
-    FUN = function(x) {
-      here('data-clean', x) |> read_fst(as.data.table = TRUE)
-    },
-    mc.cores = here('data-clean') |> dir(pattern = 'noindicators-2.*split[0-9]\\.fst') |> length()
+    X = here(
+      'data', 'clean', 'prediction', 'output'
+    ) |> dir(
+      pattern = 'noindicators-2.*split[0-9]\\.fst',
+      full.names = TRUE
+    ),
+    FUN = read_fst,
+    as.data.table = TRUE,
+    mc.cores = 5
   ) |> rbindlist(use.names = TRUE, fill = TRUE)
   # Clean up
   invisible(gc())
@@ -218,7 +222,7 @@
   write_fst(
     x = natality_full,
     path = here(
-      'data-clean',
+      'data', 'clean', 'prediction', 'output',
       'natality-micro-rf-train80-noindicators-2-full-cvpred.fst'
     ),
     compress = 100
