@@ -1,6 +1,6 @@
 # Notes ----------------------------------------------------------------------------------
 #   Goal:   Predict birthweight
-#   Time:   ~ 64 minutes
+#   Time:   ~ 1 hour per fold.
 
 
 # Data notes -----------------------------------------------------------------------------
@@ -82,6 +82,8 @@
   rm(natality_pre, natality_post, natality_split, natality_test, natality_train)
   rm(natality_dt)
   invisible(gc())
+  # Add a new row ID to merge with predictions
+  natality_full[, .row := 1:.N]
   # Find indices of post years (1996 and beyond)
   indices_post = natality_full[year >= 1996, which = TRUE]
   # Build the rsample object
@@ -144,7 +146,6 @@
     x = workflow() %>% add_model(rf_model) %>% add_recipe(rf_recipe_final),
     parameters = select_best(rf_cv, metric = 'rmse')
   )
-
   # Iterating over splits: Generate out-of-sample predictions
   blah = lapply(
     X = seq_along(indices),
@@ -186,23 +187,39 @@
     }
   )
 
-  # Load the splits
-  rf_pred = lapply(
+  # Load the splits' predictions
+  rf_pred = mclapply(
     X = here('data-clean') |> dir(pattern = 'noindicators-2.*split[0-9]\\.fst'),
     FUN = function(x) {
       here('data-clean', x) |> read_fst(as.data.table = TRUE)
-    }
+    },
+    mc.cores = here('data-clean') |> dir(pattern = 'noindicators-2.*split[0-9]\\.fst') |> length()
   ) |> rbindlist(use.names = TRUE, fill = TRUE)
-
-
-  # Add predictions to natality dataset
-  natality_full[, dbwt_pred := rf_pred$.pred]
+  # Clean up
+  invisible(gc())
+  # Collapse to row (we have 5 predictions per post-period row)
+  rf_final = collap(
+    X = rf_pred,
+    by = ~ .row,
+    FUN = fmean,
+    cols = c('dbwt', '.pred'),
+    sort = TRUE
+  )
+  # Key both datasets using row
+  setkey(natality_full, .row)
+  # Add predictions to natality dataset (ordering should match; row "id" will not)
+  natality_full[, dbwt_pred := rf_final$.pred]
+  natality_full[, dbwt_check := rf_final$dbwt]
+  natality_full[, .row_check := rf_final$.row]
+  # Checks
+  natality_full[dbwt_check != dbwt, .N]
+  natality_full[.row_check != .row, .N]
   # Save
   write_fst(
-    x = natality_dt,
+    x = natality_full,
     path = here(
       'data-clean',
-      'natality-micro-rf-train80-noindicators-2-full-cv.fst'
+      'natality-micro-rf-train80-noindicators-2-full-cvpred.fst'
     ),
     compress = 100
   )
