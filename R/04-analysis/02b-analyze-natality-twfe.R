@@ -5,42 +5,7 @@
 
 # Todo list --------------------------------------------------------------------
 #   TODO Add a way to keep sample constant (due to missing demog controls)
-#   TODO Add ability to have multiple instruments (and interaction?)
-#   TODO Inegrate below code to do spline heterogeneity 
-  # # Adding bsplines to data
-  # p_load(splines)
-  # spline_df = 5
-  # spline_cols = paste0('pred_spline_',1:spline_df)
-  # natality_dt = 
-  #   cbind(
-  #     natality_dt,
-  #     bs(
-  #       x = natality_dt$dbwt_pred_pctl_pre, 
-  #       df = spline_df,
-  #       intercept = TRUE
-  #     ) |> 
-  #     data.table() |>
-  #     setnames(new = spline_cols)
-  #   )
-  # # 2SLS: Event study instruments with splines
-  # tsls_spline_mod = feols(
-  #   data = natality_dt, 
-  #   cluster = ~year + state_fips,
-  #   fml = dbwt ~ 
-  #     # Controls  
-  #     alachlor_km2 + atrazine_km2 + cyanazine_km2 + fluazifop_km2 + 
-  #     metolachlor_km2 + metribuzin_km2 + nicosulfuron_km2 + 
-  #     unemployment_rate +
-  #     # Fixed effects have to be interacted splines as controls
-  #     .[paste0('i(year_month, ',spline_cols,')')] + 
-  #     .[paste0('i(fips_res, ',spline_cols,')')] + 
-  #     .[paste0('i(fips_occ, ',spline_cols,')')]
-  #     | # IV
-  #     .[paste0('I(glyph_km2*',spline_cols,')')] ~ 
-  #       .[paste0(
-  #         'i(year, I(all_yield_diff_percentile_gmo*',spline_cols,'), ref = 1995)'
-  #       )]
-  # )
+
 
 # Setup ------------------------------------------------------------------------
   # Load packages
@@ -55,41 +20,41 @@
 # Load data --------------------------------------------------------------------
   # Yield-potential treatment definitions
   comb_cnty_dt = here(
-    'data/clean', 'comb-cnty-dt.fst'
+    'data', 'clean', 'comb-cnty-dt.fst'
   ) %>% read_fst(as.data.table = TRUE)
   # Pre-period county-level crop yield percentiles
   pctl_dt = here(
-    'data/clean', 'crop-acre-percentile-90-95.fst'
+    'data', 'clean', 'crop-acre-percentile-90-95.fst'
   ) |> read_fst(as.data.table = TRUE)
   # Shift-share data
   share_dt = here(
-    'data/clean', 'glyph-nat-dt.fst'
+    'data', 'clean', 'glyph-nat-dt.fst'
   ) %>% read_fst(as.data.table = TRUE)
   # Natality data: Raw
   natality_dt = here(
-    'data/clean', 'natality-micro.fst'
+    'data', 'clean', 'natality-micro.fst'
   ) %>% read_fst(as.data.table = TRUE)
   # Natality data: Predictions
   prediction_dt = here(
-    'data/clean', 'natality-micro-rf-noind.fst'
+    'data', 'clean', 'prediction', 'output',
+    'natality-micro-rf-train80-noindicators-2-full-cvpred.fst'
   ) %>% read_fst(
     as.data.table = TRUE,
     columns = c('row', 'dbwt', 'dbwt_pred')
   )
-  # Add predictions to the full natality dataset (using row ID)
+  # Change name of DBWT (for checking merge later)
+  setnames(prediction_dt, old = 'dbwt', new = 'dbwt_check')
+
+
+# Merge datasets -------------------------------------------------------------------------
+  # Add row to natality data for merging with predictions
+  natality_dt[, row := 1:.N]
+  # Merge predictions onto the full natality dataset (using row ID)
 # NOTE: Also adding true birth weight to check the merge
-  setorder(prediction_dt, row)
-  set(
-    x = natality_dt,
-    i = prediction_dt[, row],
-    j = 'dbwt_pred',
-    value = prediction_dt[['dbwt_pred']]
-  )
-  set(
-    x = natality_dt,
-    i = prediction_dt[, row],
-    j = 'dbwt_check',
-    value = prediction_dt[['dbwt']]
+  natality_dt %<>% merge(
+    y = prediction_dt,
+    by = 'row',
+    all = FALSE
   )
   # Check the merge
   if (natality_dt[, fmean(dbwt == dbwt_check)] < 1) {
@@ -132,18 +97,6 @@
     by = c('GEOID', 'year'),
     all = TRUE
   )
-  # Add whether glyph_km2 is above median 
-  comb_cnty_dt[, above_median_glyph_km2 := glyph_km2 > fmedian(glyph_km2)]
-  # Same for main instrument 
-  # TODO: do this for all of treatment variables (?)
-  comb_cnty_dt[,':='( 
-    above_median_all_yield_diff_percentile_gmo = 
-      all_yield_diff_percentile_gmo > fmedian(all_yield_diff_percentile_gmo),
-    all_yield_diff_percentile_gmo_sq = all_yield_diff_percentile_gmo^2,
-    above_median_glyphosate_nat_100km = 
-      glyphosate_nat_100km > fmedian(glyphosate_nat_100km),
-    glyphosate_nat_100km_sq = glyphosate_nat_100km^2
-  )]
 
 
 # Define 'rural' counties ------------------------------------------------------
@@ -188,11 +141,13 @@
     )
   )]
 
+
 # If testing without real data ------------------------------------------------
   # natality_dt = read.fst(
   #   here('data/clean/mini-data.fst'),
   #   as.data.table = TRUE
   # )
+
 
 # Add birthweight percentiles --------------------------------------------------
   # Add percentiles for birthweight (based upon pre-1996 births)
@@ -235,21 +190,24 @@
   # Add indicators for low birthweight (<2500) and very low birthweight (<1500)
   natality_dt[, `:=`(
     i_lbw = 1 * (dbwt < 2500),
-    i_vlbw = 1 * (dbwt < 1500)
+    i_vlbw = 1 * (dbwt < 1500),
+    i_preterm = 1 * (gestation <= 37)
   )]
   # Add month of sample
   natality_dt[, year_month := paste0(year, '-', month)]
 
+
 # Function: Run TFWE analysis --------------------------------------------------
   est_twfe = function(
     outcomes = c(
-      'dbwt', 'gestation',
+      'dbwt', 'dbwt_pred',
       'dbwt_pctl_pre', 
       'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
       'c_section', 'any_anomaly'
     ),
     iv = 'all_yield_diff_percentile_gmo',
-    iv_shift = 'glyphosate_nat_100km',
+    iv_shift = NULL,
     spatial_subset = 'rural',
     het_split = NULL,
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
@@ -485,7 +443,7 @@
     }
 
     # Make folder for the results
-    dir_today = here('data', 'results', 'micro')#today() %>% str_remove_all('-'))
+    dir_today = here('data', 'results', 'micro')
     dir_today %>% dir.create()
     # Base filename with all options 
     base_name = paste0(
@@ -586,21 +544,19 @@
 # Estimates: Main, pooled results ----------------------------------------------
   # Instrument: Yield diff percentile GMO
   est_twfe(
-    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
     iv = 'all_yield_diff_percentile_gmo',
     iv_shift = 'glyphosate_nat_100km',
     spatial_subset = 'rural',
     het_split = NULL,
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
-    controls = c(0, 3),
+    controls = 0:3,
     clustering = c('year', 'state_fips')
   )
   # Instrument: Yield diff percentile GMO, east of 100th meridian
   est_twfe(
-    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
     iv = 'e100m_yield_diff_percentile_gmo',
-    iv_shift = 'glyphosate_nat_100km',
+    iv_shift = NULL,
     spatial_subset = 'rural',
     het_split = NULL,
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
@@ -610,9 +566,8 @@
   )
   # Instrument: Yield diff percentile GMO max
   est_twfe(
-    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
     iv = 'all_yield_diff_percentile_gmo_max',
-    iv_shift = 'glyphosate_nat_100km',
+    iv_shift = NULL,
     spatial_subset = 'rural',
     het_split = NULL,
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
@@ -622,9 +577,8 @@
   )
   # Instrument: Yield diff GMO, 50-0
   est_twfe(
-    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
     iv = 'all_yield_diff_gmo_50_0',
-    iv_shift = 'glyphosate_nat_100km',
+    iv_shift = NULL,
     spatial_subset = 'rural',
     het_split = NULL,
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
@@ -634,9 +588,8 @@
   )
   # Instrument: 1990-1995 acreage percentiles
   est_twfe(
-    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
     iv = 'percentile_gm_acres',
-    iv_shift = 'glyphosate_nat_100km',
+    iv_shift = NULL,
     spatial_subset = 'rural',
     het_split = NULL,
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
@@ -649,17 +602,6 @@
 # Estimates: Heterogeneity by predicted quintile and month --------------------
   # Yield diff percentile GMO
   est_twfe(
-    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
-    iv = 'e100m_yield_diff_percentile_gmo',
-    spatial_subset = 'rural',
-    het_split = 'pred_q5',
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = c(0, 3),
-    controls = c(0, 3),
-    clustering = c('year', 'state_fips')
-  )
-  est_twfe(
-    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
     iv = 'all_yield_diff_percentile_gmo',
     spatial_subset = 'rural',
     het_split = 'pred_q5',
@@ -668,20 +610,8 @@
     controls = c(0, 3),
     clustering = c('year', 'state_fips')
   )
-  # Yield diff percentile GMO max
   est_twfe(
-    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
-    iv = 'all_yield_diff_percentile_gmo_max',
-    spatial_subset = 'rural',
-    het_split = 'pred_q5',
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = c(0, 3),
-    controls = c(0, 3),
-    clustering = c('year', 'state_fips')
-  )
-  est_twfe(
-    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
-    iv = 'all_yield_diff_percentile_gmo_max',
+    iv = 'e100m_yield_diff_percentile_gmo',
     spatial_subset = 'rural',
     het_split = 'pred_q5',
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
@@ -691,7 +621,6 @@
   )
   # More refined heterogeneity splits: Deciles 
   est_twfe(
-    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
     iv = 'all_yield_diff_percentile_gmo',
     spatial_subset = 'rural',
     het_split = 'pred_q10',
@@ -702,7 +631,6 @@
   )
   # More refined heterogeneity splits: Deciles with top/bottom 1%, 5% separate)
   est_twfe(
-    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
     iv = 'all_yield_diff_percentile_gmo',
     spatial_subset = 'rural',
     het_split = 'pred_q14',
@@ -713,7 +641,6 @@
   )
   # Heterogeneity by month of birth
   est_twfe(
-    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
     iv = 'all_yield_diff_percentile_gmo',
     spatial_subset = 'rural',
     het_split = 'month',
@@ -727,9 +654,7 @@
   # NOTE: These only work for iv = 'all_yield_diff_percentile_gmo' for now
   # Quadratic in glyphosate with IV nonlinear as well
   est_twfe(
-    outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
     iv = 'all_yield_diff_percentile_gmo',
-    iv_shift = 'glyphosate_nat_100km',
     spatial_subset = 'rural',
     het_split = NULL,
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
@@ -739,17 +664,4 @@
     gly_nonlinear = 'quadratic',
     iv_nonlinear = TRUE
   )
-  # # Split glyphosate at median
-  # est_twfe(
-  #   outcomes = c('dbwt', 'dbwt_pctl_pre', 'gestation'),
-  #   iv = 'all_yield_diff_percentile_gmo',
-  #   iv_shift = 'glyphosate_nat_100km',
-  #   spatial_subset = 'rural',
-  #   het_split = NULL,
-  #   base_fe = c('year_month', 'fips_res', 'fips_occ'),
-  #   fes = c(0, 3),
-  #   controls = c(0, 3),
-  #   clustering = c('year', 'state_fips'),
-  #   gly_nonlinear = 'median',
-  #   iv_nonlinear = TRUE
-  # )
+  

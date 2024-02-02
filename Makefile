@@ -150,13 +150,13 @@ $(wildcard $(fig-desc-dir)/gaez-acreage/*.jpeg): \
 # Summary tables of predictions
 $(wildcard $(clean-dir)prediction/summaries/*.fst): \
  R/04-analysis/01d-ml-train-models.R \
- $(clean-dir)natality-micro-rf-train80-noindicators-0-full-cv.fst
+ $(clean-dir)natality-micro-rf-train80-noindicators-2-full-cvpred.fst
 	Rscript $<
 	@echo "Made Pred BW summary tables"
 
 # Training the model and making predictions
 # TODO: Is this the right file name? seems like not
-$(clean-dir)natality-micro-rf-train80-noindicators-0-full-cv.fst: \
+$(clean-dir)natality-micro-rf-train80-noindicators-2-full-cvpred.fst: \
  R/04-analysis/01d-ml-train-models.R \
  R/04-analysis/01c-ml-tune-params.R \
  R/04-analysis/01b-ml-setup-models.R \
