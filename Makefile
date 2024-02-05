@@ -82,13 +82,13 @@ micro-results: \
 # Targets for micro analysis 
 $(wildcard $(result-dir)micro/est_rf_*.qs) \
 $(wildcard $(result-dir)micro/est_2sls_*.qs) \
-$(wildcard $(result-dir)micro/est_2sls_ss_*.qs):
- R/04-analysis/02a-analyze-natality-twfe.R \
+$(wildcard $(result-dir)micro/est_2sls_ss_*.qs):\
+ R/04-analysis/02b-analyze-natality-twfe.R \
  $(clean-dir)comb-cnty-dt.fst \
  $(clean-dir)crop-acre-percentile-90-95.fst \
  $(clean-dir)glyph-nat-dt.fst \
- $(clean-dir)natality-micro.fst \
- $(clean-dir)natality-micro-rf-train80-noindicators-0-full-cv.fst
+ $(clean-dir)natality-micro.fst 
+#  $(clean-dir)/prediction/output/natality-micro-rf-train80-noindicators-2-full-cvpred.fst
 	Rscript $<
 	@echo "Ran main analysis"
 
