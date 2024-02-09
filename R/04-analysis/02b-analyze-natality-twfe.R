@@ -1,6 +1,6 @@
 # Notes ------------------------------------------------------------------------
 #   Goal:   Run main TWFE analysis with various specifications.
-#   Time:   About 4 hours for 8 runs (varies with specification).
+#   Time:   ~100 hours for 11 runs (varies a lot with specification).
 
 
 # Todo list --------------------------------------------------------------------
@@ -140,6 +140,8 @@
       default = NA
     )
   )]
+  # Clean up
+  rm(lbls, lvls); invisible(gc())
 
 
 # If testing without real data ------------------------------------------------
@@ -186,6 +188,47 @@
   )]
 
 
+# Add end-of-sample GM/suitability percentiles ---------------------------------
+  # Find the last year of the current natality sample (will use for pctl calc)
+  yr_max = natality_dt[,fmax(year)]
+  # Calculate averageg GLY/km2 and GMO suitability by county in last 3 years 
+# NOTE Subsetting to only rural counties (i.e., ECDF will use rural counties)
+  end_dt = comb_cnty_dt[between(year, yr_max - 2, yr_max) & rural == TRUE, .(
+    fips,
+    glyph_km2,
+    all_yield_diff_percentile_gmo
+  )] |> fgroup_by(fips) |> fmean()
+  # Calculate ECDFs for the variables
+  ecdf_gly_end = end_dt[, glyph_km2 %>% ecdf()]
+  ecdf_gaez_end = end_dt[, all_yield_diff_percentile_gmo %>% ecdf()]
+  # Use ECDFs to calculate percentiles
+  end_dt[, `:=`(
+    glyph_km2_pctl_end = ecdf_gly_end(glyph_km2),
+    all_yield_diff_percentile_gmo_pctl_end = ecdf_gaez_end(all_yield_diff_percentile_gmo)
+  )]
+  # Add tercile
+  end_dt[, `:=`(
+    glyph_km_end_q3 = cut(
+      x = glyph_km2_pctl_end,
+      breaks = 3,
+      labels = 1:3, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
+    )
+  )]
+  # Summarize terciles
+  # end_dt |> qsu(~glyph_km_end_q3)
+# NOTE While GLY/km2 correlates with suitability, within each GLY quartile, there
+#      is substantial variation in suitability (effectively spanning its range)
+  # Add new variable into county-level dataset
+  comb_cnty_dt %<>% join(
+    y = end_dt[,.(fips, glyph_km_end_q3)],
+    on = 'fips',
+    how = 'left',
+    validate = 'm:1'
+  )
+  # Clean up
+  rm(yr_max, end_dt, ecdf_gly_end, ecdf_gaez_end); invisible(gc())
+
+
 # Add additional variables -----------------------------------------------------
   # Add indicators for low birthweight (<2500) and very low birthweight (<1500)
   natality_dt[, `:=`(
@@ -195,6 +238,14 @@
   )]
   # Add month of sample
   natality_dt[, year_month := paste0(year, '-', month)]
+  # Add indicators for child's race and mother's race, ethnicity, marital status
+  natality_dt[, `:=`(
+    i_female = 1 * (sex == 'F'),
+    i_m_black = 1 * (mrace == 2), 
+    i_m_nonwhite = 1 * (mrace != 1),
+    i_m_hispanic = 1 * (mhisp > 0),
+    i_m_married = 1 * (mar == 1)
+  )]
 
 
 # Function: Run TFWE analysis --------------------------------------------------
@@ -286,7 +337,7 @@
       'dbwt_pred',
       'dbwt_pctl_pre',
       'dbwt_pred_pctl_pre',
-      het_split
+      switch(het_split %in% names(natality_dt), het_split, NULL)
     )
     # Enforce spatial subsets (essentially rural, urban, or all)
     if (is.null(spatial_subset)) {
@@ -304,6 +355,7 @@
       )), with = FALSE],
       y = comb_cnty_dt[, unique(c(
         'fips', 'year',
+        switch(het_split %in% names(comb_cnty_dt), het_split, NULL),
         glyph_vars,
         iv_vars,
         pest_controls,
@@ -644,13 +696,14 @@
     iv = 'all_yield_diff_percentile_gmo',
     spatial_subset = 'rural',
     het_split = 'month',
-    base_fe = c('year', 'fips'),
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
     controls = c(0, 3),
     clustering = c('year', 'state_fips')
   )
 
-# Non-linearities in glyph effect ---------------------------------------------
+
+# Nonlinearities in glyph effect -----------------------------------------------
   # NOTE: These only work for iv = 'all_yield_diff_percentile_gmo' for now
   # Quadratic in glyphosate with IV nonlinear as well
   est_twfe(
@@ -664,4 +717,33 @@
     gly_nonlinear = 'quadratic',
     iv_nonlinear = TRUE
   )
-  
+
+
+# Nonlinearity by GLY percentile -----------------------------------------------
+  # Instrument: Yield diff percentile GMO
+  est_twfe(
+    outcomes = c('dbwt', 'gestation'),
+    iv = 'all_yield_diff_percentile_gmo',
+    spatial_subset = 'rural',
+    het_split = 'glyph_km_end_q3',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    fes = 3,
+    controls = 3,
+    clustering = c('year', 'state_fips')
+  )
+
+
+# Changing demographics --------------------------------------------------------
+  # Instrument: Yield diff percentile GMO
+  est_twfe(
+    outcomes = c(
+      'i_female', 'i_m_black', 'i_m_nonwhite', 'i_m_hispanic', 'i_m_married'
+    ),
+    iv = 'all_yield_diff_percentile_gmo',
+    spatial_subset = 'rural',
+    het_split = NULL,
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    fes = 3,
+    controls = 3,
+    clustering = c('year', 'state_fips')
+  )
