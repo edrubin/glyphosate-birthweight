@@ -191,7 +191,7 @@
 # Add end-of-sample GM/suitability percentiles ---------------------------------
   # Find the last year of the current natality sample (will use for pctl calc)
   yr_max = natality_dt[,fmax(year)]
-  # Calculate averageg GLY/km2 and GMO suitability by county in last 3 years 
+  # Calculate average GLY/km2 and GMO suitability by county in last 3 years 
 # NOTE Subsetting to only rural counties (i.e., ECDF will use rural counties)
   end_dt = comb_cnty_dt[between(year, yr_max - 2, yr_max) & rural == TRUE, .(
     fips,
@@ -216,8 +216,12 @@
   )]
   # Summarize terciles
   # end_dt |> qsu(~glyph_km_end_q3)
-# NOTE While GLY/km2 correlates with suitability, within each GLY quartile, there
-#      is substantial variation in suitability (effectively spanning its range)
+  ggplot(data = tmp, aes(x = all_yield_diff_percentile_gmo)) + 
+    geom_histogram() +
+    theme_minimal() +
+    facet_wrap(facets = 'glyph_km_end_q3')
+# NOTE Of course, GLY/km2 correlates with suitability. Within GLY tercile, there
+#      is some variation in suitability. Not sure it's good variation...
   # Add new variable into county-level dataset
   comb_cnty_dt %<>% join(
     y = end_dt[,.(fips, glyph_km_end_q3)],
@@ -337,7 +341,11 @@
       'dbwt_pred',
       'dbwt_pctl_pre',
       'dbwt_pred_pctl_pre',
-      switch(het_split %in% names(natality_dt), het_split, NULL)
+      switch(
+        !is.null(het_split),
+        switch(het_split %in% names(natality_dt), het_split, NULL),
+        NULL
+      )
     )
     # Enforce spatial subsets (essentially rural, urban, or all)
     if (is.null(spatial_subset)) {
@@ -355,7 +363,11 @@
       )), with = FALSE],
       y = comb_cnty_dt[, unique(c(
         'fips', 'year',
-        switch(het_split %in% names(comb_cnty_dt), het_split, NULL),
+        switch(
+          !is.null(het_split),
+          switch(het_split %in% names(comb_cnty_dt), het_split, NULL),
+          NULL
+        ),
         glyph_vars,
         iv_vars,
         pest_controls,
@@ -593,147 +605,147 @@
   }
 
 
-# Estimates: Main, pooled results ----------------------------------------------
-  # Instrument: Yield diff percentile GMO
-  est_twfe(
-    iv = 'all_yield_diff_percentile_gmo',
-    iv_shift = 'glyphosate_nat_100km',
-    spatial_subset = 'rural',
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = c(0, 3),
-    controls = 0:3,
-    clustering = c('year', 'state_fips')
-  )
-  # Instrument: Yield diff percentile GMO, east of 100th meridian
-  est_twfe(
-    iv = 'e100m_yield_diff_percentile_gmo',
-    iv_shift = NULL,
-    spatial_subset = 'rural',
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = c(0, 3),
-    controls = c(0, 3),
-    clustering = c('year', 'state_fips')
-  )
-  # Instrument: Yield diff percentile GMO max
-  est_twfe(
-    iv = 'all_yield_diff_percentile_gmo_max',
-    iv_shift = NULL,
-    spatial_subset = 'rural',
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = c(0, 3),
-    controls = c(0, 3),
-    clustering = c('year', 'state_fips')
-  )
-  # Instrument: Yield diff GMO, 50-0
-  est_twfe(
-    iv = 'all_yield_diff_gmo_50_0',
-    iv_shift = NULL,
-    spatial_subset = 'rural',
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = c(0, 3),
-    controls = c(0, 3),
-    clustering = c('year', 'state_fips')
-  )
-  # Instrument: 1990-1995 acreage percentiles
-  est_twfe(
-    iv = 'percentile_gm_acres',
-    iv_shift = NULL,
-    spatial_subset = 'rural',
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = c(0, 3),
-    controls = c(0, 3),
-    clustering = c('year', 'state_fips')
-  )
+# # Estimates: Main, pooled results ----------------------------------------------
+#   # Instrument: Yield diff percentile GMO
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo',
+#     iv_shift = 'glyphosate_nat_100km',
+#     spatial_subset = 'rural',
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = c(0, 3),
+#     controls = 0:3,
+#     clustering = c('year', 'state_fips')
+#   )
+#   # Instrument: Yield diff percentile GMO, east of 100th meridian
+#   est_twfe(
+#     iv = 'e100m_yield_diff_percentile_gmo',
+#     iv_shift = NULL,
+#     spatial_subset = 'rural',
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = c(0, 3),
+#     controls = c(0, 3),
+#     clustering = c('year', 'state_fips')
+#   )
+#   # Instrument: Yield diff percentile GMO max
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo_max',
+#     iv_shift = NULL,
+#     spatial_subset = 'rural',
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = c(0, 3),
+#     controls = c(0, 3),
+#     clustering = c('year', 'state_fips')
+#   )
+#   # Instrument: Yield diff GMO, 50-0
+#   est_twfe(
+#     iv = 'all_yield_diff_gmo_50_0',
+#     iv_shift = NULL,
+#     spatial_subset = 'rural',
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = c(0, 3),
+#     controls = c(0, 3),
+#     clustering = c('year', 'state_fips')
+#   )
+#   # Instrument: 1990-1995 acreage percentiles
+#   est_twfe(
+#     iv = 'percentile_gm_acres',
+#     iv_shift = NULL,
+#     spatial_subset = 'rural',
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = c(0, 3),
+#     controls = c(0, 3),
+#     clustering = c('year', 'state_fips')
+#   )
 
 
-# Estimates: Heterogeneity by predicted quintile and month --------------------
-  # Yield diff percentile GMO
-  est_twfe(
-    iv = 'all_yield_diff_percentile_gmo',
-    spatial_subset = 'rural',
-    het_split = 'pred_q5',
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = c(0, 3),
-    controls = c(0, 3),
-    clustering = c('year', 'state_fips')
-  )
-  est_twfe(
-    iv = 'e100m_yield_diff_percentile_gmo',
-    spatial_subset = 'rural',
-    het_split = 'pred_q5',
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = c(0, 3),
-    controls = c(0, 3),
-    clustering = c('year', 'state_fips')
-  )
-  # More refined heterogeneity splits: Deciles 
-  est_twfe(
-    iv = 'all_yield_diff_percentile_gmo',
-    spatial_subset = 'rural',
-    het_split = 'pred_q10',
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = c(0, 3),
-    controls = c(0, 3),
-    clustering = c('year', 'state_fips')
-  )
-  # More refined heterogeneity splits: Deciles with top/bottom 1%, 5% separate)
-  est_twfe(
-    iv = 'all_yield_diff_percentile_gmo',
-    spatial_subset = 'rural',
-    het_split = 'pred_q14',
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = c(0, 3),
-    controls = c(0, 3),
-    clustering = c('year', 'state_fips')
-  )
-  # Heterogeneity by month of birth
-  est_twfe(
-    iv = 'all_yield_diff_percentile_gmo',
-    spatial_subset = 'rural',
-    het_split = 'month',
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = c(0, 3),
-    controls = c(0, 3),
-    clustering = c('year', 'state_fips')
-  )
+# # Estimates: Heterogeneity by predicted quintile and month --------------------
+#   # Yield diff percentile GMO
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo',
+#     spatial_subset = 'rural',
+#     het_split = 'pred_q5',
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = c(0, 3),
+#     controls = c(0, 3),
+#     clustering = c('year', 'state_fips')
+#   )
+#   est_twfe(
+#     iv = 'e100m_yield_diff_percentile_gmo',
+#     spatial_subset = 'rural',
+#     het_split = 'pred_q5',
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = c(0, 3),
+#     controls = c(0, 3),
+#     clustering = c('year', 'state_fips')
+#   )
+#   # More refined heterogeneity splits: Deciles 
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo',
+#     spatial_subset = 'rural',
+#     het_split = 'pred_q10',
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = c(0, 3),
+#     controls = c(0, 3),
+#     clustering = c('year', 'state_fips')
+#   )
+#   # More refined heterogeneity splits: Deciles with top/bottom 1%, 5% separate)
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo',
+#     spatial_subset = 'rural',
+#     het_split = 'pred_q14',
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = c(0, 3),
+#     controls = c(0, 3),
+#     clustering = c('year', 'state_fips')
+#   )
+#   # Heterogeneity by month of birth
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo',
+#     spatial_subset = 'rural',
+#     het_split = 'month',
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = c(0, 3),
+#     controls = c(0, 3),
+#     clustering = c('year', 'state_fips')
+#   )
 
 
-# Nonlinearities in glyph effect -----------------------------------------------
-  # NOTE: These only work for iv = 'all_yield_diff_percentile_gmo' for now
-  # Quadratic in glyphosate with IV nonlinear as well
-  est_twfe(
-    iv = 'all_yield_diff_percentile_gmo',
-    spatial_subset = 'rural',
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = c(0, 3),
-    controls = c(0, 3),
-    clustering = c('year', 'state_fips'),
-    gly_nonlinear = 'quadratic',
-    iv_nonlinear = TRUE
-  )
+# # Nonlinearities in glyph effect -----------------------------------------------
+#   # NOTE: These only work for iv = 'all_yield_diff_percentile_gmo' for now
+#   # Quadratic in glyphosate with IV nonlinear as well
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo',
+#     spatial_subset = 'rural',
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = c(0, 3),
+#     controls = c(0, 3),
+#     clustering = c('year', 'state_fips'),
+#     gly_nonlinear = 'quadratic',
+#     iv_nonlinear = TRUE
+#   )
 
 
-# Nonlinearity by GLY percentile -----------------------------------------------
-  # Instrument: Yield diff percentile GMO
-  est_twfe(
-    outcomes = c('dbwt', 'gestation'),
-    iv = 'all_yield_diff_percentile_gmo',
-    spatial_subset = 'rural',
-    het_split = 'glyph_km_end_q3',
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = 3,
-    controls = 3,
-    clustering = c('year', 'state_fips')
-  )
+# # Nonlinearity by GLY percentile -----------------------------------------------
+#   # Instrument: Yield diff percentile GMO
+#   est_twfe(
+#     outcomes = c('dbwt', 'gestation'),
+#     iv = 'all_yield_diff_percentile_gmo',
+#     spatial_subset = 'rural',
+#     het_split = 'glyph_km_end_q3',
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = 3,
+#     controls = 3,
+#     clustering = c('year', 'state_fips')
+#   )
 
 
-# Changing demographics --------------------------------------------------------
+# Test changing demographics ---------------------------------------------------
   # Instrument: Yield diff percentile GMO
   est_twfe(
     outcomes = c(
