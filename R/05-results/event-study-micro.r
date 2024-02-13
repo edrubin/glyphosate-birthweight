@@ -75,44 +75,7 @@ extract_event_study_coefs = function(mod_path){
   return(mod_dt)
 }
 
-# Running for all models 
-mod_paths = 
-  str_subset(
-    list.files(here('data/results/micro'), full.names = TRUE),
-    'est_rf'
-  )
-mod_dt = lapply(mod_paths, extract_event_study_coefs) |> 
-  rbindlist(use.names = TRUE, fill = TRUE)
-
-
 # Function to plot the event study --------------------------------------------
-outcome_in = 'dbwt'
-fixef_num_in = 'Mother and Father FEs'
-control_num_in = 'Pesticides and Economic'
-trt_in = 'all_yield_diff_percentile_gmo'
-spatial_in = 'rural'
-sample_in = 'NANA'
-pink       = '#e64173'
-red_pink   = '#e64173'
-turquoise  = '#20B2AA'
-orange     = '#FFA500'
-red        = '#fb6107'
-blue       = '#648FFF'
-dark_blue  = '#3b3b9a'
-green      = '#8bb174'
-grey_light = 'grey70'
-grey_mid   = 'grey50'
-grey_dark  = 'grey20'
-purple     = '#6A5ACD'
-slate      = '#314f4f'
-# Setting height and width 
-
-
-theme_set(
-  theme_minimal(base_size = 14) +
-  theme(axis.title.x = element_blank())
-)
-
 plot_reduced_form = function(
   outcome_in, mod_dt, print = FALSE, width_in = 6, height_in = 3, pink = '#e64173'
 ){
@@ -282,10 +245,22 @@ plot_reduced_form = function(
 }
 
 
+# Now we can run the functions ------------------------------------------------
+theme_set(
+  theme_minimal(base_size = 14) +
+  theme(axis.title.x = element_blank())
+)
+# Running for all models 
+mod_paths = 
+  str_subset(
+    list.files(here('data/results/micro'), full.names = TRUE),
+    'est_rf'
+  )
+mod_dt = lapply(mod_paths, extract_event_study_coefs) |> 
+  rbindlist(use.names = TRUE, fill = TRUE)
 # Running for all outcomes 
 lapply(
   unique(mod_dt$lhs),
   plot_reduced_form, 
   mod_dt = mod_dt
 )
-
