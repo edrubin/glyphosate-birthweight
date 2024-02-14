@@ -123,8 +123,7 @@ extract_event_study_coefs = function(mod_path){
       trt == 'e100m_yield_diff_percentile_gmo', 'Attainable Yield, GM Avg Percentile, Eastern US',
       trt == 'percentile_gm_acres','1990-1995 GM Acreage Percentile'
     )
-  )
-  ]
+  )]
   # return the results 
   return(mod_dt)
 }

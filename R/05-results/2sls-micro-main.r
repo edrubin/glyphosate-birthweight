@@ -2,9 +2,15 @@
 library(pacman)
 p_load(
   here, data.table, fst, fixest, ggplot2,
-  stringr, qs, collapse
+  stringr, qs, collapse, janitor
 )
-
+# Setup -----------------------------------------------------------------------
+  # Making a statistic of observations scaled to millions 
+  fitstat_register(
+    'n_millions',
+    fun = \(mod){round(mod$nobs/1e6, digits = 2)},
+    'N (millions)'
+  )
 # Function to load the models -------------------------------------------------
 mod_paths = 
   str_subset(
@@ -68,12 +74,7 @@ mod_2sls = qread(mod_paths[1])
       by.y = 'variable',
       all.x = TRUE
     )[order(i)]
-  # Getting N into millions 
-  fitstat_register(
-    'n_millions',
-    fun = \(mod){round(mod$nobs/1e6, digits = 2)},
-    'N (millions)'
-  )
+
   # Making the dictionary
   setFixest_dict(c(
     glyph_km2 = 'GLY/$km^2$',
@@ -122,7 +123,6 @@ mod_2sls = qread(mod_paths[1])
     )
   ) |> write(here('figures/micro/2sls/main-outcomes.tex'))
 
-
 # Appendix tables -------------------------------------------------------------
   # Main table but with estimates of control variables included 
   # Robustness to alternative treatment defn 
@@ -130,8 +130,3 @@ mod_2sls = qread(mod_paths[1])
   # Robustness to controls 
 
   # Robustness to fixed effects 
-
-# Heterogeneity plots ---------------------------------------------------------
-  # By predicted bw percentiles 
-
-  # By month of birth 
