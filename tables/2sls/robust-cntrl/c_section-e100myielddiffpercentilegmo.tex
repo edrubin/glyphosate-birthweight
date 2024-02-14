@@ -1,0 +1,28 @@
+\begin{table}[htbp]
+   \centering
+   \small
+   \begin{threeparttable}[b]
+      \caption{\label{tab:robust-cntrl-c_section-e100myielddiffpercentilegmo} \textbf{The effect of glyphosate on probability of C-section, \\ Robustness to alternative controls and fixed effects}}
+      \begin{tabular}{lcccccccc}
+         \toprule
+         Model:           & (1)     & (2)     & (3)     & (4)     & (5)     & (6)     & (7)     & (8)\\  
+         \midrule 
+         GLY/$km^2$       & 0.329   & 0.567   & 0.258   & 0.460   & 0.338   & 0.548   & 0.250   & 0.427\\   
+                          & (0.234) & (0.320) & (0.227) & (0.300) & (0.218) & (0.293) & (0.214) & (0.279)\\   
+         Local pesticides &         & Yes     &         & Yes     &         & Yes     &         & Yes\\  
+         Unemployment     &         &         & Yes     & Yes     &         &         & Yes     & Yes\\  
+         \midrule
+         \emph{Fixed-effects}\\
+         Family Demog     &         &         &         &         & Yes     & Yes     & Yes     & Yes\\  
+         Yr x Mo + Cnty   & Yes     & Yes     & Yes     & Yes     & Yes     & Yes     & Yes     & Yes\\  
+         \midrule
+         \emph{Fit statistics}\\
+         N (millions)     & 13.19   & 13.19   & 13.19   & 13.19   & 10.53   & 10.53   & 10.53   & 10.53\\  
+         \midrule
+         \multicolumn{9}{l}{\emph{Clustered (Year \& State) standard-errors in parentheses}}\\
+      \end{tabular}
+      
+      \begin{tablenotes}\item Sample restricted to births from mothers residing in a rural county. Instruments are the attainable yield percentile for GM crops in the eastern US in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.
+      \end{tablenotes}
+   \end{threeparttable}
+\end{table}

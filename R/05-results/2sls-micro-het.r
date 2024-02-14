@@ -1,4 +1,4 @@
-# Script to plot predicted BW heterogeneity
+# Script to plot predicted BW and month of birth heterogeneity
 library(pacman)
 p_load(
   here, data.table, fst, fixest, ggplot2,
@@ -155,7 +155,7 @@ plot_predbw_results = function(
   ggsave(
     plot = decile_p,
     filename = here(paste0(
-      'figures/micro/2sls/pred-bw-het-deciles-',outcome_in,'.jpeg'
+      'figures/micro/2sls/deciles-',outcome_in,'.jpeg'
     )),
     width = width_in, height = height_in
   )
@@ -193,7 +193,7 @@ plot_predbw_results = function(
   ggsave(
     plot = decile_effatmean_p,
     filename = here(paste0(
-      'figures/micro/2sls/pred-bw-het-deciles-at-mean-',outcome_in,'.jpeg'
+      'figures/micro/2sls/deciles-at-mean-',outcome_in,'.jpeg'
     )),
     width = width_in, height = height_in
   )
@@ -235,7 +235,7 @@ plot_predbw_results = function(
   ggsave(
     plot = all_splits_p,
     filename = here(paste0(
-      'figures/micro/2sls/pred-bw-het-all-splits-',outcome_in,'.jpeg'
+      'figures/micro/2sls/all-splits-',outcome_in,'.jpeg'
     )),
     width = width_in*1.25, height = height_in
   )
@@ -279,7 +279,7 @@ plot_predbw_results = function(
   ggsave(
     plot = decile_cntrls_p,
     filename = here(paste0(
-      'figures/micro/2sls/pred-bw-het-deciles-robust-cntrl-',outcome_in,'.jpeg'
+      'figures/micro/2sls/deciles-robust-cntrl-',outcome_in,'.jpeg'
     )),
     width = width_in*1.25, height = height_in*1.25
   )
@@ -324,7 +324,7 @@ plot_predbw_results = function(
   ggsave(
     plot = quintile_trt_p,
     filename = here(paste0(
-      'figures/micro/2sls/pred-bw-het-quintile-robust-trt-',outcome_in,'.jpeg'
+      'figures/micro/2sls/quintile-robust-trt-',outcome_in,'.jpeg'
     )),
     width = width_in*1.25, height = height_in*1.25
   )
@@ -359,7 +359,7 @@ plot_predbw_results = function(
   ggsave(
     plot = month_p,
     filename = here(paste0(
-      'figures/micro/2sls/pred-bw-het-month-',outcome_in,'.jpeg'
+      'figures/micro/2sls/month-',outcome_in,'.jpeg'
     )),
     width = width_in, height = height_in
   )
@@ -403,12 +403,14 @@ plot_predbw_results = function(
   ggsave(
     plot = month_cntrls_p,
     filename = here(paste0(
-      'figures/micro/2sls/pred-bw-het-month-robust-cntrl-',outcome_in,'.jpeg'
+      'figures/micro/2sls/month-robust-cntrl-',outcome_in,'.jpeg'
     )),
     width = width_in*1.25, height = height_in*1.25
   )
 }  
   
+
+# Making all of the plots! ----------------------------------------------------
 theme_set(theme_minimal(base_size = 12))
 # Loading the data from different pred splits 
 mod_paths = 
