@@ -34,7 +34,12 @@ natality_dt = map_dfr(
     read.fst(
       path = here(paste0("data/health-restricted/period-clean/natality-",yr,".fst")),
       as.data.table = TRUE
-    )[,.(# Summarizing the results 
+    )[, `:=`(
+        any_anomaly = 1 * (do.call(pmin, .SD) == 1),
+        any_anomaly_nona = 1 * (do.call(function(...) pmin(..., na.rm = TRUE), .SD) == 1)
+      ), 
+      .SDcols = febrile:baby_other_cong
+    ][,.(# Summarizing the results 
       median_birth_wt = median(dbwt, na.rm = T),
       median_birth_wt_male = median(ifelse(sex %in% c("1","M"), dbwt, as.numeric(NA)), na.rm = T),
       median_birth_wt_female = median(ifelse(!(sex %in% c("1","M")), dbwt, as.numeric(NA)), na.rm = T),
@@ -52,6 +57,7 @@ natality_dt = map_dfr(
       mean_birth_wt_q4 = mean(ifelse(month %in% paste0(10:12), dbwt, as.numeric(NA)), na.rm = T),
       mean_birth_wt_nq1 = mean(ifelse(!(month %in% paste0("0",1:3)), dbwt, as.numeric(NA)), na.rm = T),
       low_birth_wt = sum(dbwt < 2500, na.rm = T),
+      v_low_birth_wt = sum(dbwt < 1500, na.rm = T),
       low_birth_wt_male = sum(sex %in% c("1","M") & dbwt < 2500, na.rm = T),
       low_birth_wt_female = sum(!(sex %in% c("1","M")) & dbwt < 2500, na.rm = T),
       low_birth_wt_q1 = sum(month %in% paste0("0",1:3) & dbwt < 2500, na.rm = T),
@@ -76,10 +82,15 @@ natality_dt = map_dfr(
         fifelse(gestation == '99', as.numeric(NA), as.numeric(gestation)), 
         na.rm = TRUE
       ),
-      preterm = sum(
-        as.integer(gestation) < 37, 
+      mean_gest = mean(
+        fifelse(gestation == '99', as.numeric(NA), as.numeric(gestation)), 
         na.rm = TRUE
       ),
+      preterm = sum(
+        as.integer(gestation) <= 37, 
+        na.rm = TRUE
+      ),
+      any_anomaly = sum(any_anomaly, na.rm = TRUE),
       pct_tobacco = mean(tobacco, na.rm = TRUE),
       pct_alcohol = mean(alcohol, na.rm = TRUE)
     ),
