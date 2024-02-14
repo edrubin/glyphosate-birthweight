@@ -101,11 +101,11 @@ extract_event_study_coefs = function(mod_path){
   mod_dt[,':='(
     year = str_extract(coefficient, '(?<=year::)\\d{4}') |> as.integer(),
     fixef_num = fcase(
-      fixef == 'year_month + fips_res + fips_occ', "No FEs",
+      fixef == 'year_month + fips_res + fips_occ', "No Add'l FEs",
       fixef == 'year_month + fips_res + fips_occ + sex + mage + mrace + mhisp + meduc + mar + birth_facility + restatus + total_birth_order', 'Mother FEs',
       fixef == 'year_month + fips_res + fips_occ + fage + fhisp + frace', 'Father FEs',
-      fixef == 'year_month + fips_res + fips_occ + sex + mage + mrace + mhisp + meduc + mar + birth_facility + restatus + total_birth_order + fage + fhisp + frace', 'Mother and Father FEs'
-    ) |> factor(levels = c('No FEs','Mother FEs','Father FEs','Mother and Father FEs')),
+      fixef == 'year_month + fips_res + fips_occ + sex + mage + mrace + mhisp + meduc + mar + birth_facility + restatus + total_birth_order + fage + fhisp + frace', 'Add Family FEs'
+    ) |> factor(levels = c("No Add'l FEs",'Mother FEs','Father FEs','Add Family FEs')),
     control_num = fcase(
       str_detect(rhs, 'atrazine') & str_detect(rhs, 'unemployment'), 'Pesticides and Unemployment',
       str_detect(rhs, 'atrazine'), 'Pesticides',
@@ -151,7 +151,7 @@ plot_reduced_form = function(
       data = mod_dt[
         type == '2sls-fs' & var_of_interest == TRUE & 
         lhs == outcome_in &
-        fixef_num == 'Mother and Father FEs' & control_num == 'Pesticides and Unemployment' &
+        fixef_num == 'Add Family FEs' & control_num == 'Pesticides and Unemployment' &
         trt == 'all_yield_diff_percentile_gmo' & spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA'
       ],
@@ -182,7 +182,7 @@ plot_reduced_form = function(
       data = mod_dt[
         type == 'rf' & var_of_interest == TRUE & 
         lhs == outcome_in &
-        fixef_num == 'Mother and Father FEs' & control_num == 'Pesticides and Unemployment' &
+        fixef_num == 'Add Family FEs' & control_num == 'Pesticides and Unemployment' &
         trt == 'all_yield_diff_percentile_gmo' & spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA'
       ],
@@ -212,7 +212,7 @@ plot_reduced_form = function(
     ggplot(
       data = mod_dt[
         type == '2sls-fs' & var_of_interest == TRUE & lhs == outcome_in &
-        fixef_num == 'Mother and Father FEs' & control_num == 'Pesticides and Unemployment' &
+        fixef_num == 'Add Family FEs' & control_num == 'Pesticides and Unemployment' &
         trt != 'percentile_gm_acres' & 
         spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA'
@@ -250,7 +250,7 @@ plot_reduced_form = function(
     ggplot(
       data = mod_dt[
         type == 'rf' & var_of_interest == TRUE & lhs == outcome_in &
-        fixef_num == 'Mother and Father FEs' & control_num == 'Pesticides and Unemployment' &
+        fixef_num == 'Add Family FEs' & control_num == 'Pesticides and Unemployment' &
         trt != 'percentile_gm_acres' & spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA'
       ],
@@ -370,7 +370,7 @@ plot_reduced_form = function(
       data = mod_dt[
         type == '2sls-fs' & 
         var_of_interest == TRUE & lhs == outcome_in &
-        fixef_num == 'Mother and Father FEs' & 
+        fixef_num == 'Add Family FEs' & 
         control_num == 'Pesticides and Unemployment' &
         trt == 'all_yield_diff_percentile_gmo' & 
         spatial == 'rural' &
@@ -411,7 +411,7 @@ plot_reduced_form = function(
       data = mod_dt[
         type == 'rf' & 
         var_of_interest == TRUE & lhs == outcome_in &
-        fixef_num == 'Mother and Father FEs' & 
+        fixef_num == 'Add Family FEs' & 
         control_num == 'Pesticides and Unemployment' &
         trt == 'all_yield_diff_percentile_gmo' & 
         spatial == 'rural' &
