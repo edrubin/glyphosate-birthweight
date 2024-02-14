@@ -205,7 +205,8 @@ plot_predbw_results = function(
         var_of_interest == TRUE & 
         trt == 'allyielddiffpercentilegmo' &
         fixef_num == 'Mother and Father FEs' & 
-        control_num == 'Pesticides and Unemployment'
+        control_num == 'Pesticides and Unemployment' & 
+        sample_var != 'month'
       ], 
       aes(
         x = pctl, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -327,27 +328,108 @@ plot_predbw_results = function(
     )),
     width = width_in*1.25, height = height_in*1.25
   )
+  # Now for heterogeneity by month of birth 
+  month_p = 
+    ggplot(
+      data = pctl_est_dt[
+        lhs == outcome_in & 
+        trt == 'allyielddiffpercentilegmo' &
+        sample_var == 'month' & 
+        var_of_interest == TRUE & 
+        fixef_num == 'Mother and Father FEs' & 
+        control_num == 'Pesticides and Unemployment' & 
+        sample != 'Full sample'
+      ], 
+      aes(x = as.integer(sample), y = estimate, ymin = ci_l, ymax = ci_h),
+    ) + 
+    geom_hline(yintercept = 0) +
+    geom_ribbon(alpha = 0.3, color = NA) + 
+    geom_point() + 
+    geom_line() +
+    scale_x_continuous(
+      name = 'Month of Birth',
+      breaks = 1:12
+    ) +
+    scale_y_continuous(
+      name = paste0('Maringal Effect on ',y_lab),
+      labels = y_labels
+    ) + 
+    theme(panel.grid.minor = element_blank())
+  if(print) print(month_p)
+  ggsave(
+    plot = month_p,
+    filename = here(paste0(
+      'figures/micro/2sls/pred-bw-het-month-',outcome_in,'.jpeg'
+    )),
+    width = width_in, height = height_in
+  )
+  # Robustness in month plot to fixef and controls 
+  month_cntrls_p = 
+    ggplot(
+      data = pctl_est_dt[
+        lhs == outcome_in & 
+        trt == 'allyielddiffpercentilegmo' &
+        sample_var == 'month' & 
+        var_of_interest == TRUE & 
+        sample != 'Full sample'
+      ], 
+      aes(
+        x = as.integer(sample), y = estimate, ymin = ci_l, ymax = ci_h,
+        color = control_num, fill = control_num
+      ),
+    ) + 
+    geom_hline(yintercept = 0) +
+    geom_ribbon(alpha = 0.3, color = NA) + 
+    geom_point() + 
+    geom_line() +
+    scale_color_brewer(
+      'Controls', palette = "Dark2",
+      aesthetics = c('color','fill')
+    ) +
+    scale_x_continuous(
+      name = 'Month of Birth',
+      breaks = 1:12
+    ) +
+    scale_y_continuous(
+      name = paste0('Maringal Effect on ',y_lab),
+      labels = y_labels
+    ) + 
+    facet_grid(cols = vars(fixef_num)) +
+    theme(
+      panel.grid.minor = element_blank(),
+      legend.position = 'bottom'
+    ) 
+  if(print) print(month_cntrls_p)
+  ggsave(
+    plot = month_cntrls_p,
+    filename = here(paste0(
+      'figures/micro/2sls/pred-bw-het-month-robust-cntrl-',outcome_in,'.jpeg'
+    )),
+    width = width_in*1.25, height = height_in*1.25
+  )
 }  
   
-theme_set(
-  theme_minimal(base_size = 12) 
-)
+theme_set(theme_minimal(base_size = 12))
 # Loading the data from different pred splits 
 mod_paths = 
   str_subset(
     list.files(here('data/results/micro'), full.names = TRUE),
     'est_2sls_outcome'
   ) |>
-  str_subset('het-pred') 
+  str_subset('het-pred|het-month') 
 pred_bw_dt = lapply(mod_paths, extract_pred_bw_effects) |> rbindlist()
 # Merging with the estimates so we can plot with pctl on x axis 
 pctl_est_dt = 
   merge(
-    pred_bw_dt, 
+    pred_bw_dt[sample_var != 'month'], 
     cut_dt, 
     by.x = c('sample_var','sample'),
     by.y = c('variable','value'),
     allow.cartesian = TRUE
+  ) |>
+  rbind(
+    pred_bw_dt[sample_var == 'month'],
+    use.names=TRUE , fill = TRUE 
   )
 # Calculating effect at mean 
 pctl_est_dt[,':='(
