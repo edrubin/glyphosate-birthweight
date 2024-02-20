@@ -54,7 +54,8 @@ p_load(
         i_preterm = fmean(preterm/tot_inf_births, w = tot_inf_births),
         c_section = fmean(tot_c_section/tot_inf_births, w = tot_inf_births),
         any_anomaly = fmean(any_anomaly/tot_inf_births, w = tot_inf_births),
-        tot_births = fsum(tot_inf_births)
+        tot_births = fsum(tot_inf_births),
+        glyph_km2_sd = fsd(glyph_km2, w = tot_inf_births)
       ),
       keyby = year
     ] |>
