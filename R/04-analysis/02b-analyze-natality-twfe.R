@@ -276,6 +276,7 @@
     clustering = c('year', 'state_fips'),
     gly_nonlinear = NULL,
     iv_nonlinear = FALSE,
+    include_ols = FALSE,
     ...
   ) {
 
@@ -511,6 +512,22 @@
       ) %>% as.formula()
     }
 
+    # Formula: OLS 
+    if(include_ols == TRUE){
+      fml_ols = paste(
+        fml_y,
+        ' ~ ',
+        fml_gly,
+        ifelse(
+          !is.null(fml_controls),
+          paste0(' + ', fml_controls),
+          ''
+        ),
+        ' | ',
+        fml_fes
+      ) %>% as.formula()
+    }
+
     # Make folder for the results
     dir_today = here('data', 'results', 'micro')
     dir_today %>% dir.create()
@@ -603,6 +620,33 @@
         preset = 'fast'
       )
       rm(est_2sls); invisible(gc())
+    }
+
+    # Estimate OLS 
+    if(include_ols == TRUE){
+      if (!is.null(het_split)) {
+        est_ols = feols(
+          fml = fml_ols,
+          cluster = fml_inf,
+          data = est_dt[!(year %in% 1990:1991)],
+          fsplit = het_split,
+          lean = TRUE
+        )
+      } else {
+        est_ols = feols(
+          fml = fml_ols,
+          cluster = fml_inf,
+          data = est_dt[!(year %in% 1990:1991)],
+          lean = TRUE
+        )
+      }
+      # Save
+      qsave(
+        est_ols,
+        file.path(dir_today, paste0('est_ols', base_name)),
+        preset = 'fast'
+      )
+      rm(est_ols); invisible(gc())
     }
 
     # Return something
