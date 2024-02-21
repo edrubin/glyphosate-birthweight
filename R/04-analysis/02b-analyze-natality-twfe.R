@@ -818,12 +818,23 @@
     controls = 3,
     clustering = c('year', 'state_fips')
   )
-  # Het by nonwhite
+  # Estimate white and nonwhite mothers separately
   est_twfe(
     iv = 'all_yield_diff_percentile_gmo',
     iv_shift = 'glyphosate_nat_100km',
     spatial_subset = 'rural',
     het_split = 'i_m_nonwhite',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    fes = 3,
+    controls = 3,
+    clustering = c('year', 'state_fips')
+  )
+  # Estimate midwest and northeast separately
+  est_twfe(
+    iv = 'all_yield_diff_percentile_gmo',
+    iv_shift = 'glyphosate_nat_100km',
+    spatial_subset = 'rural',
+    het_split = 'midwest_northeast',
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = 3,
     controls = 3,
