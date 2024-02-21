@@ -32,6 +32,11 @@ p_load(
       x = seq(0,1,by = 0.01),
       breaks = c(0,0.01,0.05,seq(0.1,0.9,0.1),0.95, 0.99,1),
       labels = 1:14, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
+    ),
+    pred_q20 = cut(
+      x = seq(0,1,by = 0.01),
+      breaks = 20,
+      labels = 1:20, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
     )
   ) |>
   melt(id.vars = 'pctl')
@@ -106,17 +111,17 @@ extract_pred_bw_effects = function(mod_path){
 
 # Plotting the results --------------------------------------------------------
 plot_predbw_results = function(
-  outcome_in, pctl_est_dt, print = TRUE, width_in = 6, height_in = 3
+  outcome_in, pctl_est_dt, print = TRUE, width_in = 6, height_in = 4
 ){
   y_lab = fcase(
     outcome_in == 'dbwt', 'Birthweight (g)',
     outcome_in == 'any_anomaly', 'Any Anomaly (%)',
     outcome_in == 'c_section', 'C Section (%)',
     outcome_in == 'dbwt_pctl_pre', 'Birthweight Pctl (%)',
-    outcome_in == 'dbwt_pred', 'Predicted Birthweight (g)',
+    outcome_in == 'dbwt_pred', 'Pred Birthweight (g)',
     outcome_in == 'gestation', 'Gestation (weeks)',
-    outcome_in == 'i_lbw', 'Low Birthweight (%)',
-    outcome_in == 'i_vlbw', 'Very Low Birthweight (%)',
+    outcome_in == 'i_lbw', 'LBW (%)',
+    outcome_in == 'i_vlbw', 'VLBW (%)',
     outcome_in == 'i_preterm', 'Preterm (%)',
     default = 'Estimate'
   )
@@ -158,7 +163,7 @@ plot_predbw_results = function(
     filename = here(paste0(
       'figures/micro/2sls/deciles-',outcome_in,'.jpeg'
     )),
-    width = width_in, height = height_in
+    width = width_in, height = height_in*0.85
   )
   # Effect at mean for deciles 
   decile_effatmean_p = 
@@ -196,7 +201,7 @@ plot_predbw_results = function(
     filename = here(paste0(
       'figures/micro/2sls/deciles-at-mean-',outcome_in,'.jpeg'
     )),
-    width = width_in, height = height_in
+    width = width_in, height = height_in*0.85
   )
   # Now a plot with all three splits 
   all_splits_p = 
@@ -282,7 +287,7 @@ plot_predbw_results = function(
     filename = here(paste0(
       'figures/micro/2sls/deciles-robust-cntrl-',outcome_in,'.jpeg'
     )),
-    width = width_in*1.25, height = height_in*1.25
+    width = width_in*1.25, height = height_in
   )
   # Robustness to alt treatment 
   quintile_trt_p = 
@@ -362,7 +367,7 @@ plot_predbw_results = function(
     filename = here(paste0(
       'figures/micro/2sls/month-',outcome_in,'.jpeg'
     )),
-    width = width_in, height = height_in
+    width = width_in, height = height_in*0.85
   )
   # Robustness in month plot to fixef and controls 
   month_cntrls_p = 
@@ -406,7 +411,7 @@ plot_predbw_results = function(
     filename = here(paste0(
       'figures/micro/2sls/month-robust-cntrl-',outcome_in,'.jpeg'
     )),
-    width = width_in*1.25, height = height_in*1.25
+    width = width_in*1.25, height = height_in
   )
 }  
   
