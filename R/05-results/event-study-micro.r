@@ -46,6 +46,7 @@ fs_coeftable = function(i, mod_2sls){
 
 # Function to extract data from event study models ----------------------------
 extract_event_study_coefs = function(mod_path){
+  print(paste('starting', mod_path))
   # Loading the model 
   mod = qread(mod_path)
   # Getting coefficients---depends on rf model or first stage
@@ -59,11 +60,20 @@ extract_event_study_coefs = function(mod_path){
       clean_names()
     mod_dt[,type:='rf']
     # Adding sample var and sample if not there
+    if (!exists('sample', where = mod_dt)) {
+      mod_dt[, 'sample' := NA_character_]
+    }
     if (!exists('sample_var', where = mod_dt)) {
       mod_dt[, 'sample_var' := NA_character_]
     }
-    if (!exists('sample', where = mod_dt)) {
-      mod_dt[, 'sample' := NA_character_]
+    if (!exists('rhs', where = mod_dt)) {
+      mod_dt[, 'rhs' := as.character(mod[[1]]$fml_all$linear)[3]]
+    }
+    if (!exists('fixef', where = mod_dt)) {
+      mod_dt[, 'fixef' := as.character(mod[[1]]$fml_all$fixef)[2]]
+    }
+    if (!exists('lhs', where = mod_dt)) {
+      mod_dt[, 'lhs' := as.character(mod[[1]]$fml_all$linear)[2]]
     }
   }else if(str_detect(mod_path, 'est_2sls_outcome')){
     # Getting first stage coefs from 2SLS model
@@ -73,6 +83,15 @@ extract_event_study_coefs = function(mod_path){
       mod_2sls = mod
     ) |> rbindlist()
     mod_dt[,type:='2sls-fs']
+    if (!exists('rhs', where = mod_dt)) {
+      mod_dt[, 'rhs' := as.character(mod[[1]]$fml_all$linear)[3]]
+    }
+    if (!exists('fixef', where = mod_dt)) {
+      mod_dt[, 'fixef' := as.character(mod[[1]]$fml_all$fixef)[2]]
+    }
+    if (!exists('lhs', where = mod_dt)) {
+      mod_dt[, 'lhs' := as.character(mod[[1]]$fml_all$linear)[2]]
+    }
   } else {
     stop('not yet able to extract model coefs')
   }
@@ -135,84 +154,149 @@ plot_reduced_form = function(
   # Making outcome labels and scales 
   y_lab = fcase(
     outcome_in == 'dbwt', 'Birthweight (g)',
-    outcome_in == 'any_anomaly', 'Any Anomaly (%)',
-    outcome_in == 'c_section', 'C Section (%)',
-    outcome_in == 'dbwt_pctl_pre', 'Birthweight Pctl (%)',
+    outcome_in == 'any_anomaly', 'Any Anomaly',# (%)',
+    outcome_in == 'c_section', 'C Section',# (%)',
+    outcome_in == 'dbwt_pctl_pre', 'Birthweight Pctl',# (%)',
     outcome_in == 'dbwt_pred', 'Predicted Birthweight (g)',
     outcome_in == 'gestation', 'Gestation (weeks)',
-    outcome_in == 'i_lbw', 'Low Birthweight (%)',
-    outcome_in == 'i_vlbw', 'Very Low Birthweight (%)',
-    outcome_in == 'i_preterm', 'Preterm (%)',
+    outcome_in == 'i_lbw', 'Low Birthweight',# (%)',
+    outcome_in == 'i_vlbw', 'Very Low Birthweight',# (%)',
+    outcome_in == 'i_preterm', 'Preterm',# (%)',
+    outcome_in == 'i_female', 'Female',# (%)',
+    outcome_in == 'i_m_black', 'Mother Black',# (%)',
+    outcome_in == 'i_m_nonwhite', 'Mother Non-white',# (%)',
+    outcome_in == 'i_m_hispanic', 'Mother Hispanic',# (%)',
+    outcome_in == 'i_m_married', 'Mother Married',# (%)',
     default = 'Estimate'
   )
   # Main plot--first stage 
-  fs_event_p = 
-    ggplot(
-      data = mod_dt[
-        type == '2sls-fs' & var_of_interest == TRUE & 
-        lhs == outcome_in &
-        fixef_num == 'Add Family FEs' & control_num == 'Pesticides and Unemployment' &
-        trt == 'all_yield_diff_percentile_gmo' & spatial == 'rural' &
-        paste0(sample_var, sample) == 'NANA'
-      ],
-      aes(x = year, y = estimate, ymin = ci_l, ymax = ci_h)
-    ) +
-    geom_hline(yintercept = 0) +
-    geom_vline(xintercept = 1995.5, col = 'black', size = 1, alpha = 1, linetype = 'dashed') +
-    geom_ribbon(fill = pink, alpha = 0.5) +
-    geom_point(color = pink, size = 2.5) +
-    geom_line(linewidth = 0.3, color = pink) +
-    scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
-    scale_x_continuous(
-      name = 'Year', 
-      breaks = seq(1990, 2015, 5), 
-      minor_breaks = NULL
-    ) 
-  if(print) print(fs_event_p)
-  ggsave(
-    fs_event_p, 
-    filename = here(paste0(
-      'figures/micro/fs-event/main-',outcome_in,'.jpeg'
-    )), 
-    width = width_in, height = height_in
-  )
+  fs_event_main_dt = 
+    mod_dt[
+      type == '2sls-fs' & 
+      !(year %in% 1990:1991) &
+      var_of_interest == TRUE & 
+      lhs == outcome_in &
+      fixef_num == 'Add Family FEs' & 
+      control_num == 'Pesticides and Unemployment' &
+      trt == 'all_yield_diff_percentile_gmo' & 
+      spatial == 'rural' &
+      paste0(sample_var, sample) == 'NANA'
+    ]
+  if(nrow(fs_event_main_dt) > 0){
+    fs_event_p = 
+      ggplot(
+        data = fs_event_main_dt,
+        aes(x = year, y = estimate, ymin = ci_l, ymax = ci_h)
+      ) +
+      geom_hline(yintercept = 0) +
+      geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+      geom_ribbon(fill = pink, alpha = 0.5) +
+      geom_point(color = pink, size = 2.5) +
+      geom_line(linewidth = 0.3, color = pink) +
+      scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
+      scale_x_continuous(
+        name = 'Year', 
+        limits = c(1990,2015),
+        breaks = seq(1990, 2015, 5), 
+        minor_breaks = NULL
+      ) 
+    if(print) print(fs_event_p)
+    ggsave(
+      fs_event_p, 
+      filename = here(paste0(
+        'figures/micro/fs-event/main-',outcome_in,'.jpeg'
+      )), 
+      width = width_in, height = height_in
+    )
+  }
   # Main plot--reduced form
-  rf_event_p = 
-    ggplot(
-      data = mod_dt[
-        type == 'rf' & var_of_interest == TRUE & 
-        lhs == outcome_in &
-        fixef_num == 'Add Family FEs' & control_num == 'Pesticides and Unemployment' &
-        trt == 'all_yield_diff_percentile_gmo' & spatial == 'rural' &
-        paste0(sample_var, sample) == 'NANA'
-      ],
-      aes(x = year, y = estimate, ymin = ci_l, ymax = ci_h)
-    ) +
-    geom_hline(yintercept = 0) +
-    geom_vline(xintercept = 1995.5, col = 'black', size = 1, alpha = 1, linetype = 'dashed') +
-    geom_ribbon(fill = pink, alpha = 0.5) +
-    geom_point(color = pink, size = 2.5) +
-    geom_line(linewidth = 0.3, color = pink) +
-    scale_y_continuous(name = y_lab, minor_breaks = NULL) +
-    scale_x_continuous(
-      name = 'Year', 
-      breaks = seq(1990, 2015, 5), 
-      minor_breaks = NULL
-    ) 
-  if(print) print(rf_event_p)
-  ggsave(
-    rf_event_p, 
-    filename = here(paste0(
-      'figures/micro/rf-event/main-',outcome_in,'.jpeg'
-    )), 
-    width = width_in, height = height_in
-  )
+  rf_event_main_dt = 
+    mod_dt[
+      type == 'rf' & 
+      var_of_interest == TRUE & 
+      lhs == outcome_in &
+      fixef_num == 'Add Family FEs' & 
+      control_num == 'Pesticides and Unemployment' &
+      trt == 'all_yield_diff_percentile_gmo' & 
+      spatial == 'rural' &
+      paste0(sample_var, sample) == 'NANA'
+    ]
+  if(nrow(rf_event_main_dt)>0){
+    rf_event_p = 
+      ggplot(
+        data = rf_event_main_dt,
+        aes(x = year, y = estimate, ymin = ci_l, ymax = ci_h)
+      ) +
+      geom_hline(yintercept = 0) +
+      geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+      geom_ribbon(fill = pink, alpha = 0.5) +
+      geom_point(color = pink, size = 2.5) +
+      geom_line(linewidth = 0.3, color = pink) +
+      scale_y_continuous(name = y_lab, minor_breaks = NULL) +
+      scale_x_continuous(
+        name = 'Year', 
+        limits = c(1990,2015),
+        breaks = seq(1990, 2015, 5), 
+        minor_breaks = NULL
+      ) 
+    if(print) print(rf_event_p)
+    ggsave(
+      rf_event_p, 
+      filename = here(paste0(
+        'figures/micro/rf-event/main-',outcome_in,'.jpeg'
+      )), 
+      width = width_in, height = height_in
+    )
+  }
+  # Reduced form with no controls/fe's
+  rf_event_nc_dt = 
+    mod_dt[
+      type == 'rf' & 
+      var_of_interest == TRUE & 
+      lhs == outcome_in &
+      fixef_num == "No Add'l FEs" & 
+      control_num == 'None' &
+      trt == 'all_yield_diff_percentile_gmo' & 
+      spatial == 'rural' &
+      paste0(sample_var, sample) == 'NANA'
+    ]
+  if(nrow(rf_event_nc_dt)>0){
+    rf_event_nc_p = 
+      ggplot(
+        data = rf_event_nc_dt,
+        aes(x = year, y = estimate, ymin = ci_l, ymax = ci_h)
+      ) +
+      geom_hline(yintercept = 0) +
+      geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+      geom_ribbon(fill = pink, alpha = 0.5) +
+      geom_point(color = pink, size = 2.5) +
+      geom_line(linewidth = 0.3, color = pink) +
+      scale_y_continuous(name = y_lab, minor_breaks = NULL) +
+      scale_x_continuous(
+        name = 'Year', 
+        limits = c(1990,2015),
+        breaks = seq(1990, 2015, 5), 
+        minor_breaks = NULL
+      ) 
+    if(print) print(rf_event_p)
+    ggsave(
+      rf_event_nc_p, 
+      filename = here(paste0(
+        'figures/micro/rf-event/no-cntrl-fe-',outcome_in,'.jpeg'
+      )), 
+      width = width_in, height = height_in
+    )
+  }
   # Now robustness to different definitions of trt 
   fs_event_trt_p = 
     ggplot(
       data = mod_dt[
-        type == '2sls-fs' & var_of_interest == TRUE & lhs == outcome_in &
-        fixef_num == 'Add Family FEs' & control_num == 'Pesticides and Unemployment' &
+        type == '2sls-fs' & 
+        !(year %in% 1990:1991) &
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        fixef_num == 'Add Family FEs' & 
+        control_num == 'Pesticides and Unemployment' &
         trt != 'percentile_gm_acres' & 
         spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA'
@@ -224,13 +308,14 @@ plot_reduced_form = function(
       )
     ) +
     geom_hline(yintercept = 0) +
-    geom_vline(xintercept = 1995.5, col = 'black', size = 1, alpha = 1, linetype = 'dashed') +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.5, color = NA) +
     geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
     geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
     scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
     scale_x_continuous(
       name = 'Year', 
+      limits = c(1990,2015),
       breaks = seq(1990, 2015, 5), 
       minor_breaks = NULL
     ) + 
@@ -261,13 +346,14 @@ plot_reduced_form = function(
       )
     ) +
     geom_hline(yintercept = 0) +
-    geom_vline(xintercept = 1995.5, col = 'black', size = 1, alpha = 1, linetype = 'dashed') +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.5, color = NA) +
     geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
     geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
     scale_y_continuous(name = y_lab, minor_breaks = NULL) +
     scale_x_continuous(
       name = 'Year', 
+      limits = c(1990,2015),
       breaks = seq(1990, 2015, 5), 
       minor_breaks = NULL
     ) + 
@@ -288,6 +374,7 @@ plot_reduced_form = function(
     ggplot(
       data = mod_dt[
         type == '2sls-fs' & 
+        !(year %in% 1990:1991) &
         var_of_interest == TRUE & 
         lhs == outcome_in &
         trt == 'all_yield_diff_percentile_gmo' &
@@ -301,13 +388,14 @@ plot_reduced_form = function(
       )
     ) +
     geom_hline(yintercept = 0) +
-    geom_vline(xintercept = 1995.5, col = 'black', size = 1, alpha = 1, linetype = 'dashed') +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.5, color = NA) +
     geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
     geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
     scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
     scale_x_continuous(
       name = 'Year', 
+      limits = c(1990,2015),
       breaks = seq(1990, 2015, 5), 
       minor_breaks = NULL
     ) + 
@@ -341,13 +429,14 @@ plot_reduced_form = function(
       )
     ) +
     geom_hline(yintercept = 0) +
-    geom_vline(xintercept = 1995.5, col = 'black', size = 1, alpha = 1, linetype = 'dashed') +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.5, color = NA) +
     geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
     geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
     scale_y_continuous(name = y_lab, minor_breaks = NULL) +
     scale_x_continuous(
       name = 'Year', 
+      limits = c(1990,2015),
       breaks = seq(1990, 2015, 5), 
       minor_breaks = NULL
     ) + 
@@ -369,7 +458,9 @@ plot_reduced_form = function(
     ggplot(
       data = mod_dt[
         type == '2sls-fs' & 
-        var_of_interest == TRUE & lhs == outcome_in &
+        !(year %in% 1990:1991) &
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
         fixef_num == 'Add Family FEs' & 
         control_num == 'Pesticides and Unemployment' &
         trt == 'all_yield_diff_percentile_gmo' & 
@@ -384,13 +475,14 @@ plot_reduced_form = function(
       )
     ) +
     geom_hline(yintercept = 0) +
-    geom_vline(xintercept = 1995.5, col = 'black', size = 1, alpha = 1, linetype = 'dashed') +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.5, color = NA) +
     geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
     geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
     scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
     scale_x_continuous(
       name = 'Year', 
+      limits = c(1990,2015),
       breaks = seq(1990, 2015, 5), 
       minor_breaks = NULL
     ) + 
@@ -425,13 +517,14 @@ plot_reduced_form = function(
       )
     ) +
     geom_hline(yintercept = 0) +
-    geom_vline(xintercept = 1995.5, col = 'black', size = 1, alpha = 1, linetype = 'dashed') +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.5, color = NA) +
     geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
     geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
     scale_y_continuous(name = y_lab, minor_breaks = NULL) +
     scale_x_continuous(
       name = 'Year', 
+      limits = c(1990,2015),
       breaks = seq(1990, 2015, 5), 
       minor_breaks = NULL
     ) + 
