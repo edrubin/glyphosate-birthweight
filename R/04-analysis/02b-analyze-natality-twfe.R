@@ -184,6 +184,11 @@
       x = dbwt_pred_pctl_pre,
       breaks = c(0,0.01,0.05,seq(0.1,0.9,0.1),0.95, 0.99,1),
       labels = 1:14, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
+    ),
+    pred_q20 = cut(
+      x = dbwt_pred_pctl_pre,
+      breaks = 20,
+      labels = 1:20, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
     )
   )]
 
@@ -552,7 +557,7 @@
       est_2sls = feols(
         fml = fml_2sls,
         cluster = fml_inf,
-        data = est_dt,
+        data = est_dt[!(year %in% 1990:1991)],
         fsplit = het_split,
         lean = TRUE
       )
@@ -560,7 +565,7 @@
       est_2sls = feols(
         fml = fml_2sls,
         cluster = fml_inf,
-        data = est_dt,
+        data = est_dt[!(year %in% 1990:1991)],
         lean = TRUE
       )
     }
@@ -579,7 +584,7 @@
         est_2sls_ss = feols(
           fml = fml_2sls_ss,
           cluster = fml_inf,
-          data = est_dt,
+          data = est_dt[!(year %in% 1990:1991)],
           fsplit = het_split,
           lean = TRUE
         )
@@ -587,7 +592,7 @@
         est_2sls_ss = feols(
           fml = fml_2sls_ss,
           cluster = fml_inf,
-          data = est_dt,
+          data = est_dt[!(year %in% 1990:1991)],
           lean = TRUE
         )
       }
@@ -698,6 +703,16 @@
 #     iv = 'all_yield_diff_percentile_gmo',
 #     spatial_subset = 'rural',
 #     het_split = 'pred_q14',
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = c(0, 3),
+#     controls = c(0, 3),
+#     clustering = c('year', 'state_fips')
+#   )
+#   # More refined heterogeneity splits: vigintiles
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo',
+#     spatial_subset = 'rural',
+#     het_split = 'pred_q20',
 #     base_fe = c('year_month', 'fips_res', 'fips_occ'),
 #     fes = c(0, 3),
 #     controls = c(0, 3),
