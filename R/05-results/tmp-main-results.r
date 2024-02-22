@@ -210,7 +210,7 @@
   # Build tables of results
   est_rf1_pctl = lapply(
     X = rf1_pctl,
-    FUN = function(i) rf1[[i]] %>% iplot() %$% prms %>% as.data.table()
+    FUN = function(i) rf1[[i]] %>% iplot() %$%  `` %>% as.data.table()
   ) %>% rbindlist(use.names = TRUE, fill = TRUE, idcol = 'spec')
   est_rf1_dbwt = lapply(
     X = rf1_dbwt,

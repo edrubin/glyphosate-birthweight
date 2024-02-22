@@ -8,7 +8,7 @@ library(pacman)
 p_load(
   magrittr, data.table, janitor, tidyr, dplyr, 
   readr, here, stringr, glue, fst, purrr, readxl,
-  tigris, sf
+  tigris, sf, crosswalkr
 )
 options(tigris_use_cache = TRUE)
 
@@ -207,12 +207,12 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
       all.x = TRUE
     ) |>
     merge(
-      all_crop_acre_dt[,-c('state_fips','county_fips')], 
+      all_crop_acre_dt, 
       by = c("GEOID","year"),
       all.x = T
     ) |>
     merge(
-      all_crop_yield_dt[,-c('state_fips','county_fips')], 
+      all_crop_yield_dt, 
       by = c("GEOID","year"),
       all.x = T
     ) |>
@@ -242,7 +242,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
       all.x = T
     ) |>
     merge(
-      all_crop_irrigated_dt[,-c('state_fips','county_fips')],
+      all_crop_irrigated_dt,
       by = c("GEOID","year"),
       all.x = T
     )
@@ -300,6 +300,20 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
     soy_state = state_fips %in% soy_states, 
     soy_county = GEOID %in% soy_counties
   )]
+
+  # Census region and divisions 
+  comb_dt = 
+    merge(
+      comb_dt[,-c('census_region','census_division')],
+      data.table(stcrosswalk)[,.(
+        state_fips = str_pad(stfips, 2, 'left','0'),
+        census_region = cenregnm, 
+        census_division = cendivnm
+      )],
+      by = 'state_fips',
+      all.x = TRUE
+    )
+  comb_dt[,midwest_northeast:= census_region %in% c('Midwest','Northeast')]
 
   if(water_exposure == TRUE){
     # Upstream/downstream Exposure data

@@ -184,6 +184,11 @@
       x = dbwt_pred_pctl_pre,
       breaks = c(0,0.01,0.05,seq(0.1,0.9,0.1),0.95, 0.99,1),
       labels = 1:14, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
+    ),
+    pred_q20 = cut(
+      x = dbwt_pred_pctl_pre,
+      breaks = 20,
+      labels = 1:20, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
     )
   )]
 
@@ -271,6 +276,7 @@
     clustering = c('year', 'state_fips'),
     gly_nonlinear = NULL,
     iv_nonlinear = FALSE,
+    include_ols = FALSE,
     ...
   ) {
 
@@ -506,6 +512,22 @@
       ) %>% as.formula()
     }
 
+    # Formula: OLS 
+    if(include_ols == TRUE){
+      fml_ols = paste(
+        fml_y,
+        ' ~ ',
+        fml_gly,
+        ifelse(
+          !is.null(fml_controls),
+          paste0(' + ', fml_controls),
+          ''
+        ),
+        ' | ',
+        fml_fes
+      ) %>% as.formula()
+    }
+
     # Make folder for the results
     dir_today = here('data', 'results', 'micro')
     dir_today %>% dir.create()
@@ -552,7 +574,7 @@
       est_2sls = feols(
         fml = fml_2sls,
         cluster = fml_inf,
-        data = est_dt,
+        data = est_dt[!(year %in% 1990:1991)],
         fsplit = het_split,
         lean = TRUE
       )
@@ -560,7 +582,7 @@
       est_2sls = feols(
         fml = fml_2sls,
         cluster = fml_inf,
-        data = est_dt,
+        data = est_dt[!(year %in% 1990:1991)],
         lean = TRUE
       )
     }
@@ -579,7 +601,7 @@
         est_2sls_ss = feols(
           fml = fml_2sls_ss,
           cluster = fml_inf,
-          data = est_dt,
+          data = est_dt[!(year %in% 1990:1991)],
           fsplit = het_split,
           lean = TRUE
         )
@@ -587,7 +609,7 @@
         est_2sls_ss = feols(
           fml = fml_2sls_ss,
           cluster = fml_inf,
-          data = est_dt,
+          data = est_dt[!(year %in% 1990:1991)],
           lean = TRUE
         )
       }
@@ -598,6 +620,33 @@
         preset = 'fast'
       )
       rm(est_2sls); invisible(gc())
+    }
+
+    # Estimate OLS 
+    if(include_ols == TRUE){
+      if (!is.null(het_split)) {
+        est_ols = feols(
+          fml = fml_ols,
+          cluster = fml_inf,
+          data = est_dt[!(year %in% 1990:1991)],
+          fsplit = het_split,
+          lean = TRUE
+        )
+      } else {
+        est_ols = feols(
+          fml = fml_ols,
+          cluster = fml_inf,
+          data = est_dt[!(year %in% 1990:1991)],
+          lean = TRUE
+        )
+      }
+      # Save
+      qsave(
+        est_ols,
+        file.path(dir_today, paste0('est_ols', base_name)),
+        preset = 'fast'
+      )
+      rm(est_ols); invisible(gc())
     }
 
     # Return something
@@ -703,6 +752,16 @@
 #     controls = c(0, 3),
 #     clustering = c('year', 'state_fips')
 #   )
+#   # More refined heterogeneity splits: vigintiles
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo',
+#     spatial_subset = 'rural',
+#     het_split = 'pred_q20',
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = c(0, 3),
+#     controls = c(0, 3),
+#     clustering = c('year', 'state_fips')
+#   )
 #   # Heterogeneity by month of birth
 #   est_twfe(
 #     iv = 'all_yield_diff_percentile_gmo',
@@ -757,5 +816,27 @@
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = 0,
     controls = 0,
+    clustering = c('year', 'state_fips')
+  )
+  # Estimate white and nonwhite mothers separately
+  est_twfe(
+    iv = 'all_yield_diff_percentile_gmo',
+    iv_shift = 'glyphosate_nat_100km',
+    spatial_subset = 'rural',
+    het_split = 'i_m_nonwhite',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    fes = 3,
+    controls = 3,
+    clustering = c('year', 'state_fips')
+  )
+  # Estimate midwest and northeast separately
+  est_twfe(
+    iv = 'all_yield_diff_percentile_gmo',
+    iv_shift = 'glyphosate_nat_100km',
+    spatial_subset = 'rural',
+    het_split = 'midwest_northeast',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    fes = 3,
+    controls = 3,
     clustering = c('year', 'state_fips')
   )
