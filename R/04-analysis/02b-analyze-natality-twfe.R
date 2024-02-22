@@ -216,10 +216,10 @@
   )]
   # Summarize terciles
   # end_dt |> qsu(~glyph_km_end_q3)
-  ggplot(data = tmp, aes(x = all_yield_diff_percentile_gmo)) + 
-    geom_histogram() +
-    theme_minimal() +
-    facet_wrap(facets = 'glyph_km_end_q3')
+  # ggplot(data = end_dt, aes(x = all_yield_diff_percentile_gmo)) + 
+  #   geom_histogram() +
+  #   theme_minimal() +
+  #   facet_wrap(facets = 'glyph_km_end_q3')
 # NOTE Of course, GLY/km2 correlates with suitability. Within GLY tercile, there
 #      is some variation in suitability. Not sure it's good variation...
   # Add new variable into county-level dataset
@@ -755,7 +755,7 @@
     spatial_subset = 'rural',
     het_split = NULL,
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = 3,
-    controls = 3,
+    fes = 0,
+    controls = 0,
     clustering = c('year', 'state_fips')
   )
