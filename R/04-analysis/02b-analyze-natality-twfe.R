@@ -269,6 +269,8 @@
     iv = 'all_yield_diff_percentile_gmo',
     iv_shift = NULL,
     spatial_subset = 'rural',
+    county_subset = NULL,
+    county_subset_name = NULL,
     het_split = NULL,
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
@@ -384,6 +386,12 @@
       by.y = c('fips', 'year'),
       all = FALSE
     )
+
+    # Enforce regional subsets (Census regions)
+    if (!is.null(county_subset)) {
+      # Take the implied subset
+      est_dt %<>% .[fips_res %in% county_subset]
+    }
 
     # Build the requested pieces of the formula...
     # Glyph variable 
@@ -537,6 +545,15 @@
       '_fe-', paste0(fes, collapse = ''),
       '_controls-', paste0(controls, collapse = ''),
       '_spatial-', spatial_subset,
+      ifelse(
+        is.null(county_subset),
+        '',
+        ifelse(
+          is.null(county_subset_name),
+          '_county-subset-',
+          paste0('_county-', county_subset_name)
+        )
+      ),
       '_het-', het_split %>% str_remove_all('[^0-9a-z]'),
       '_iv-', iv %>% str_remove_all('[^0-9a-z]'),
       '_cl-', clustering %>% str_remove_all('[^a-z]') %>% paste0(collapse = ''),
@@ -774,36 +791,6 @@
 #   )
 
 
-# # Nonlinearities in glyph effect -----------------------------------------------
-#   # NOTE: These only work for iv = 'all_yield_diff_percentile_gmo' for now
-#   # Quadratic in glyphosate with IV nonlinear as well
-#   est_twfe(
-#     iv = 'all_yield_diff_percentile_gmo',
-#     spatial_subset = 'rural',
-#     het_split = NULL,
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = c(0, 3),
-#     clustering = c('year', 'state_fips'),
-#     gly_nonlinear = 'quadratic',
-#     iv_nonlinear = TRUE
-#   )
-
-
-# # Nonlinearity by GLY percentile -----------------------------------------------
-#   # Instrument: Yield diff percentile GMO
-#   est_twfe(
-#     outcomes = c('dbwt', 'gestation'),
-#     iv = 'all_yield_diff_percentile_gmo',
-#     spatial_subset = 'rural',
-#     het_split = 'glyph_km_end_q3',
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = 3,
-#     controls = 3,
-#     clustering = c('year', 'state_fips')
-#   )
-
-
 # Test changing demographics ---------------------------------------------------
   # Instrument: Yield diff percentile GMO
   est_twfe(
@@ -825,16 +812,47 @@
     spatial_subset = 'rural',
     het_split = 'i_m_nonwhite',
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = 3,
-    controls = 3,
+    fes = c(0, 3),
+    controls = c(0, 3),
     clustering = c('year', 'state_fips')
   )
-  # Estimate midwest and northeast separately
+
+
+# Separate estimates by region -------------------------------------------------
+  # Estimate only for midwest and northeast
   est_twfe(
     iv = 'all_yield_diff_percentile_gmo',
     iv_shift = 'glyphosate_nat_100km',
     spatial_subset = 'rural',
-    het_split = 'midwest_northeast',
+    county_subset =
+      comb_cnty_dt[census_region %in% c('Midwest', 'Northeast'), funique(fips)],
+    county_subset_name = 'mw-ne',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    fes = 3,
+    controls = 3,
+    clustering = c('year', 'state_fips')
+  )
+  # Estimate only for the south
+  est_twfe(
+    iv = 'all_yield_diff_percentile_gmo',
+    iv_shift = 'glyphosate_nat_100km',
+    spatial_subset = 'rural',
+    county_subset =
+      comb_cnty_dt[census_region == 'South', funique(fips)],
+    county_subset_name = 'south',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    fes = 3,
+    controls = 3,
+    clustering = c('year', 'state_fips')
+  )
+  # Estimate only for the south without Florida
+  est_twfe(
+    iv = 'all_yield_diff_percentile_gmo',
+    iv_shift = 'glyphosate_nat_100km',
+    spatial_subset = 'rural',
+    county_subset = 
+      comb_cnty_dt[census_region == 'South' & state_fips != '12', funique(fips)],
+    county_subset_name = 'south-nofl',
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = 3,
     controls = 3,
