@@ -304,7 +304,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
   # Census region and divisions 
   comb_dt = 
     merge(
-      comb_dt[,-c('census_region','census_division')],
+      comb_dt[, -c('census_region', 'census_division')],
       data.table(stcrosswalk)[,.(
         state_fips = str_pad(stfips, 2, 'left','0'),
         census_region = cenregnm, 
@@ -313,7 +313,6 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
       by = 'state_fips',
       all.x = TRUE
     )
-  comb_dt[,midwest_northeast:= census_region %in% c('Midwest','Northeast')]
 
   if(water_exposure == TRUE){
     # Upstream/downstream Exposure data
