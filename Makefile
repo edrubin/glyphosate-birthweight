@@ -72,8 +72,7 @@ cnty-results: \
 # Micro analysis 
 micro-results: \
  $(wildcard $(result-dir)micro/est_rf_*.qs) \
- $(wildcard $(result-dir)micro/est_2sls_*.qs) \
- $(wildcard $(result-dir)micro/est_2sls_ss_*.qs)
+ $(wildcard $(result-dir)micro/est_2sls_*.qs)
 
 # -----------------------------------------------------------------------------
 
@@ -81,8 +80,7 @@ micro-results: \
 
 # Targets for micro analysis 
 $(wildcard $(result-dir)micro/est_rf_*.qs) \
-$(wildcard $(result-dir)micro/est_2sls_*.qs) \
-$(wildcard $(result-dir)micro/est_2sls_ss_*.qs):\
+$(wildcard $(result-dir)micro/est_2sls_*.qs):\
  R/04-analysis/02b-analyze-natality-twfe.R \
  $(clean-dir)comb-cnty-dt.fst \
  $(clean-dir)crop-acre-percentile-90-95.fst \
