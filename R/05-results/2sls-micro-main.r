@@ -66,11 +66,6 @@ p_load(
       list.files(here('data/results/micro'), full.names = TRUE), 
       'controls-0123_spatial-rural_het-_iv-allyielddiffpercentilegmo'
     ))
-  main_spec_ols = 
-    qread(str_subset(
-      mod_paths, 
-      'controls-0123_spatial-rural_het-_iv-allyielddiffpercentilegmo'
-    ))
   # Filtering down to all controls and fixed effects
   main_mod = main_spec[
     fixef = 'mage', 

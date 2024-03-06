@@ -279,6 +279,7 @@
     gly_nonlinear = NULL,
     iv_nonlinear = FALSE,
     include_ols = FALSE,
+    ols_only = FALSE
     ...
   ) {
 
@@ -561,84 +562,85 @@
       '_ivnl-', iv_nonlinear,
       '.qs'
     )
-    # Estimate with or without heterogeneity splits
-    if (!is.null(het_split)) {
-      est_rf = feols(
-        fml = fml_rf,
-        cluster = fml_inf,
-        data = est_dt,
-        fsplit = het_split,
-        lean = TRUE
-      )
-    } else {
-      est_rf = feols(
-        fml = fml_rf,
-        cluster = fml_inf,
-        data = est_dt,
-        lean = TRUE
-      )
-    }
-    # Save
-    qsave(
-      est_rf,
-      file.path(dir_today, paste0('est_rf', base_name)),
-      preset = 'fast'
-    )
-    rm(est_rf); invisible(gc())
-   
-    # Estimate: 2SLS with event study
-    if (!is.null(het_split)) {
-      est_2sls = feols(
-        fml = fml_2sls,
-        cluster = fml_inf,
-        data = est_dt[!(year %in% 1990:1991)],
-        fsplit = het_split,
-        lean = TRUE
-      )
-    } else {
-      est_2sls = feols(
-        fml = fml_2sls,
-        cluster = fml_inf,
-        data = est_dt[!(year %in% 1990:1991)],
-        lean = TRUE
-      )
-    }
-
-    # Save
-    qsave(
-      est_2sls,
-      file.path(dir_today, paste0('est_2sls', base_name)),
-      preset = 'fast'
-    )
-    rm(est_2sls); invisible(gc())
-
-    # Estimate: 2SLS with shift share (if iv_shift is defined)
-    if (!is.null(iv_shift)) {
+    if(ols_only == FALSE){
+      # Estimate with or without heterogeneity splits
       if (!is.null(het_split)) {
-        est_2sls_ss = feols(
-          fml = fml_2sls_ss,
+        est_rf = feols(
+          fml = fml_rf,
+          cluster = fml_inf,
+          data = est_dt,
+          fsplit = het_split,
+          lean = TRUE
+        )
+      } else {
+        est_rf = feols(
+          fml = fml_rf,
+          cluster = fml_inf,
+          data = est_dt,
+          lean = TRUE
+        )
+      }
+      # Save
+      qsave(
+        est_rf,
+        file.path(dir_today, paste0('est_rf', base_name)),
+        preset = 'fast'
+      )
+      rm(est_rf); invisible(gc())
+    
+      # Estimate: 2SLS with event study
+      if (!is.null(het_split)) {
+        est_2sls = feols(
+          fml = fml_2sls,
           cluster = fml_inf,
           data = est_dt[!(year %in% 1990:1991)],
           fsplit = het_split,
           lean = TRUE
         )
       } else {
-        est_2sls_ss = feols(
-          fml = fml_2sls_ss,
+        est_2sls = feols(
+          fml = fml_2sls,
           cluster = fml_inf,
           data = est_dt[!(year %in% 1990:1991)],
           lean = TRUE
         )
       }
+
       # Save
       qsave(
-        est_2sls_ss,
-        file.path(dir_today, paste0('est_2sls_ss', base_name)),
+        est_2sls,
+        file.path(dir_today, paste0('est_2sls', base_name)),
         preset = 'fast'
       )
       rm(est_2sls); invisible(gc())
-    }
 
+      # Estimate: 2SLS with shift share (if iv_shift is defined)
+      if (!is.null(iv_shift)) {
+        if (!is.null(het_split)) {
+          est_2sls_ss = feols(
+            fml = fml_2sls_ss,
+            cluster = fml_inf,
+            data = est_dt[!(year %in% 1990:1991)],
+            fsplit = het_split,
+            lean = TRUE
+          )
+        } else {
+          est_2sls_ss = feols(
+            fml = fml_2sls_ss,
+            cluster = fml_inf,
+            data = est_dt[!(year %in% 1990:1991)],
+            lean = TRUE
+          )
+        }
+        # Save
+        qsave(
+          est_2sls_ss,
+          file.path(dir_today, paste0('est_2sls_ss', base_name)),
+          preset = 'fast'
+        )
+        rm(est_2sls); invisible(gc())
+      }
+    }
     # Estimate OLS 
     if(include_ols == TRUE){
       if (!is.null(het_split)) {
@@ -793,69 +795,84 @@
 
 
 # Test changing demographics ---------------------------------------------------
-  # Instrument: Yield diff percentile GMO
+#   # Instrument: Yield diff percentile GMO
+#   est_twfe(
+#     outcomes = c(
+#       'i_female', 'i_m_black', 'i_m_nonwhite', 'i_m_hispanic', 'i_m_married'
+#     ),
+#     iv = 'all_yield_diff_percentile_gmo',
+#     spatial_subset = 'rural',
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = 0,
+#     controls = 0,
+#     clustering = c('year', 'state_fips')
+#   )
+#   # Estimate white and nonwhite mothers separately
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo',
+#     iv_shift = 'glyphosate_nat_100km',
+#     spatial_subset = 'rural',
+#     het_split = 'i_m_nonwhite',
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = c(0, 3),
+#     controls = c(0, 3),
+#     clustering = c('year', 'state_fips')
+#   )
+
+
+# # Separate estimates by region -------------------------------------------------
+#   # Estimate only for midwest and northeast
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo',
+#     iv_shift = 'glyphosate_nat_100km',
+#     spatial_subset = 'rural',
+#     county_subset =
+#       comb_cnty_dt[census_region %in% c('Midwest', 'Northeast'), funique(fips)],
+#     county_subset_name = 'mw-ne',
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = 3,
+#     controls = 3,
+#     clustering = c('year', 'state_fips')
+#   )
+#   # Estimate only for the south
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo',
+#     iv_shift = 'glyphosate_nat_100km',
+#     spatial_subset = 'rural',
+#     county_subset =
+#       comb_cnty_dt[census_region == 'South', funique(fips)],
+#     county_subset_name = 'south',
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = 3,
+#     controls = 3,
+#     clustering = c('year', 'state_fips')
+#   )
+#   # Estimate only for the south without Florida
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo',
+#     iv_shift = 'glyphosate_nat_100km',
+#     spatial_subset = 'rural',
+#     county_subset = 
+#       comb_cnty_dt[census_region == 'South' & state_fips != '12', funique(fips)],
+#     county_subset_name = 'south-nofl',
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = 3,
+#     controls = 3,
+#     clustering = c('year', 'state_fips')
+#   )
+
+
+# Just the OLS model ----------------------------------------------------------
   est_twfe(
-    outcomes = c(
-      'i_female', 'i_m_black', 'i_m_nonwhite', 'i_m_hispanic', 'i_m_married'
-    ),
     iv = 'all_yield_diff_percentile_gmo',
+    iv_shift = NULL,
     spatial_subset = 'rural',
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = 0,
-    controls = 0,
-    clustering = c('year', 'state_fips')
-  )
-  # Estimate white and nonwhite mothers separately
-  est_twfe(
-    iv = 'all_yield_diff_percentile_gmo',
-    iv_shift = 'glyphosate_nat_100km',
-    spatial_subset = 'rural',
-    het_split = 'i_m_nonwhite',
+    het_split = pred_q5,
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = c(0, 3),
-    controls = c(0, 3),
-    clustering = c('year', 'state_fips')
-  )
-
-
-# Separate estimates by region -------------------------------------------------
-  # Estimate only for midwest and northeast
-  est_twfe(
-    iv = 'all_yield_diff_percentile_gmo',
-    iv_shift = 'glyphosate_nat_100km',
-    spatial_subset = 'rural',
-    county_subset =
-      comb_cnty_dt[census_region %in% c('Midwest', 'Northeast'), funique(fips)],
-    county_subset_name = 'mw-ne',
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = 3,
-    controls = 3,
-    clustering = c('year', 'state_fips')
-  )
-  # Estimate only for the south
-  est_twfe(
-    iv = 'all_yield_diff_percentile_gmo',
-    iv_shift = 'glyphosate_nat_100km',
-    spatial_subset = 'rural',
-    county_subset =
-      comb_cnty_dt[census_region == 'South', funique(fips)],
-    county_subset_name = 'south',
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = 3,
-    controls = 3,
-    clustering = c('year', 'state_fips')
-  )
-  # Estimate only for the south without Florida
-  est_twfe(
-    iv = 'all_yield_diff_percentile_gmo',
-    iv_shift = 'glyphosate_nat_100km',
-    spatial_subset = 'rural',
-    county_subset = 
-      comb_cnty_dt[census_region == 'South' & state_fips != '12', funique(fips)],
-    county_subset_name = 'south-nofl',
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = 3,
-    controls = 3,
-    clustering = c('year', 'state_fips')
+    controls = 0:3,
+    clustering = c('year', 'state_fips'),
+    include_ols = TRUE,
+    only_ols = TRUE
   )
