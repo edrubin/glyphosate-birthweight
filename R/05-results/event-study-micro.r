@@ -26,7 +26,8 @@ fs_coeftable = function(i, mod_2sls){
     lhs = mod_2sls[[i]]$model_info$lhs, 
     rhs = paste0(
       mod_2sls[[i]]$iv_inst_names, " + ",
-      mod_2sls[[i]]$model_info$rhs
+      #mod_2sls[[i]]$model_info$rhs
+      as.character(mod_2sls[[i]]$fml_all$linear)[3]
     ),
     sample_var = ifelse(
       is.null(mod_2sls[[i]]$model_info$sample), 
@@ -113,8 +114,9 @@ extract_event_study_coefs = function(mod_path){
     )
   # Adding info from filename 
   mod_dt[,':='(
-    spatial = str_extract(mod_path, '(?<=_spatial-).*(?=_het)'),
-    cluster = str_extract(mod_path, '(?<=_cl-).*(?=_glynl)')
+    spatial = str_extract(mod_path, '(?<=_spatial-)[a-zA-Z-]+(?=_)'),
+    cluster = str_extract(mod_path, '(?<=_cl-)[a-zA-Z-]+(?=_)'),
+    county_subset = str_extract(mod_path, '(?<=_county-)[a-zA-Z-]+(?=_)')
   )]
   # Some cleaning of fixef names
   mod_dt[,':='(
@@ -141,7 +143,28 @@ extract_event_study_coefs = function(mod_path){
       trt == 'all_yield_diff_percentile_gmo_max', 'Attainable Yield, GM Max Percentile',
       trt == 'e100m_yield_diff_percentile_gmo', 'Attainable Yield, GM Avg Percentile, Eastern US',
       trt == 'percentile_gm_acres','1990-1995 GM Acreage Percentile'
-    )
+    ),
+    county_subset = fcase(
+      county_subset == 'mw-ne', 'Midwest and Northeast',
+      county_subset == 'south', 'South',
+      county_subset == 'south-nofl', 'South, no FL'
+    ),
+    lhs_name = fcase(
+      lhs == 'dbwt', 'Birthweight (g)',
+      lhs == 'any_anomaly', 'Pr(Any Anomaly)',
+      lhs == 'c_section', 'Pr(C Section)',
+      lhs == 'dbwt_pctl_pre', 'Birthweight Percentile',
+      lhs == 'dbwt_pred', 'Predicted Birthweight (g)',
+      lhs == 'gestation', 'Gestation (weeks)',
+      lhs == 'i_lbw', 'Pr(Low Birthweight)',
+      lhs == 'i_vlbw', 'Pr(Very Low Birthweight)',
+      lhs == 'i_preterm', 'Pr(Preterm)',
+      lhs == 'i_female', 'Pr(Female)',
+      lhs == 'i_m_black', 'Pr(Mother Black)',
+      lhs == 'i_m_nonwhite', 'Pr(Mother Non-white)',
+      lhs == 'i_m_hispanic', 'Pr(Mother Hispanic)',
+      lhs == 'i_m_married', 'Pr(Mother Married)'
+    ) 
   )]
   # return the results 
   return(mod_dt)
@@ -151,6 +174,7 @@ extract_event_study_coefs = function(mod_path){
 plot_reduced_form = function(
   outcome_in, mod_dt, print = FALSE, width_in = 6, height_in = 3, pink = '#e64173'
 ){
+  print(paste('Starting', outcome_in))
   # Making outcome labels and scales 
   y_lab = fcase(
     outcome_in == 'dbwt', 'Birthweight (g)',
@@ -173,14 +197,14 @@ plot_reduced_form = function(
   fs_event_main_dt = 
     mod_dt[
       type == '2sls-fs' & 
-      !(year %in% 1990:1991) &
       var_of_interest == TRUE & 
       lhs == outcome_in &
       fixef_num == 'Add Family FEs' & 
       control_num == 'Pesticides and Unemployment' &
       trt == 'all_yield_diff_percentile_gmo' & 
       spatial == 'rural' &
-      paste0(sample_var, sample) == 'NANA'
+      paste0(sample_var, sample) == 'NANA' & 
+      is.na(county_subset)
     ]
   if(nrow(fs_event_main_dt) > 0){
     fs_event_p = 
@@ -219,7 +243,8 @@ plot_reduced_form = function(
       control_num == 'Pesticides and Unemployment' &
       trt == 'all_yield_diff_percentile_gmo' & 
       spatial == 'rural' &
-      paste0(sample_var, sample) == 'NANA'
+      paste0(sample_var, sample) == 'NANA' & 
+      is.na(county_subset)
     ]
   if(nrow(rf_event_main_dt)>0){
     rf_event_p = 
@@ -258,7 +283,8 @@ plot_reduced_form = function(
       control_num == 'None' &
       trt == 'all_yield_diff_percentile_gmo' & 
       spatial == 'rural' &
-      paste0(sample_var, sample) == 'NANA'
+      paste0(sample_var, sample) == 'NANA'& 
+      is.na(county_subset)
     ]
   if(nrow(rf_event_nc_dt)>0){
     rf_event_nc_p = 
@@ -292,14 +318,14 @@ plot_reduced_form = function(
     ggplot(
       data = mod_dt[
         type == '2sls-fs' & 
-        !(year %in% 1990:1991) &
         var_of_interest == TRUE & 
         lhs == outcome_in &
         fixef_num == 'Add Family FEs' & 
         control_num == 'Pesticides and Unemployment' &
         trt != 'percentile_gm_acres' & 
         spatial == 'rural' &
-        paste0(sample_var, sample) == 'NANA'
+        paste0(sample_var, sample) == 'NANA'& 
+        is.na(county_subset)
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -337,7 +363,8 @@ plot_reduced_form = function(
         type == 'rf' & var_of_interest == TRUE & lhs == outcome_in &
         fixef_num == 'Add Family FEs' & control_num == 'Pesticides and Unemployment' &
         trt != 'percentile_gm_acres' & spatial == 'rural' &
-        paste0(sample_var, sample) == 'NANA'
+        paste0(sample_var, sample) == 'NANA' & 
+      is.na(county_subset)
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -374,12 +401,12 @@ plot_reduced_form = function(
     ggplot(
       data = mod_dt[
         type == '2sls-fs' & 
-        !(year %in% 1990:1991) &
         var_of_interest == TRUE & 
         lhs == outcome_in &
         trt == 'all_yield_diff_percentile_gmo' &
         spatial == 'rural' &
-        paste0(sample_var, sample) == 'NANA'
+        paste0(sample_var, sample) == 'NANA' & 
+        is.na(county_subset)
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -420,7 +447,8 @@ plot_reduced_form = function(
         lhs == outcome_in &
         trt == 'all_yield_diff_percentile_gmo' &
         spatial == 'rural' &
-        paste0(sample_var, sample) == 'NANA'
+        paste0(sample_var, sample) == 'NANA' & 
+        is.na(county_subset)
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -453,12 +481,98 @@ plot_reduced_form = function(
     )), 
     width = width_in*1.75, height = height_in*2
   )
+  # Now for County Subset robustness
+  fs_event_cntysub_p = 
+    ggplot(
+      data = mod_dt[
+        type == '2sls-fs' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        fixef_num == 'Add Family FEs' & 
+        control_num == 'Pesticides and Unemployment' &
+        trt == 'all_yield_diff_percentile_gmo' & 
+        spatial == 'rural' &
+        paste0(sample_var, sample) == 'NANA' & 
+        !is.na(county_subset)
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = county_subset, 
+        fill = county_subset
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_brewer(
+      name = 'County Subset', palette = 'Dark2',
+      aesthetics = c('color','fill')
+    )
+  if(print) print(fs_event_cntysub_p)
+  ggsave(
+    fs_event_cntrl_p, 
+    filename = here(paste0(
+      'figures/micro/fs-event/robust-cntysub-',outcome_in,'.jpeg'
+    )), 
+    width = width_in*1.75, height = height_in
+  )
+  rf_event_cntysub_p = 
+    ggplot(
+      data =mod_dt[
+        type == 'rf' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        fixef_num == 'Add Family FEs' & 
+        control_num == 'Pesticides and Unemployment' &
+        trt == 'all_yield_diff_percentile_gmo' & 
+        spatial == 'rural' &
+        paste0(sample_var, sample) == 'NANA' & 
+        !is.na(county_subset)
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = county_subset, 
+        fill = county_subset
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    scale_y_continuous(name = y_lab, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_brewer(
+      name = 'County Subset', palette = 'Dark2',
+      aesthetics = c('color','fill')
+    ) 
+  if(print) print(rf_event_cntysub_p)
+  ggsave(
+    rf_event_cntysub_p, 
+    filename = here(paste0(
+      'figures/micro/rf-event/robust-cntysub-',outcome_in,'.jpeg'
+    )), 
+    width = width_in*1.75, height = height_in
+  )
   # Now for Heterogeneity by pred bw
   fs_event_het_predbw_p = 
     ggplot(
       data = mod_dt[
         type == '2sls-fs' & 
-        !(year %in% 1990:1991) &
         var_of_interest == TRUE & 
         lhs == outcome_in &
         fixef_num == 'Add Family FEs' & 
@@ -466,7 +580,8 @@ plot_reduced_form = function(
         trt == 'all_yield_diff_percentile_gmo' & 
         spatial == 'rural' &
         sample_var == 'pred_q5' & 
-        sample != 'Full sample'
+        sample != 'Full sample' & 
+        is.na(county_subset)
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -508,7 +623,8 @@ plot_reduced_form = function(
         trt == 'all_yield_diff_percentile_gmo' & 
         spatial == 'rural' &
         sample_var == 'pred_q5' & 
-        sample != 'Full sample'
+        sample != 'Full sample' & 
+        is.na(county_subset)
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -543,6 +659,49 @@ plot_reduced_form = function(
   return(paste('Done', outcome_in))
 }
 
+# Function to plot many outcomes at once --------------------------------------
+plot_results_faceted_outcomes = function(mod_dt){
+  rf_event_main_dt = 
+    mod_dt[
+      type == 'rf' & 
+      lhs != 'dbwt' &
+      var_of_interest == TRUE & 
+      fixef_num == 'Add Family FEs' & 
+      control_num == 'Pesticides and Unemployment' &
+      trt == 'all_yield_diff_percentile_gmo' & 
+      spatial == 'rural' &
+      paste0(sample_var, sample) == 'NANA' & 
+      is.na(county_subset )
+    ]
+  if(nrow(rf_event_main_dt)>0){
+    rf_event_p = 
+      ggplot(
+        data = rf_event_main_dt,
+        aes(x = year, y = estimate, ymin = ci_l, ymax = ci_h)
+      ) +
+      geom_hline(yintercept = 0) +
+      geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+      geom_ribbon(fill = pink, alpha = 0.5) +
+      geom_point(color = pink, size = 2.5) +
+      geom_line(linewidth = 0.3, color = pink) +
+      scale_y_continuous(name = '', minor_breaks = NULL) +
+      scale_x_continuous(
+        name = 'Year', 
+        limits = c(1990,2015),
+        breaks = seq(1990, 2015, 5), 
+        minor_breaks = NULL
+      ) +
+      facet_wrap(~lhs_name,ncol = 2, scales = 'free_y')
+    if(print) print(rf_event_p)
+    ggsave(
+      rf_event_p, 
+      filename = here(paste0(
+        'figures/micro/rf-event/main-all-other-lhs.jpeg'
+      )), 
+      width = width_in*1.5, height = height_in*2.75
+    )
+  }
+}
 
 # Now we can run the functions ------------------------------------------------
 theme_set(
@@ -564,3 +723,4 @@ lapply(
   plot_reduced_form, 
   mod_dt = mod_dt
 )
+plot_results_faceted_outcomes(mod_dt)

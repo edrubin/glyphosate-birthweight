@@ -63,6 +63,11 @@ p_load(
 # First the main table: Main spec with different outcomes ---------------------
   main_spec = 
     qread(str_subset(
+      list.files(here('data/results/micro'), full.names = TRUE), 
+      'controls-0123_spatial-rural_het-_iv-allyielddiffpercentilegmo'
+    ))
+  main_spec_ols = 
+    qread(str_subset(
       mod_paths, 
       'controls-0123_spatial-rural_het-_iv-allyielddiffpercentilegmo'
     ))
@@ -157,7 +162,9 @@ p_load(
       '__GLY/$km^2$ effect at mean' = effect_at_mean_dt$effect_at_mean
     )
   ) |> write(here('tables/2sls/main-outcomes-cntrl-coefs.tex'))
+  # Main table with OLS estimates 
   
+
 # Function to make robustness tables for each outcome -------------------------
 # Make control table for one outcome 
 make_outcome_control_table = function(outcome_in, mod, trt, spatial){

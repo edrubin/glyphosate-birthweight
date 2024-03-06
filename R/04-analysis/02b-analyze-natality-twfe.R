@@ -681,7 +681,8 @@
 #     base_fe = c('year_month', 'fips_res', 'fips_occ'),
 #     fes = c(0, 3),
 #     controls = 0:3,
-#     clustering = c('year', 'state_fips')
+#     clustering = c('year', 'state_fips'),
+#     include_ols = TRUE
 #   )
 #   # Instrument: Yield diff percentile GMO, east of 100th meridian
 #   est_twfe(

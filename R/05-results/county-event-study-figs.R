@@ -63,7 +63,7 @@ make_cnty_event_study_figs = function(rural_in){
     # Getting everything into a nice table 
     coef_dt = 
       rbind(
-        data.table(coeftable(main_event_mods, se= 'het')),#cluster = ~GEOID + year)),
+        data.table(coeftable(main_event_mods, cluster = ~state_fips + year)),
         use.names = TRUE,
         fill = TRUE
       ) |>
@@ -78,8 +78,8 @@ make_cnty_event_study_figs = function(rural_in){
     # Getting everything into a nice table 
     coef_dt = 
       rbind(
-        data.table(coeftable(main_event_mods, se= 'het')),#cluster = ~GEOID + year)),
-        data.table(coeftable(alt_event_mods, se= 'het')),#cluster = ~GEOID + year)),
+        data.table(coeftable(main_event_mods, cluster = ~state_fips + year)),
+        data.table(coeftable(alt_event_mods, cluster = ~state_fips + year)),
         use.names = TRUE,
         fill = TRUE
       ) |>
@@ -168,8 +168,7 @@ make_cnty_event_study_figs = function(rural_in){
       theme_minimal(base_size = 16) + 
       labs(
         x = 'Year', 
-        y = 'Estimate and 95% CI', 
-        caption= 'Standard errors clustered by county and year.'
+        y = 'Estimate and 95% CI'
       ) + 
       facet_wrap(~lhs_n)
     pest_fs_p
