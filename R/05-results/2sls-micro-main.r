@@ -62,10 +62,11 @@ p_load(
 
 # First the main table: Main spec with different outcomes ---------------------
   main_spec = 
-    qread(str_subset(
-      list.files(here('data/results/micro'), full.names = TRUE), 
-      'controls-0123_spatial-rural_het-_iv-allyielddiffpercentilegmo'
-    ))
+    qread(
+      list.files(here('data/results/micro'), full.names = TRUE) |>
+      str_subset('est_2sls_outcome') |>
+      str_subset('controls-0123_spatial-rural_het-_iv-allyielddiffpercentilegmo')
+    )
   # Filtering down to all controls and fixed effects
   main_mod = main_spec[
     fixef = 'mage', 
@@ -126,7 +127,8 @@ p_load(
     extralines = list(
       '__2012 mean' = effect_at_mean_dt$mean,
       '__Effect at mean' = effect_at_mean_dt$effect_at_mean
-    )
+    ),
+    label = 'tab:main-outcomes'
   ) |> write(here('tables/2sls/main-outcomes.tex'))
 
 # Appendix tables -------------------------------------------------------------
@@ -254,6 +256,73 @@ make_control_robust_tables = function(mod_path){
     spatial = spatial
   )
 }
+
+# Table for shift-share estimation 
+  main_spec_ss = qread(str_subset(
+    list.files(here('data/results/micro'), full.names = TRUE),
+    'est_2sls_ss'
+  )[1])
+  main_mod_ss = main_spec_ss[
+      fixef = 'mage', 
+      rhs = 'nicosulfuron_km2 \\+ unemployment',
+      lhs = '^dbwt$|dbwt_pctl|i_lbw|i_vlbw|preterm|section|gest'
+    ]
+  # Calculating effect at GLY mean
+  effect_at_mean_dt_ss = 
+    data.table(coeftable(main_mod_ss, keep = 'glyph'))[,.(
+      i = .I,
+      lhs, 
+      effect_at_mean = Estimate*mean_dt[
+          year == 2012 & variable == 'glyph_km2'
+        ]$value
+    )]
+  # Merging with mean of each outcome 
+  effect_at_mean_dt_ss = 
+    merge(
+      effect_at_mean_dt_ss[,-'mean'], 
+      mean_dt[
+        (year == 2012 & variable != 'any_anomaly') | 
+        (year == 2003 & variable == 'any_anomaly'),
+        .(variable, mean = value)
+      ],
+      by.x = 'lhs', 
+      by.y = 'variable',
+      all.x = TRUE
+    )[order(i)]
+  etable(
+    main_mod_ss,
+    tex = TRUE,
+    style.tex = style.tex(
+      depvar.title = 'Dep Var',
+      model.format = "", 
+      line.top = 'simple',
+      line.bottom = 'simple',
+      var.title = '\\midrule'
+    ),
+    se.below = TRUE,
+    keep = 'GLY',
+    digits = 3,
+    signif.code = NA,
+    group = list(
+      '^_Local pesticides' = 'Nicosulfuron',
+      '^_Unemployment' = 'Unemp'
+    ),
+    fixef.group = list(
+      '-^Yr x Mo + Cnty' = 'year_month|fips',
+      '-^Family Demog' = 'age|sex|race|hisp|birth|mar|educ|restatus'
+    ),
+    se.row = FALSE,
+    fitstat = ~n_millions,
+    digits.stats = 4,
+    tpt = TRUE,
+    notes = "Sample restricted to births from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
+    extralines = list(
+      '__2012 mean' = effect_at_mean_dt_ss$mean,
+      '__Effect at mean' = effect_at_mean_dt_ss$effect_at_mean
+    ),
+    label = 'tab:main-outcomes-ss'
+  ) |> write(here('tables/2sls/main-outcomes-ss.tex'))
+
 
 # Running control tables for all estimations
 mod_paths = 

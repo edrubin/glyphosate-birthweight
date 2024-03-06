@@ -212,7 +212,8 @@ plot_predbw_results = function(
         trt == 'allyielddiffpercentilegmo' &
         fixef_num == 'Mother and Father FEs' & 
         control_num == 'Pesticides and Unemployment' & 
-        sample_var != 'month'
+        sample_var != 'month' & 
+        sample_var != 'pred_q14'
       ], 
       aes(
         x = pctl, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -414,7 +415,92 @@ plot_predbw_results = function(
     width = width_in*1.25, height = height_in
   )
 }  
-  
+
+# Function to make plots with all outcomes that are faceted -------------------
+plot_predbw_results_all_outcome = function(
+  pctl_est_dt, print = TRUE, width_in = 6, height_in = 4
+){
+  all_splits_p = 
+    ggplot(
+      data = pctl_est_dt[
+        var_of_interest == TRUE & 
+        trt == 'allyielddiffpercentilegmo' &
+        fixef_num == 'Mother and Father FEs' & 
+        control_num == 'Pesticides and Unemployment' & 
+        sample_var != 'month' & 
+        sample_var != 'pred_q14' &
+        lhs != 'dbwt_pred'
+      ], 
+      aes(
+        x = pctl, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = str_remove(sample_var, 'pred_q')|> as.integer() |> as.factor(), 
+        fill  = str_remove(sample_var, 'pred_q')|> as.integer() |> as.factor()
+      ),
+    ) + 
+    geom_hline(yintercept = 0) +
+    geom_ribbon(alpha = 0.3, color = NA) + 
+    geom_line() +
+    scale_color_brewer(
+      'Number of Pred BW Bins', 
+      palette = "Dark2",
+      aesthetics = c('color','fill')
+    ) +
+    scale_x_continuous(
+      name = 'Predicted Birthweight Percentile',
+      labels = scales::label_percent()
+    ) +
+    scale_y_continuous(name = 'Maringal Effect') + 
+    theme(
+      panel.grid.minor = element_blank(),
+      legend.position = 'bottom',
+      strip.text = element_text(size = 16)
+    ) + 
+    facet_wrap(~lhs_name, ncol = 2, scales = 'free_y')
+  if(print) print(all_splits_p)
+  ggsave(
+    plot = all_splits_p,
+    filename = here(paste0(
+      'figures/micro/2sls/all-splits-all-outcomes.jpeg'
+    )),
+    width = width_in*1.5, height = height_in*2.75
+  )
+  # Now for heterogeneity by month of birth 
+  month_p = 
+    ggplot(
+      data = pctl_est_dt[
+        lhs != 'dbwt_pred' & 
+        trt == 'allyielddiffpercentilegmo' &
+        sample_var == 'month' & 
+        var_of_interest == TRUE & 
+        fixef_num == 'Mother and Father FEs' & 
+        control_num == 'Pesticides and Unemployment' & 
+        sample != 'Full sample'
+      ], 
+      aes(x = as.integer(sample), y = estimate, ymin = ci_l, ymax = ci_h),
+    ) + 
+    geom_hline(yintercept = 0) +
+    geom_ribbon(alpha = 0.3, color = NA) + 
+    geom_point() + 
+    geom_line() +
+    scale_x_continuous(
+      name = 'Month of Birth',
+      breaks = 1:12
+    ) +
+    scale_y_continuous(name = 'Maringal Effect') + 
+    theme(
+      panel.grid.minor = element_blank(),
+      strip.text = element_text(size = 16)
+    ) +
+    facet_wrap(~lhs_name, scales = 'free_y', ncol = 2)
+  if(print) print(month_p)
+  ggsave(
+    plot = month_p,
+    filename = here(paste0(
+      'figures/micro/2sls/month-all-outcomes.jpeg'
+    )),
+    width = width_in*1.5, height = height_in*2.75
+  )
+}
 
 # Making all of the plots! ----------------------------------------------------
 theme_set(theme_minimal(base_size = 12))
@@ -442,7 +528,23 @@ pctl_est_dt =
 # Calculating effect at mean 
 pctl_est_dt[,':='(
   effect_at_mean_l = ci_l*mean_dt[year == 2012 & variable == 'glyph_km2']$value,
-  effect_at_mean = estimate*mean_dt[year == 2012 & variable == 'glyph_km2']$value,effect_at_mean_h = ci_h*mean_dt[year == 2012 & variable == 'glyph_km2']$value
+  effect_at_mean = estimate*mean_dt[year == 2012 & variable == 'glyph_km2']$value,effect_at_mean_h = ci_h*mean_dt[year == 2012 & variable == 'glyph_km2']$value,
+  lhs_name = fcase(
+    lhs == 'dbwt', 'Birthweight (g)',
+    lhs == 'any_anomaly', 'Pr(Any Anomaly)',
+    lhs == 'c_section', 'Pr(C Section)',
+    lhs == 'dbwt_pctl_pre', 'Birthweight Percentile',
+    lhs == 'dbwt_pred', 'Predicted Birthweight (g)',
+    lhs == 'gestation', 'Gestation (weeks)',
+    lhs == 'i_lbw', 'Pr(Low Birthweight)',
+    lhs == 'i_vlbw', 'Pr(Very Low Birthweight)',
+    lhs == 'i_preterm', 'Pr(Preterm)',
+    lhs == 'i_female', 'Pr(Female)',
+    lhs == 'i_m_black', 'Pr(Mother Black)',
+    lhs == 'i_m_nonwhite', 'Pr(Mother Non-white)',
+    lhs == 'i_m_hispanic', 'Pr(Mother Hispanic)',
+    lhs == 'i_m_married', 'Pr(Mother Married)'
+  ) 
 )]
 # Making the plots 
 lapply(
@@ -453,3 +555,4 @@ lapply(
   width_in = 6*1.05, 
   height_in = 4*1.05
 )
+plot_predbw_results_all_outcome(pctl_est_dt)

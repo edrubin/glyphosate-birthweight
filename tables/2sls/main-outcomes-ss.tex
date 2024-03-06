@@ -1,0 +1,30 @@
+\begin{table}[htbp]
+   \centering
+   \begin{threeparttable}[b]
+      \caption{\label{tab:main-outcomes-ss} no title}
+      \begin{tabular}{lccccccc}
+         \toprule
+         Dep Var          & BW      & BW Pctl & Low BW  & Very Low BW & Gestation & Preterm & C-section\\  
+         Model:           & (1)     & (2)     & (3)     & (4)         & (5)       & (6)     & (7)\\  
+         \midrule 
+         GLY/$km^2$       & -870.5  & -0.442  & 0.205   & 0.049       & -5.49     & 0.622   & 0.130\\   
+                          & (305.7) & (0.158) & (0.072) & (0.017)     & (1.47)    & (0.224) & (0.187)\\   
+         Local pesticides & Yes     & Yes     & Yes     & Yes         & Yes       & Yes     & Yes\\  
+         Unemployment     & Yes     & Yes     & Yes     & Yes         & Yes       & Yes     & Yes\\  
+         \midrule
+         \emph{Fixed-effects}\\
+         Family Demog     & Yes     & Yes     & Yes     & Yes         & Yes       & Yes     & Yes\\  
+         Yr x Mo + Cnty   & Yes     & Yes     & Yes     & Yes         & Yes       & Yes     & Yes\\  
+         \midrule
+         \emph{Fit statistics}\\
+         N (millions)     & 10.73   & 10.73   & 10.73   & 10.73       & 10.71     & 10.71   & 9.510\\  
+         2012 mean        & 3,271.1 &         & 0.081   & 0.014       & 38.6      & 0.207   & 0.278\\  
+         Effect at mean   & -20.3   & -0.010  & 0.005   & 0.001       & -0.128    & 0.015   & 0.003\\  
+         \midrule
+         \multicolumn{8}{l}{\emph{Clustered (Year \& State) standard-errors in parentheses}}\\
+      \end{tabular}
+      
+      \begin{tablenotes}\item Sample restricted to births from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.
+      \end{tablenotes}
+   \end{threeparttable}
+\end{table}

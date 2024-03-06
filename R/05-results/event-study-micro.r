@@ -660,7 +660,8 @@ plot_reduced_form = function(
 }
 
 # Function to plot many outcomes at once --------------------------------------
-plot_results_faceted_outcomes = function(mod_dt){
+plot_results_faceted_outcomes = function(mod_dt, print = FALSE, width_in = 6, height_in = 3, pink = '#e64173'){
+  # First the main results
   rf_event_main_dt = 
     mod_dt[
       type == 'rf' & 
@@ -691,12 +692,110 @@ plot_results_faceted_outcomes = function(mod_dt){
         breaks = seq(1990, 2015, 5), 
         minor_breaks = NULL
       ) +
-      facet_wrap(~lhs_name,ncol = 2, scales = 'free_y')
+      facet_wrap(~lhs_name,ncol = 2, scales = 'free_y') + 
+      theme(strip.text = element_text(size = 16))
     if(print) print(rf_event_p)
     ggsave(
       rf_event_p, 
       filename = here(paste0(
         'figures/micro/rf-event/main-all-other-lhs.jpeg'
+      )), 
+      width = width_in*1.5, height = height_in*2.75
+    )
+  }
+  # Now the demographic outcomes
+  rf_event_demog_dt = 
+    mod_dt[
+      type == 'rf' & 
+      lhs %in% c(
+        'dbwt_pred','i_m_black','i_m_hispanic','i_m_married','i_m_nonwhite','i_female'
+      ) &
+      var_of_interest == TRUE & 
+      fixef_num == "No Add'l FEs" & 
+      control_num == 'None' &
+      trt == 'all_yield_diff_percentile_gmo' & 
+      spatial == 'rural' &
+      paste0(sample_var, sample) == 'NANA' & 
+      is.na(county_subset)
+    ]
+  if(nrow(rf_event_demog_dt)>0){
+    rf_event_demog_p = 
+      ggplot(
+        data = rf_event_demog_dt,
+        aes(x = year, y = estimate, ymin = ci_l, ymax = ci_h)
+      ) +
+      geom_hline(yintercept = 0) +
+      geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+      geom_ribbon(fill = pink, alpha = 0.5) +
+      geom_point(color = pink, size = 2.5) +
+      geom_line(linewidth = 0.3, color = pink) +
+      scale_y_continuous(name = '', minor_breaks = NULL) +
+      scale_x_continuous(
+        name = 'Year', 
+        limits = c(1990,2015),
+        breaks = seq(1990, 2015, 5), 
+        minor_breaks = NULL
+      ) +
+      facet_wrap(~lhs_name,ncol = 2, scales = 'free_y') +
+      theme(strip.text = element_text(size = 16))
+    if(print) print(rf_event_demog_p)
+    ggsave(
+      rf_event_demog_p, 
+      filename = here(paste0(
+        'figures/micro/rf-event/no-cntrl-all-demog.jpeg'
+      )), 
+      width = width_in*1.5, height = height_in*2
+    )
+  }
+  # Estimating white and non-white separately 
+  rf_het_white_dt = 
+    mod_dt[
+      type == 'rf' & 
+      lhs != 'dbwt_pred' &
+      var_of_interest == TRUE & 
+      fixef_num == 'Add Family FEs' & 
+      control_num == 'Pesticides and Unemployment' &
+      trt == 'all_yield_diff_percentile_gmo' & 
+      spatial == 'rural' &
+      sample_var == 'i_m_nonwhite' &
+      sample != 'Full sample' & 
+      is.na(county_subset)
+    ]
+  if(nrow(rf_het_white_dt)>0){
+    rf_het_white_p = 
+      ggplot(
+        data = rf_het_white_dt,
+        aes(x = year, y = estimate, ymin = ci_l, ymax = ci_h, color = sample, fill = sample)
+      ) +
+      geom_hline(yintercept = 0) +
+      geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+      #geom_ribbon(alpha = 0.5, color = NA) +
+      geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+      geom_linerange(position = position_dodge(width = 0.63)) +
+      #geom_line(linewidth = 0.3) +
+      scale_color_brewer(
+        palette = 'Dark2', 
+        name = '',
+        labels = c('Mother White', 'Mother Non-white'),
+        aesthetics = c('fill','color')
+      ) +
+      scale_y_continuous(name = '', minor_breaks = NULL) +
+      scale_x_continuous(
+        name = 'Year', 
+        limits = c(1990,2015),
+        breaks = seq(1990, 2015, 5), 
+        minor_breaks = NULL
+      ) +
+      facet_wrap(~lhs_name,ncol = 2, scales = 'free_y') + 
+      theme(
+        strip.text = element_text(size = 16),
+        legend.position = 'bottom'
+      )
+    if(print) print(rf_het_white_p)
+    ggsave(
+      rf_het_white_p, 
+      filename = here(paste0(
+        'figures/micro/rf-event/het-i_m_nonwhite-all-outcomes.jpeg'
       )), 
       width = width_in*1.5, height = height_in*2.75
     )
