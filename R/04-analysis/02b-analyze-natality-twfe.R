@@ -447,7 +447,7 @@ estimate_water_spec = function(
     iv_nonlinear = FALSE,
     include_ols = FALSE,
     skip_iv = FALSE,
-    water_types = NULL
+    water_types = NULL,
     ...
   ) {
 
