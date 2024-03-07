@@ -256,6 +256,173 @@
     i_m_married = 1 * (mar == 1)
   )]
 
+# Function: Water analysis -----------------------------------------------------
+# This function is called within the analysis script to estimate water spec
+estimate_water_spec = function(
+  water_type, # c('bins-simple','bins-soil','ml-pred')
+  iv, est_dt, 
+  controls, pest_controls, econ_controls, 
+  fml_y, fml_iv, fml_controls, fml_fes, fml_inf, 
+  het_split, 
+  dir_today, base_name
+){
+  if(str_detect(water_type,'bins')){
+    # Reading raw data 
+    county_exposure_dt = 
+      read.fst(
+        path = here("data/watershed/county-exposure-dt.fst"), 
+        as.data.table = TRUE
+      )
+    # soil => separate estimates for high erodibility/precipitation
+    if(str_detect(water_type, 'soil')){
+      col_regex = c(
+        paste0('^', iv, '_d\\d{2,3}$'),
+        '^high_kls_d\\d{2,3}$',
+        '^high_ppt_growing_season_d\\d{2,3}$'
+      )
+      # Making all of the interactions 
+      water_dt = 
+        melt(
+          county_exposure_dt, 
+          id.vars = c('GEOID','year'),
+          measure = patterns(col_regex),
+          variable.name = 'distance_bin',
+          value.name = c('trt', 'high_kls','high_ppt_growing_season')
+        )[,.(
+          fips_res = GEOID,
+          year, 
+          distance_bin = fcase(
+            distance_bin == '1', 'd50',
+            distance_bin == '2', 'd100',
+            distance_bin == '3', 'd150',
+            distance_bin == '4', 'd200',
+            distance_bin == '5', 'd250',
+            distance_bin == '6', 'd300'
+          ),
+          trt, high_kls, high_ppt_growing_season, 
+          high_kls_ppt = high_kls*high_ppt_growing_season, 
+          high_kls_trt = high_kls*trt, 
+          high_ppt_trt = high_ppt_growing_season*trt, 
+          high_kls_ppt_trt = high_kls*high_ppt_growing_season*trt
+        )] |>
+        dcast(
+          formula = fips_res + year ~ distance_bin,
+          value.var = c(
+            'trt', 'high_kls', 'high_ppt_growing_season', 
+            'high_kls_ppt','high_kls_trt','high_ppt_trt',
+            'high_kls_ppt_trt'
+          )
+        )
+      # Turning trt back into real iv variable name 
+      setnames(
+        water_dt,
+        old = colnames(water_dt),
+        new = str_replace(colnames(water_dt),'trt',iv)
+      )
+    }else{
+      # Simple just has upstream trt 
+      col_regex = c('^all_yield_diff_percentile_gmo_d\\d{2,3}')  
+      water_dt = 
+        get_vars(
+          county_exposure_dt,
+          vars = c('GEOID','year', col_regex),
+          regex = TRUE
+        ) |>
+        setnames('GEOID','fips_res')
+    }
+    # Make the formula
+    water_fml = 
+      paste0(
+        'i(year, ', 
+        colnames(water_dt)[-(1:2)],
+        ', ref = 1995)'
+      ) |> 
+      paste(collapse = ' + ')
+    fml_rhs_water = paste0(water_fml,' + ',fml_controls)
+    # Merge with main table 
+    water_dt |> setkey('fips_res','year')
+    est_dt |> setkey('fips_res','year')
+    # Merge with estimating data 
+    est_dt = merge(
+      est_dt, 
+      water_dt,
+      by = c('fips_res','year','month'),
+      all.x = TRUE
+    )
+    rm(county_exposure_dt, water_dt); gc()
+  }else if(water_type == 'ml-pred'){
+    # Load the water-ML predictions 
+    county_exposure_pred_dt = 
+      read.fst(
+        path = here("data/watershed/county-exposure-pred-dt.fst"), 
+        as.data.table = TRUE
+      ) |>
+      setnames('GEOID', 'fips_res') |>
+      setkey('fips_res','year','month')
+    est_dt |> setkey('fips_res','year','month')
+    # Merge with estimating data 
+    est_dt = merge(
+      est_dt, 
+      county_exposure_pred_dt,
+      by = c('fips_res','year','month'),
+      all.x = TRUE
+    )
+    # Add water to formula in reduced form 
+    rhs_raw_fml = 
+      CJ(
+        controls = controls,
+        pred = str_subset(colnames(county_exposure_pred_dt), 'pred')
+      )[,.(
+        fml_string = fcase(
+          controls == 0, pred,
+          controls == 1, paste0(pred, ' + ', paste(pest_controls, collapse = '+')),
+          controls == 2, paste0(pred, ' + ', paste(econ_controls, collapse = '+')),
+          controls == 3, paste0(
+            pred,' + ',
+            paste(c(pest_controls,econ_controls), collapse = '+')
+          )
+        )
+      )]$fml_string    
+    fml_rhs_water = paste0(
+      ifelse(length(rhs_raw_fml) > 1, 'sw(', ''),
+      paste(rhs_raw_fml, collapse = ', '),
+      ifelse(length(controls) > 1, ')', '')
+    )
+  }
+  # Add water to reduced form formula
+  fml_rf_water = paste(
+    fml_y,
+    '~',
+    fml_iv, ' + ',
+    fml_rhs_water,
+    ' | ',
+    fml_fes
+  ) %>% as.formula()
+  # Estimating the reduced form
+  if (!is.null(het_split)) {
+    est_rf_water = feols(
+      fml = fml_rf_water,
+      cluster = fml_inf,
+      data = est_dt,
+      fsplit = het_split,
+      lean = TRUE
+    )
+  } else {
+    est_rf_water = feols(
+      fml = fml_rf,
+      cluster = fml_inf,
+      data = est_dt,
+      lean = TRUE
+    )
+  }
+  # Save
+  qsave(
+    est_rf_water,
+    file.path(dir_today, paste0('est_water_rf-', water_type,'_',base_name)),
+    preset = 'fast'
+  )
+  rm(est_rf_water); invisible(gc())
+}
 
 # Function: Run TFWE analysis --------------------------------------------------
   est_twfe = function(
@@ -279,7 +446,8 @@
     gly_nonlinear = NULL,
     iv_nonlinear = FALSE,
     include_ols = FALSE,
-    ols_only = FALSE
+    skip_iv = FALSE,
+    water_types = NULL
     ...
   ) {
 
@@ -562,7 +730,7 @@
       '_ivnl-', iv_nonlinear,
       '.qs'
     )
-    if(ols_only == FALSE){
+    if(skip_iv == FALSE){
       # Estimate with or without heterogeneity splits
       if (!is.null(het_split)) {
         est_rf = feols(
@@ -667,7 +835,21 @@
       )
       rm(est_ols); invisible(gc())
     }
-
+    # Estimating water results 
+    if(!is.null(water_types)){
+      lapply(
+        water_types, 
+        estimate_water_spec, 
+        iv = iv, est_dt = est_dt, controls = controls, 
+        pest_controls = pest_controls, econ_controls = econ_controls, 
+        fml_y = fml_y, fml_iv = fml_iv, 
+        fml_controls = fml_controls, 
+        fml_fes = fml_fes, fml_inf = fml_inf, 
+        het_split = het_split, 
+        dir_today = dir_today, 
+        base_name = base_name
+      )
+    }
     # Return something
     return('done')
   }
@@ -864,6 +1046,7 @@
 
 
 # Just the OLS model ----------------------------------------------------------
+  # This should only estimate OLS results (not rf or 2sls or water)
   est_twfe(
     iv = 'all_yield_diff_percentile_gmo',
     iv_shift = NULL,
@@ -874,5 +1057,21 @@
     controls = 0:3,
     clustering = c('year', 'state_fips'),
     include_ols = TRUE,
-    only_ols = TRUE
+    skip_iv = TRUE
+  )
+
+# Water results ---------------------------------------------------------------
+  # This should only estimate water results (not rf or 2sls or ols)
+  est_twfe(
+    iv = 'all_yield_diff_percentile_gmo',
+    iv_shift = NULL,
+    spatial_subset = 'rural',
+    het_split = NULL,
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    fes = 3,
+    controls = 3,
+    clustering = c('year', 'state_fips'),
+    include_ols = FALSE,
+    skip_iv = TRUE,
+    water_types = c('bins-simple','bins-soil','ml-pred')
   )
