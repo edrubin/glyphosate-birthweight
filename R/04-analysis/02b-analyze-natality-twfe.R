@@ -290,7 +290,7 @@ estimate_water_spec = function(
           value.name = c('trt', 'high_kls','high_ppt_growing_season')
         )[,.(
           fips_res = GEOID,
-          year, 
+          year,
           distance_bin = fcase(
             distance_bin == '1', 'd50',
             distance_bin == '2', 'd100',
@@ -299,16 +299,16 @@ estimate_water_spec = function(
             distance_bin == '5', 'd250',
             distance_bin == '6', 'd300'
           ),
-          trt, high_kls, high_ppt_growing_season, 
-          high_kls_ppt = high_kls*high_ppt_growing_season, 
-          high_kls_trt = high_kls*trt, 
-          high_ppt_trt = high_ppt_growing_season*trt, 
+          trt, high_kls, high_ppt_growing_season,
+          high_kls_ppt = high_kls*high_ppt_growing_season,
+          high_kls_trt = high_kls*trt,
+          high_ppt_trt = high_ppt_growing_season*trt,
           high_kls_ppt_trt = high_kls*high_ppt_growing_season*trt
         )] |>
         dcast(
           formula = fips_res + year ~ distance_bin,
           value.var = c(
-            'trt', 'high_kls', 'high_ppt_growing_season', 
+            'trt', 'high_kls', 'high_ppt_growing_season',
             'high_kls_ppt','high_kls_trt','high_ppt_trt',
             'high_kls_ppt_trt'
           )
@@ -346,7 +346,7 @@ estimate_water_spec = function(
     est_dt = merge(
       est_dt, 
       water_dt,
-      by = c('fips_res','year','month'),
+      by = c('fips_res','year'),
       all.x = TRUE
     )
     rm(county_exposure_dt, water_dt); gc()
@@ -409,7 +409,7 @@ estimate_water_spec = function(
     )
   } else {
     est_rf_water = feols(
-      fml = fml_rf,
+      fml = fml_rf_water,
       cluster = fml_inf,
       data = est_dt,
       lean = TRUE
@@ -1045,20 +1045,21 @@ estimate_water_spec = function(
 #   )
 
 
-# Just the OLS model ----------------------------------------------------------
-  # This should only estimate OLS results (not rf or 2sls or water)
-  est_twfe(
-    iv = 'all_yield_diff_percentile_gmo',
-    iv_shift = NULL,
-    spatial_subset = 'rural',
-    het_split = pred_q5,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = c(0, 3),
-    controls = 0:3,
-    clustering = c('year', 'state_fips'),
-    include_ols = TRUE,
-    skip_iv = TRUE
-  )
+# # Just the OLS model ----------------------------------------------------------
+#   # This should only estimate OLS results (not rf or 2sls or water)
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo',
+#     iv_shift = NULL,
+#     spatial_subset = 'rural',
+#     het_split = 'pred_q5',
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = c(0, 3),
+#     controls = 0:3,
+#     clustering = c('year', 'state_fips'),
+#     include_ols = TRUE,
+#     skip_iv = TRUE
+#   )
+
 
 # Water results ---------------------------------------------------------------
   # This should only estimate water results (not rf or 2sls or ols)
@@ -1073,5 +1074,5 @@ estimate_water_spec = function(
     clustering = c('year', 'state_fips'),
     include_ols = FALSE,
     skip_iv = TRUE,
-    water_types = c('bins-simple','bins-soil','ml-pred')
+    water_types = c('ml-pred') #'bins-simple', 'bins-soil'
   )
