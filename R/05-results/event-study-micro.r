@@ -527,7 +527,7 @@ plot_reduced_form = function(
   )
   rf_event_cntysub_p = 
     ggplot(
-      data =mod_dt[
+      data = mod_dt[
         type == 'rf' & 
         var_of_interest == TRUE & 
         lhs == outcome_in &
@@ -535,13 +535,13 @@ plot_reduced_form = function(
         control_num == 'Pesticides and Unemployment' &
         trt == 'all_yield_diff_percentile_gmo' & 
         spatial == 'rural' &
-        paste0(sample_var, sample) == 'NANA' & 
-        !is.na(county_subset)
+        paste0(sample_var, sample) == 'NANA' 
+        #& !is.na(county_subset)
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
-        color = county_subset, 
-        fill = county_subset
+        color = ifelse(is.na(county_subset),'Full Sample', county_subset), 
+        fill = ifelse(is.na(county_subset),'Full Sample', county_subset)
       )
     ) +
     geom_hline(yintercept = 0) +
@@ -665,7 +665,7 @@ plot_results_faceted_outcomes = function(mod_dt, print = FALSE, width_in = 6, he
   rf_event_main_dt = 
     mod_dt[
       type == 'rf' & 
-      lhs != 'dbwt' &
+      lhs != 'dbwt_pred' &
       var_of_interest == TRUE & 
       fixef_num == 'Add Family FEs' & 
       control_num == 'Pesticides and Unemployment' &
@@ -811,7 +811,7 @@ theme_set(
 mod_paths = 
   str_subset(
     list.files(here('data/results/micro'), full.names = TRUE),
-    'est_2sls_ss', 
+    'est_2sls_ss|est_ols|est_water_rf', 
     negate = TRUE
   )
 mod_dt = lapply(mod_paths, extract_event_study_coefs) |> 
