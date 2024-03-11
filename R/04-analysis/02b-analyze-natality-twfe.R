@@ -274,7 +274,7 @@ estimate_water_spec = function(
         as.data.table = TRUE
       )
     # soil => separate estimates for high erodibility/precipitation
-    if(str_detect(water_type, 'soil')){
+    if(water_type == 'bins-soil'){
       col_regex = c(
         paste0('^', iv, '_d\\d{2,3}$'),
         '^high_kls_d\\d{2,3}$',
@@ -308,8 +308,9 @@ estimate_water_spec = function(
         dcast(
           formula = fips_res + year ~ distance_bin,
           value.var = c(
-            'trt', 'high_kls', 'high_ppt_growing_season',
-            'high_kls_ppt','high_kls_trt','high_ppt_trt',
+            'trt', 
+            #'high_kls','high_ppt_growing_season',
+            #'high_kls_ppt','high_kls_trt','high_ppt_trt',
             'high_kls_ppt_trt'
           )
         )
@@ -319,7 +320,7 @@ estimate_water_spec = function(
         old = colnames(water_dt),
         new = str_replace(colnames(water_dt),'trt',iv)
       )
-    }else{
+    }else if(water_type =='bins-simple'){
       # Simple just has upstream trt 
       col_regex = c('^all_yield_diff_percentile_gmo_d\\d{2,3}')  
       water_dt = 
@@ -329,6 +330,8 @@ estimate_water_spec = function(
           regex = TRUE
         ) |>
         setnames('GEOID','fips_res')
+    }else{
+      stop("water_type not recognized, use 'bins-simple','bins-soil', or 'ml-pred'.")
     }
     # Make the formula
     water_fml = 
@@ -386,8 +389,10 @@ estimate_water_spec = function(
     fml_rhs_water = paste0(
       ifelse(length(rhs_raw_fml) > 1, 'sw(', ''),
       paste(rhs_raw_fml, collapse = ', '),
-      ifelse(length(controls) > 1, ')', '')
+      ifelse(length(rhs_raw_fml) > 1, ')', '')
     )
+  }else{
+    stop("water_type not recognized, use 'bins-simple','bins-soil', or 'ml-pred'.")
   }
   # Add water to reduced form formula
   fml_rf_water = paste(
@@ -1074,5 +1079,5 @@ estimate_water_spec = function(
     clustering = c('year', 'state_fips'),
     include_ols = FALSE,
     skip_iv = TRUE,
-    water_types = c('ml-pred') #'bins-simple', 'bins-soil'
+    water_types = c('ml-pred', 'bins-soil') #'bins-simple'
   )
