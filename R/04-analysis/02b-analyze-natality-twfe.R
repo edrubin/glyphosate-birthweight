@@ -1092,7 +1092,7 @@
 
 # Estimate by counties' rural status -------------------------------------------
   est_twfe(
-    outcomes = 'dbwt'
+    outcomes = 'dbwt',
     iv = 'all_yield_diff_percentile_gmo',
     iv_shift = NULL,
     spatial_subset = NULL,
