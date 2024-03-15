@@ -48,7 +48,7 @@
 
 # Merge datasets -------------------------------------------------------------------------
   # Add row to natality data for merging with predictions
-  natality_dt[, row := 1:.N]
+  natality_dt[, row := seq_len(.N)]
   # Merge predictions onto the full natality dataset (using row ID)
 # NOTE: Also adding true birth weight to check the merge
   natality_dt %<>% merge(
@@ -433,7 +433,7 @@ estimate_water_spec = function(
   est_twfe = function(
     outcomes = c(
       'dbwt', 'dbwt_pred',
-      'dbwt_pctl_pre', 
+      'dbwt_pctl_pre',
       'i_lbw', 'i_vlbw',
       'gestation', 'i_preterm',
       'c_section', 'any_anomaly'
@@ -468,7 +468,7 @@ estimate_water_spec = function(
     # Define pesticide controls
     pest_controls = c(
       'alachlor_km2', 'atrazine_km2', 'cyanazine_km2', 'fluazifop_km2',
-      'metolachlor_km2','metribuzin_km2','nicosulfuron_km2'
+      'metolachlor_km2', 'metribuzin_km2', 'nicosulfuron_km2'
     )
     # Economic controls (currently just unemployment rate)
     econ_controls = c(
@@ -535,7 +535,7 @@ estimate_water_spec = function(
     } else {
       est_dt = natality_dt[str_detect(rural_grp, spatial_subset)]
     }
-    
+
     # Merge the datasets with the requested variables
     est_dt = merge(
       x = est_dt[, unique(c(
@@ -575,7 +575,7 @@ estimate_water_spec = function(
       gly_nonlinear == 'median', 'glyph_km2 + glyph_km2:above_median_glyph_km2', 
       default = 'glyph_km2'
     )
-    
+
     # Outcome(s)
     fml_y = paste0(
       'c(',
@@ -584,31 +584,31 @@ estimate_water_spec = function(
     )
     # Instruments: Without shift-share (event study)
     fml_iv = fcase(
-      iv_nonlinear == FALSE | is.null(gly_nonlinear), 
+      iv_nonlinear == FALSE | is.null(gly_nonlinear),
         paste0('1 + i(year, ', iv, ', ref = 1995)'),
-      iv_nonlinear == TRUE & gly_nonlinear == 'quadratic',  
+      iv_nonlinear == TRUE & gly_nonlinear == 'quadratic',
         paste0(
           '1 + i(year, ', iv,', ref = 1995)',
           '+ i(year, ', iv,'_sq, ref = 1995)'
         ),
-      iv_nonlinear == TRUE & gly_nonlinear == 'median', 
+      iv_nonlinear == TRUE & gly_nonlinear == 'median',
         paste0(
           '1 + i(year, ', iv,', ref = 1995)',
-          '+ i(year, ', iv,'*above_median_', iv,', ref = 1995)'
+          '+ i(year, ', iv,'*above_median_', iv, ', ref = 1995)'
         )
     )
     # Instruments: Shift-share approach (if iv_shift is defined)
     if (!is.null(iv_shift)) {
       fml_iv_ss = paste0(iv_shift, ' + ', iv_shift, ':', iv)
         fcase(
-          iv_nonlinear == FALSE | is.null(gly_nonlinear), 
+          iv_nonlinear == FALSE | is.null(gly_nonlinear),
             paste0(iv_shift, ' + ', iv_shift, ':', iv),
-          iv_nonlinear == TRUE & gly_nonlinear == 'quadratic',  
+          iv_nonlinear == TRUE & gly_nonlinear == 'quadratic',
             paste0(
               iv_shift, ' + ', iv_shift, ':', iv,
               iv_shift, '_sq + ', iv_shift, '_sq:', iv
             ),
-          iv_nonlinear == TRUE & gly_nonlinear == 'median', 
+          iv_nonlinear == TRUE & gly_nonlinear == 'median',
             paste0(
               iv_shift, ' + ', iv_shift, ':', iv, ' + ',
               iv_shift,':above_median_', iv_shift, ' + ',
@@ -658,7 +658,7 @@ estimate_water_spec = function(
       ' | ',
       fml_fes
     ) %>% as.formula()
-    
+
     # Formula: 2SLS via event study
     fml_2sls = paste(
       fml_y,
@@ -760,7 +760,7 @@ estimate_water_spec = function(
         preset = 'fast'
       )
       rm(est_rf); invisible(gc())
-    
+
       # Estimate: 2SLS with event study
       if (!is.null(het_split)) {
         est_2sls = feols(
@@ -840,18 +840,18 @@ estimate_water_spec = function(
       )
       rm(est_ols); invisible(gc())
     }
-    # Estimating water results 
+    # Estimating water results
     if(!is.null(water_types)){
       lapply(
-        water_types, 
-        estimate_water_spec, 
+        water_types,
+        estimate_water_spec,
         iv = iv, est_dt = est_dt, controls = controls, 
         pest_controls = pest_controls, econ_controls = econ_controls, 
-        fml_y = fml_y, fml_iv = fml_iv, 
-        fml_controls = fml_controls, 
-        fml_fes = fml_fes, fml_inf = fml_inf, 
-        het_split = het_split, 
-        dir_today = dir_today, 
+        fml_y = fml_y, fml_iv = fml_iv,
+        fml_controls = fml_controls,
+        fml_fes = fml_fes, fml_inf = fml_inf,
+        het_split = het_split,
+        dir_today = dir_today,
         base_name = base_name
       )
     }
@@ -1040,7 +1040,7 @@ estimate_water_spec = function(
 #     iv = 'all_yield_diff_percentile_gmo',
 #     iv_shift = 'glyphosate_nat_100km',
 #     spatial_subset = 'rural',
-#     county_subset = 
+#     county_subset =
 #       comb_cnty_dt[census_region == 'South' & state_fips != '12', funique(fips)],
 #     county_subset_name = 'south-nofl',
 #     base_fe = c('year_month', 'fips_res', 'fips_occ'),
@@ -1068,6 +1068,7 @@ estimate_water_spec = function(
 
 # Water results ---------------------------------------------------------------
   # This should only estimate water results (not rf or 2sls or ols)
+# NOTE Takes ~ 5 hours to run
   est_twfe(
     iv = 'all_yield_diff_percentile_gmo',
     iv_shift = NULL,

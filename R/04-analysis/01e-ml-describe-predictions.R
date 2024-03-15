@@ -1,6 +1,6 @@
 # Notes ----------------------------------------------------------------------------------
 #   Goal:   Describe predictions.
-#   Time:   ~9 minutes
+#   Time:   ~5 minutes
 
 
 # Setup ----------------------------------------------------------------------------------
@@ -78,6 +78,9 @@
     dbwt_rnd_pctl_ruralocc_pre = dbwt_pctl_ruralocc_pre %>% round(2),
     dbwt_pred_rnd_pctl_ruralocc_pre = dbwt_pred_pctl_ruralocc_pre %>% round(2)
   )]
+  # Clean up
+  rm(ecdf_pre_ruralres, ecdf_pre_ruralocc, ecdf_pred_pre_ruralres, ecdf_pred_pre_ruralocc)
+  invisible(gc())
 
 
 # Decode variables -----------------------------------------------------------------------
@@ -105,136 +108,110 @@
     month = month |> as.numeric()
   )]
   # Recode age
-  prediction_dt[, `:=`(
-    m_age = fcase(
-      mage == '01', 15,
-      mage %in% str_pad(2:41, 2, 'left', '0'), as.numeric(mage) + 15,
-      default = NA
-    ),
-    f_age = fcase(
-      fage == 1, 15,
-      (fage %in% 2:10), (fage + 1) * 5 + 2,
-      default = NA
-    )
-  )]
+  prediction_dt[mage == 1, m_age := 15]
+  prediction_dt[fage == 1, f_age := 15]
+  prediction_dt[mage > 1, m_age := mage + 13]
+  prediction_dt[fage > 1, f_age := (fage + 1) * 5 + 3]
   # Drop original variables
   prediction_dt[, c(
     'sex', 'mrace', 'frace', 'mhisp', 'fhisp', 'mar', 'birth_facility',
     'meduc', 'mage', 'fage'
   ) := NULL]
+  # Drop unwanted variables
+  prediction_dt[, c('.row', '.row_check', 'dbwt_check') := NULL]
 
 
-# Function: Summarize variables by percentile --------------------------------------------
+# Functions: Summarize variables by percentile -------------------------------------------
   # Function returns data.table with variable means by percentile and counts
-  pctl_means = function(data, var) {
+  pctl_means = function(data, var, sub_space = NA, sub_time = NA) {
     require(data.table)
     require(collapse)
+    require(magrittr)
+    # Take spatial subset (if non-na)
+    if (!is.na(sub_space)) data = data[get(sub_space)]
+    # Take temporal subset (if non-na)
+    if (!is.na(sub_time)) {
+      if (sub_time == 'pre') data = data[year < 1996]
+      if (sub_time == 'post') data = data[year >= 1996]
+    }
     # Take means of each variable by predicted percentile
-    pctl_dt =  data |>
-    num_vars() |>
-    collapv(by = var, FUN = fmean)
+    pctl_dt =
+      data |>
+      num_vars() |>
+      collapv(by = var, FUN = fmean)
     # Count of observations in each percentile
     n_dt = data[, .N, keyby = var]
     setnames(n_dt, old = 'N', new = 'n')
     # Join the two datasets
-    pctl_dt |> join(
+    pctl_dt %<>% join(
       y = n_dt,
       on = var,
       how = 'left',
       verbose = 0
     )
+    # Change name of percentile variable
+    setnames(pctl_dt, old = var, new = 'pctl')
+    # Return the data.table
+    return(pctl_dt)
+  }
+  # Function that splits the data and saves files
+  master_means = function(data, var, sub_space = NA, sub_time = NA, save_dir) {
+    require(data.table)
+    require(stringr)
+    require(fst)
+    require(here)
+    # Split the data
+    pctl_dt = pctl_means(data, var, sub_space, sub_time)
+    # Grab name components based upon 'var'
+    name_parts = var |> str_split('_') |> unlist()
+    bwt_type = ifelse(str_detect(var, 'pred'), 'pctlpred', 'pctlactual')
+    pop_sum = ifelse(is.na(sub_space), 'allbirths', sub_space) |> str_remove('_')
+    pop_ecdf = name_parts |> tail(2) |> head(1) |> str_replace('rural', 'ecdf')
+    name_time = ifelse(is.na(sub_time), 'alltime', sub_space)
+    # Build filename
+    filename = paste(
+      bwt_type, pop_sum, pop_ecdf, name_time, sep = '-'
+    ) |> paste0('.fst')
+    # Save the data
+    write_fst(
+      x = pctl_dt,
+      path = here(save_dir, filename),
+      compress = 100
+    )
   }
 
 
 # Summarize demographics by predicted percentile -----------------------------------------
-  # Summarize by percentile of predicted birthweight, rural residence
-  write_fst(
-    x = pctl_means(
+  # All time-space combinations
+  time_space = CJ(
+    sub_time = c(NA, 'pre', 'post'),
+    sub_space = c(NA, 'ruralres', 'ruralocc')
+  )
+  # Run function based upon rural-residence ECDF
+  for (i in seq_len(nrow(time_space))) {
+    master_means(
       data = prediction_dt,
-      var = 'dbwt_pred_rnd_pctl_ruralres_pre'
-    ),
-    path = here(
-      'data', 'clean', 'prediction', 'summaries',
-      'pctlpred-allbirths-ecdfres.fst'
+      var = 'dbwt_pred_rnd_pctl_ruralres_pre',
+      sub_space = time_space$sub_space[i],
+      sub_time = time_space$sub_time[i],
+      save_dir = here('data', 'clean', 'prediction', 'summaries')
     )
-  )
-  # Repeat for rural occurrence
-  write_fst(
-    x = pctl_means(
+  }
+  # Repeat for actual birthweight (still rural-residence ECDF)
+  for (i in seq_len(nrow(time_space))) {
+    master_means(
       data = prediction_dt,
-      var = 'dbwt_pred_rnd_pctl_ruralocc_pre'
-    ),
-    path = here(
-      'data', 'clean', 'prediction', 'summaries',
-      'pctlpred-allbirths-ecdfocc.fst'
+      var = 'dbwt_rnd_pctl_ruralres_pre',
+      sub_space = time_space$sub_space[i],
+      sub_time = time_space$sub_time[i],
+      save_dir = here('data', 'clean', 'prediction', 'summaries')
     )
-  )
-  # Repeat subset of RURAL births (rural residence with rural resident ECDF)
-  write_fst(
-    x = pctl_means(
-      data = prediction_dt[rural_res == TRUE],
-      var = 'dbwt_pred_rnd_pctl_ruralres_pre'
-    ),
-    path = here(
-      'data', 'clean', 'prediction', 'summaries',
-      'pctlpred-ruralres-ecdfres.fst'
-    )
-  )
-  # Now rural occurrence subset (with ECDF from rural occurrence)
-  write_fst(
-    x = pctl_means(
-      data = prediction_dt[rural_occ == TRUE],
-      var = 'dbwt_pred_rnd_pctl_ruralocc_pre'
-    ),
-    path = here(
-      'data', 'clean', 'prediction', 'summaries',
-      'pctlpred-ruralocc-ecdfocc.fst'
-    )
-  )
-
-
-# Summarize demographics by actual percentile --------------------------------------------
-  # Summarize by percentile of actual birthweight, rural residence
-  write_fst(
-    x = pctl_means(
-      data = prediction_dt,
-      var = 'dbwt_rnd_pctl_ruralres_pre'
-    ),
-    path = here(
-      'data', 'clean', 'prediction', 'summaries',
-      'pctlactual-allbirths-ecdfres.fst'
-    )
-  )
-  # Repeat for rural occurrence
-  write_fst(
-    x = pctl_means(
-      data = prediction_dt,
-      var = 'dbwt_rnd_pctl_ruralocc_pre'
-    ),
-    path = here(
-      'data', 'clean', 'prediction', 'summaries',
-      'pctlactual-allbirths-ecdfocc.fst'
-    )
-  )
-  # Repeat subset of RURAL births (rural residence with rural resident ECDF)
-  write_fst(
-    x = pctl_means(
-      data = prediction_dt[rural_res == TRUE],
-      var = 'dbwt_rnd_pctl_ruralres_pre'
-    ),
-    path = here(
-      'data', 'clean', 'prediction', 'summaries',
-      'pctlactual-ruralres-ecdfres.fst'
-    )
-  )
-  # Now rural occurrence subset (with ECDF from rural occurrence)
-  write_fst(
-    x = pctl_means(
-      data = prediction_dt[rural_occ == TRUE],
-      var = 'dbwt_rnd_pctl_ruralocc_pre'
-    ),
-    path = here(
-      'data', 'clean', 'prediction', 'summaries',
-      'pctlactual-ruralocc-ecdfocc.fst'
-    )
+  }
+  # Repeat only for rural occurrence ECDF and subset
+  master_means(
+    data = prediction_dt,
+    var = 'dbwt_pred_rnd_pctl_ruralocc_pre',
+    sub_space = 'rural_res',
+    sub_time = NA,
+    save_dir = here('data', 'clean', 'prediction', 'summaries')
   )
