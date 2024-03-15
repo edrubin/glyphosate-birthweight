@@ -3,6 +3,8 @@
 data/
 data-clean/
 notes/
+figures/
+tables/
 
 # Scratch code we don't need to keep track of
 R/scratch/
