@@ -1,6 +1,6 @@
 # Notes ----------------------------------------------------------------------------------
 #   Goal:   Describe predictions.
-#   Time:   ~5 minutes
+#   Time:   ~6 minutes
 
 
 # Setup ----------------------------------------------------------------------------------
@@ -122,40 +122,40 @@
 
 
 # Functions: Summarize variables by percentile -------------------------------------------
-  # Function returns data.table with variable means by percentile and counts
-  pctl_means = function(data, var, sub_space = NA, sub_time = NA) {
-    require(data.table)
-    require(collapse)
-    require(magrittr)
-    # Take spatial subset (if non-na)
-    if (!is.na(sub_space)) data = data[get(sub_space)]
-    # Take temporal subset (if non-na)
-    if (!is.na(sub_time)) {
-      if (sub_time == 'pre') data = data[year < 1996]
-      if (sub_time == 'post') data = data[year >= 1996]
-    }
-    # Take means of each variable by predicted percentile
-    pctl_dt =
-      data |>
-      num_vars() |>
-      collapv(by = var, FUN = fmean)
-    # Count of observations in each percentile
-    n_dt = data[, .N, keyby = var]
-    setnames(n_dt, old = 'N', new = 'n')
-    # Join the two datasets
-    pctl_dt %<>% join(
-      y = n_dt,
-      on = var,
-      how = 'left',
-      verbose = 0
-    )
-    # Change name of percentile variable
-    setnames(pctl_dt, old = var, new = 'pctl')
-    # Return the data.table
-    return(pctl_dt)
-  }
   # Function that splits the data and saves files
   master_means = function(data, var, sub_space = NA, sub_time = NA, save_dir) {
+    # Helpfer function: returns data.table with variable means by percentile and counts
+    pctl_means = function(data, var, sub_space = NA, sub_time = NA) {
+      require(data.table)
+      require(collapse)
+      require(magrittr)
+      # Take spatial subset (if non-na)
+      if (!is.na(sub_space)) data = data[get(sub_space)]
+      # Take temporal subset (if non-na)
+      if (!is.na(sub_time)) {
+        if (sub_time == 'pre') data = data[year < 1996]
+        if (sub_time == 'post') data = data[year >= 1996]
+      }
+      # Take means of each variable by predicted percentile
+      pctl_dt =
+        data |>
+        num_vars() |>
+        collapv(by = var, FUN = fmean)
+      # Count of observations in each percentile
+      n_dt = data[, .N, keyby = var]
+      setnames(n_dt, old = 'N', new = 'n')
+      # Join the two datasets
+      pctl_dt %<>% join(
+        y = n_dt,
+        on = var,
+        how = 'left',
+        verbose = 0
+      )
+      # Change name of percentile variable
+      setnames(pctl_dt, old = var, new = 'pctl')
+      # Return the data.table
+      return(pctl_dt)
+    }
     require(data.table)
     require(stringr)
     require(fst)
@@ -167,7 +167,7 @@
     bwt_type = ifelse(str_detect(var, 'pred'), 'pctlpred', 'pctlactual')
     pop_sum = ifelse(is.na(sub_space), 'allbirths', sub_space) |> str_remove('_')
     pop_ecdf = name_parts |> tail(2) |> head(1) |> str_replace('rural', 'ecdf')
-    name_time = ifelse(is.na(sub_time), 'alltime', sub_space)
+    name_time = ifelse(is.na(sub_time), 'alltime', sub_time)
     # Build filename
     filename = paste(
       bwt_type, pop_sum, pop_ecdf, name_time, sep = '-'
@@ -185,7 +185,7 @@
   # All time-space combinations
   time_space = CJ(
     sub_time = c(NA, 'pre', 'post'),
-    sub_space = c(NA, 'ruralres', 'ruralocc')
+    sub_space = c(NA, 'rural_res')
   )
   # Run function based upon rural-residence ECDF
   for (i in seq_len(nrow(time_space))) {
@@ -211,7 +211,7 @@
   master_means(
     data = prediction_dt,
     var = 'dbwt_pred_rnd_pctl_ruralocc_pre',
-    sub_space = 'rural_res',
+    sub_space = 'rural_occ',
     sub_time = NA,
     save_dir = here('data', 'clean', 'prediction', 'summaries')
   )

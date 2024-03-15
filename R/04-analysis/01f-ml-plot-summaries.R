@@ -1,11 +1,11 @@
 # Notes ----------------------------------------------------------------------------------
 #   Goal:   Plot summaries of predictions by percentile.
-#   Time:   ???
+#   Time:   Very short (<1 minute)
 
 
 # Data notes -----------------------------------------------------------------------------
 #   - Summaries are in data/clean/prediction/summaries/*.fst
-#   - Filenames have three components:
+#   - Filenames have five components:
 #       1.  The birthweight used to create the distribution/percentiles:
 #             - 'pctlactual' (percentile using actual bwt)
 #             - 'pctlpred' (percentile using predicted bwt)
@@ -16,6 +16,10 @@
 #       3.  The population used to build the distribution (the ECDF) in the pre-period:
 #             - 'ecdfocc' (rural occurrence)
 #             - 'ecdfres' (rural residence)
+#       4.  The temporal subset (if any):
+#             - 'alltime' (the full sample)
+#             - 'pre' (births prior to 1996)
+#             - 'post' (births after 1996, inclusive)
 
 
 # Setup ----------------------------------------------------------------------------------
@@ -27,10 +31,14 @@
 # Function: Plot percentile-based summaries ----------------------------------------------
 # Function that loads data and then creates/saves the plots
 #   - `bwt_type`, `pop_sum`, `pop_ecdf` together select the file (described above)
+#   - `sub_time` ('alltime', 'pre', 'post') determines temporal subsets
 #   - `save_dir` directory where the plots will be saved
 #   - `bin_width` is the width of the bins for the plots
+#      Note: bins are already percentiles, so bin_width cannot give non-whole bins
   # The function
-  plot_summaries = function(bwt_type, pop_sum, pop_ecdf, save_dir, bin_width = .01) {
+  plot_summaries = function(
+    bwt_type, pop_sum, pop_ecdf, sub_time, save_dir, bin_width = .01
+  ) {
     # Confirm packages are loaded
     require(pacman)
     require(data.table)
@@ -53,7 +61,7 @@
     pctl_dt =
       here(
         'data', 'clean', 'prediction', 'summaries',
-        paste(bwt_type, pop_sum, pop_ecdf, sep = '-') |> paste0('.fst')
+        paste(bwt_type, pop_sum, pop_ecdf, sub_time, sep = '-') |> paste0('.fst')
       ) |>
       read_fst(as.data.table = TRUE)
     # Select the desired variables
@@ -173,7 +181,7 @@
       filename = here(
         save_dir,
         paste(
-          bwt_type, pop_sum, pop_ecdf,
+          bwt_type, pop_sum, pop_ecdf, sub_time,
           paste0('bwt-', round(1 / bin_width), '.png'),
           sep = '-'
         )
@@ -187,7 +195,7 @@
       filename = here(
         save_dir,
         paste(
-          bwt_type, pop_sum, pop_ecdf,
+          bwt_type, pop_sum, pop_ecdf, sub_time,
           paste0('age-', round(1 / bin_width), '.png'),
           sep = '-'
         )
@@ -201,7 +209,7 @@
       filename = here(
         save_dir,
         paste(
-          bwt_type, pop_sum, pop_ecdf,
+          bwt_type, pop_sum, pop_ecdf, sub_time,
           paste0('ord-', round(1 / bin_width), '.png'),
           sep = '-'
         )
@@ -215,7 +223,7 @@
       filename = here(
         save_dir,
         paste(
-          bwt_type, pop_sum, pop_ecdf,
+          bwt_type, pop_sum, pop_ecdf, sub_time,
           paste0('dem-', round(1 / bin_width), '.png'),
           sep = '-'
         )
@@ -229,7 +237,7 @@
       filename = here(
         save_dir,
         paste(
-          bwt_type, pop_sum, pop_ecdf,
+          bwt_type, pop_sum, pop_ecdf, sub_time,
           paste0('edu-', round(1 / bin_width), '.png'),
           sep = '-'
         )
@@ -240,12 +248,13 @@
   }
 
 
-# Plots: Predicted birthweight, rural residence ------------------------------------------
+# Plots: Predicted birthweight, rural residence, all time --------------------------------
   # Predicted birthweight
   plot_summaries(
     bwt_type = 'pctlpred',
     pop_sum = 'ruralres',
     pop_ecdf = 'ecdfres',
+    sub_time = 'alltime',
     save_dir = here('figures', 'descriptive', 'demographic-pctl'),
     bin_width = .01
   )
@@ -253,6 +262,27 @@
     bwt_type = 'pctlpred',
     pop_sum = 'ruralres',
     pop_ecdf = 'ecdfres',
+    sub_time = 'alltime',
+    save_dir = here('figures', 'descriptive', 'demographic-pctl'),
+    bin_width = .02
+  )
+
+
+# Plots: Predicted birthweight, rural residence, pre/post --------------------------------
+  # Predicted birthweight
+  plot_summaries(
+    bwt_type = 'pctlpred',
+    pop_sum = 'ruralres',
+    pop_ecdf = 'ecdfres',
+    sub_time = 'pre',
+    save_dir = here('figures', 'descriptive', 'demographic-pctl'),
+    bin_width = .02
+  )
+  plot_summaries(
+    bwt_type = 'pctlpred',
+    pop_sum = 'ruralres',
+    pop_ecdf = 'ecdfres',
+    sub_time = 'post',
     save_dir = here('figures', 'descriptive', 'demographic-pctl'),
     bin_width = .02
   )
@@ -264,17 +294,37 @@
     bwt_type = 'pctlpred',
     pop_sum = 'ruralocc',
     pop_ecdf = 'ecdfocc',
+    sub_time = 'alltime',
     save_dir = here('figures', 'descriptive', 'demographic-pctl'),
-    bin_width = .01
+    bin_width = .02
   )
 
 
-# Plots: Actual birthweight, rural residence ---------------------------------------------
-  # Actual birthweight
+# Plots: Actual birthweight --------------------------------------------------------------
+  # Actual birthweight, all time
   plot_summaries(
     bwt_type = 'pctlactual',
     pop_sum = 'ruralres',
     pop_ecdf = 'ecdfres',
+    sub_time = 'alltime',
     save_dir = here('figures', 'descriptive', 'demographic-pctl'),
-    bin_width = .01
+    bin_width = .02
+  )
+  # Actual birthweight, pre-period
+  plot_summaries(
+    bwt_type = 'pctlactual',
+    pop_sum = 'ruralres',
+    pop_ecdf = 'ecdfres',
+    sub_time = 'pre',
+    save_dir = here('figures', 'descriptive', 'demographic-pctl'),
+    bin_width = .02
+  )
+  # Actual birthweight, post-period
+  plot_summaries(
+    bwt_type = 'pctlactual',
+    pop_sum = 'ruralres',
+    pop_ecdf = 'ecdfres',
+    sub_time = 'post',
+    save_dir = here('figures', 'descriptive', 'demographic-pctl'),
+    bin_width = .02
   )
