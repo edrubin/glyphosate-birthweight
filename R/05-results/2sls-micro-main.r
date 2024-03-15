@@ -7,6 +7,8 @@ p_load(
 # Setup -----------------------------------------------------------------------
   # Creating directory to put tables in 
   dir.create(here('tables/2sls/robust-cntrl'), recursive = T, showWarnings = F)
+  dir.create(here('tables/ols/robust-cntrl'), recursive = T, showWarnings = F)
+  dir.create(here('tables/water'), recursive = T, showWarnings = F)
   # Making a statistic of observations scaled to millions 
   fitstat_register(
     'n_millions',
@@ -34,7 +36,11 @@ p_load(
     metolachlor_km2 = 'Metolachlor/$km^2$',
     metribuzin_km2 = 'Metribuzin/$km^2$',
     nicosulfuron_km2 = 'Nicosulfuron/$km^2$',
-    unemployment_rate  = 'Unempl Rate'
+    unemployment_rate  = 'Unempl Rate',
+    pred_ampa_in_water_lasso = 'Predicted AMPA (LASSO)',
+    pred_ampa_in_water_rf = 'Predicted AMPA (RF)',
+    pred_glyph_in_water_lasso = 'Predicted GLY (LASSO)',
+    pred_glyph_in_water_rf = 'Predicted GLY (RF)'
   ))
   # Calculating 2012 mean for outcomes and GLY
   # TODO: Use the main est table for this rather than county-level table
@@ -95,7 +101,6 @@ p_load(
       by.y = 'variable',
       all.x = TRUE
     )[order(i)]
-  
   # Making the table 
   etable(
     main_mod,
@@ -130,6 +135,49 @@ p_load(
     ),
     label = 'tab:main-outcomes'
   ) |> write(here('tables/2sls/main-outcomes.tex'))
+  # OLS version of table
+  ols_spec = 
+    qread(
+      list.files(here('data/results/micro'), full.names = TRUE) |>
+      str_subset('est_ols_outcome') |>
+      str_subset('controls-0123_spatial-rural_het-predq5')
+    )
+  ols_mod = ols_spec[
+    fixef = 'mage', 
+    rhs = 'nicosulfuron_km2 \\+ unemployment',
+    lhs = '^dbwt$|dbwt_pctl|i_lbw|i_vlbw|preterm|section|gest',
+    sample = 'Full'
+  ]
+  etable(
+    ols_mod,
+    tex = TRUE,
+    style.tex = style.tex(
+      depvar.title = 'Dep Var',
+      model.format = "", 
+      line.top = 'simple',
+      line.bottom = 'simple',
+      var.title = '\\midrule'
+    ),
+    se.below = TRUE,
+    keep = 'GLY',
+    digits = 3,
+    signif.code = NA,
+    group = list(
+      '^_Local pesticides' = 'Nicosulfuron',
+      '^_Unemployment' = 'Unemp'
+    ),
+    fixef.group = list(
+      '-^Yr x Mo + Cnty' = 'year_month|fips',
+      '-^Family Demog' = 'age|sex|race|hisp|birth|mar|educ|restatus'
+    ),
+    se.row = FALSE,
+    fitstat = ~n_millions,
+    digits.stats = 4,
+    tpt = TRUE,
+    notes = "Sample restricted to births from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
+    label = 'tab:main-outcomes-ols'
+  ) |> write(here('tables/ols/main-outcomes.tex'))
+  rm(ols_mod, ols_spec)
 
 # Appendix tables -------------------------------------------------------------
   # Main table but with estimates of control variables included 
@@ -257,7 +305,19 @@ make_control_robust_tables = function(mod_path){
   )
 }
 
-# Table for shift-share estimation 
+
+# Running control tables for all estimations
+mod_paths = 
+  str_subset(
+    list.files(here('data/results/micro'), full.names = TRUE),
+    'est_2sls_outcome'
+  ) 
+lapply(
+  mod_paths,  
+  make_control_robust_tables
+)
+
+# Table for shift-share estimation --------------------------------------------
   main_spec_ss = qread(str_subset(
     list.files(here('data/results/micro'), full.names = TRUE),
     'est_2sls_ss'
@@ -324,13 +384,48 @@ make_control_robust_tables = function(mod_path){
   ) |> write(here('tables/2sls/main-outcomes-ss.tex'))
 
 
-# Running control tables for all estimations
-mod_paths = 
-  str_subset(
-    list.files(here('data/results/micro'), full.names = TRUE),
-    'est_2sls_outcome'
-  ) 
+# Table for water ml model ----------------------------------------------------
+  water_ml_spec = 
+    qread(
+      list.files(here('data/results/micro'), full.names = TRUE) |>
+      str_subset('est_water_rf-ml-pred') |>
+      str_subset('controls-3_spatial-rural_het-_iv-allyielddiffpercentilegmo')
+    )
+# Function to make table for each outcome 
+make_water_ml_table = function(outcome_in, mod){
+  etable(
+    mod[lhs = paste0('^',outcome_in,'$')], 
+    tex = TRUE,
+    keep = 'Pred',
+    style.tex = style.tex(
+      depvar.title = 'Dep Var',
+      model.format = "", 
+      line.top = 'simple',
+      line.bottom = 'simple',
+      var.title = '\\midrule'
+    ),
+    se.below = TRUE,
+    digits = 3,
+    signif.code = NA,
+    group = list(
+      '^_Local attainable yield' = 'all_yield',
+      '^_Local pesticides' = 'Nicosulfuron',
+      '^_Unemployment' = 'Unemp'
+    ),
+    fixef.group = list(
+      '-^Yr x Mo + Cnty' = 'year_month|fips',
+      '-^Family Demog' = 'age|sex|race|hisp|birth|mar|educ|restatus'
+    ),
+    se.row = FALSE,
+    fitstat = ~n_millions,
+    digits.stats = 4,
+    tpt = TRUE,
+    label = paste0('tab:water-ml-',outcome_in)
+  ) |> write(here(paste0('tables/water/water-ml-',outcome_in,'.tex')))
+}
+
 lapply(
-  mod_paths,  
-  make_control_robust_tables
+  unique(coeftable(water_ml_spec)$lhs),  
+  make_water_ml_table,
+  mod = water_ml_spec
 )
