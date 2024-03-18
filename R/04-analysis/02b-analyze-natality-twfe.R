@@ -1091,6 +1091,7 @@
 
 
 # Estimate by counties' rural status -------------------------------------------
+# NOTE Crashed during second-stage estimation
   est_twfe(
     outcomes = 'dbwt',
     iv = 'all_yield_diff_percentile_gmo',
