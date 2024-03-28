@@ -48,7 +48,7 @@
 
 # Merge datasets -------------------------------------------------------------------------
   # Add row to natality data for merging with predictions
-  natality_dt[, row := 1:.N]
+  natality_dt[, row := seq_len(.N)]
   # Merge predictions onto the full natality dataset (using row ID)
 # NOTE: Also adding true birth weight to check the merge
   natality_dt %<>% merge(
@@ -81,22 +81,24 @@
     any_anomaly = 1 * (do.call(pmin, .SD) == 1),
     any_anomaly_nona = 1 * (do.call(function(...) pmin(..., na.rm = TRUE), .SD) == 1)
   ), .SDcols = febrile:baby_other_cong]
-  # Drop individual birth anomalies 
+  # Drop individual birth anomalies
   anomalies = natality_dt |> fselect(febrile:baby_other_cong) |> names()
   natality_dt[, (anomalies) := NULL]
 
 
 # Merge crop datasets ----------------------------------------------------------
   # Add 90-95 percentiles to the county crop panel; then shift-share variables
-  comb_cnty_dt %<>% merge(
-    y = pctl_dt,
-    by = 'GEOID',
-    all = FALSE
-  ) %>% merge(
-    share_dt,
-    by = c('GEOID', 'year'),
-    all = TRUE
-  )
+  comb_cnty_dt %<>%
+    merge(
+      y = pctl_dt,
+      by = 'GEOID',
+      all = FALSE
+    ) %>%
+    merge(
+      share_dt,
+      by = c('GEOID', 'year'),
+      all = TRUE
+    )
 
 
 # Define 'rural' counties ------------------------------------------------------
@@ -182,7 +184,7 @@
     ),
     pred_q14 = cut(
       x = dbwt_pred_pctl_pre,
-      breaks = c(0,0.01,0.05,seq(0.1,0.9,0.1),0.95, 0.99,1),
+      breaks = c(0, 0.01, 0.05, seq(0.1, 0.9, 0.1), 0.95, 0.99, 1),
       labels = 1:14, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
     ),
     pred_q20 = cut(
@@ -195,14 +197,17 @@
 
 # Add end-of-sample GM/suitability percentiles ---------------------------------
   # Find the last year of the current natality sample (will use for pctl calc)
-  yr_max = natality_dt[,fmax(year)]
+  yr_max = natality_dt[, fmax(year)]
   # Calculate average GLY/km2 and GMO suitability by county in last 3 years 
 # NOTE Subsetting to only rural counties (i.e., ECDF will use rural counties)
-  end_dt = comb_cnty_dt[between(year, yr_max - 2, yr_max) & rural == TRUE, .(
-    fips,
-    glyph_km2,
-    all_yield_diff_percentile_gmo
-  )] |> fgroup_by(fips) |> fmean()
+  end_dt =
+    comb_cnty_dt[between(year, yr_max - 2, yr_max) & rural == TRUE, .(
+      fips,
+      glyph_km2,
+      all_yield_diff_percentile_gmo
+    )] |>
+    fgroup_by(fips) |>
+    fmean()
   # Calculate ECDFs for the variables
   ecdf_gly_end = end_dt[, glyph_km2 %>% ecdf()]
   ecdf_gaez_end = end_dt[, all_yield_diff_percentile_gmo %>% ecdf()]
@@ -250,190 +255,191 @@
   # Add indicators for child's race and mother's race, ethnicity, marital status
   natality_dt[, `:=`(
     i_female = 1 * (sex == 'F'),
-    i_m_black = 1 * (mrace == 2), 
+    i_m_black = 1 * (mrace == 2),
     i_m_nonwhite = 1 * (mrace != 1),
     i_m_hispanic = 1 * (mhisp > 0),
     i_m_married = 1 * (mar == 1)
   )]
 
+
 # Function: Water analysis -----------------------------------------------------
-# This function is called within the analysis script to estimate water spec
-estimate_water_spec = function(
-  water_type, # c('bins-simple','bins-soil','ml-pred')
-  iv, est_dt, 
-  controls, pest_controls, econ_controls, 
-  fml_y, fml_iv, fml_controls, fml_fes, fml_inf, 
-  het_split, 
-  dir_today, base_name
-){
-  if(str_detect(water_type,'bins')){
-    # Reading raw data 
-    county_exposure_dt = 
-      read.fst(
-        path = here("data/watershed/county-exposure-dt.fst"), 
-        as.data.table = TRUE
-      )
-    # soil => separate estimates for high erodibility/precipitation
-    if(water_type == 'bins-soil'){
-      col_regex = c(
-        paste0('^', iv, '_d\\d{2,3}$'),
-        '^high_kls_d\\d{2,3}$',
-        '^high_ppt_growing_season_d\\d{2,3}$'
-      )
-      # Making all of the interactions 
-      water_dt = 
-        melt(
-          county_exposure_dt, 
-          id.vars = c('GEOID','year'),
-          measure = patterns(col_regex),
-          variable.name = 'distance_bin',
-          value.name = c('trt', 'high_kls','high_ppt_growing_season')
-        )[,.(
-          fips_res = GEOID,
-          year,
-          distance_bin = fcase(
-            distance_bin == '1', 'd50',
-            distance_bin == '2', 'd100',
-            distance_bin == '3', 'd150',
-            distance_bin == '4', 'd200',
-            distance_bin == '5', 'd250',
-            distance_bin == '6', 'd300'
-          ),
-          trt, high_kls, high_ppt_growing_season,
-          high_kls_ppt = high_kls*high_ppt_growing_season,
-          high_kls_trt = high_kls*trt,
-          high_ppt_trt = high_ppt_growing_season*trt,
-          high_kls_ppt_trt = high_kls*high_ppt_growing_season*trt
-        )] |>
-        dcast(
-          formula = fips_res + year ~ distance_bin,
-          value.var = c(
-            'trt', 
-            #'high_kls','high_ppt_growing_season',
-            #'high_kls_ppt','high_kls_trt','high_ppt_trt',
-            'high_kls_ppt_trt'
-          )
+  # This function is called within the analysis script to estimate water spec
+  estimate_water_spec = function(
+    water_type, # c('bins-simple','bins-soil','ml-pred')
+    iv, est_dt,
+    controls, pest_controls, econ_controls, 
+    fml_y, fml_iv, fml_controls, fml_fes, fml_inf, 
+    het_split,
+    dir_today, base_name
+  ) {
+    if (str_detect(water_type, 'bins')) {
+      # Reading raw data
+      county_exposure_dt =
+        read.fst(
+          path = here("data/watershed/county-exposure-dt.fst"),
+          as.data.table = TRUE
         )
-      # Turning trt back into real iv variable name 
-      setnames(
-        water_dt,
-        old = colnames(water_dt),
-        new = str_replace(colnames(water_dt),'trt',iv)
-      )
-    }else if(water_type =='bins-simple'){
-      # Simple just has upstream trt 
-      col_regex = c('^all_yield_diff_percentile_gmo_d\\d{2,3}')  
-      water_dt = 
-        get_vars(
-          county_exposure_dt,
-          vars = c('GEOID','year', col_regex),
-          regex = TRUE
+      # soil => separate estimates for high erodibility/precipitation
+      if (water_type == 'bins-soil') {
+        col_regex = c(
+          paste0('^', iv, '_d\\d{2,3}$'),
+          '^high_kls_d\\d{2,3}$',
+          '^high_ppt_growing_season_d\\d{2,3}$'
+        )
+        # Making all of the interactions 
+        water_dt = 
+          melt(
+            county_exposure_dt, 
+            id.vars = c('GEOID','year'),
+            measure = patterns(col_regex),
+            variable.name = 'distance_bin',
+            value.name = c('trt', 'high_kls','high_ppt_growing_season')
+          )[,.(
+            fips_res = GEOID,
+            year,
+            distance_bin = fcase(
+              distance_bin == '1', 'd50',
+              distance_bin == '2', 'd100',
+              distance_bin == '3', 'd150',
+              distance_bin == '4', 'd200',
+              distance_bin == '5', 'd250',
+              distance_bin == '6', 'd300'
+            ),
+            trt, high_kls, high_ppt_growing_season,
+            high_kls_ppt = high_kls*high_ppt_growing_season,
+            high_kls_trt = high_kls*trt,
+            high_ppt_trt = high_ppt_growing_season*trt,
+            high_kls_ppt_trt = high_kls*high_ppt_growing_season*trt
+          )] |>
+          dcast(
+            formula = fips_res + year ~ distance_bin,
+            value.var = c(
+              'trt', 
+              #'high_kls','high_ppt_growing_season',
+              #'high_kls_ppt','high_kls_trt','high_ppt_trt',
+              'high_kls_ppt_trt'
+            )
+          )
+        # Turning trt back into real iv variable name 
+        setnames(
+          water_dt,
+          old = colnames(water_dt),
+          new = str_replace(colnames(water_dt),'trt',iv)
+        )
+      } else if (water_type =='bins-simple') {
+        # Simple just has upstream trt 
+        col_regex = c('^all_yield_diff_percentile_gmo_d\\d{2,3}')  
+        water_dt = 
+          get_vars(
+            county_exposure_dt,
+            vars = c('GEOID','year', col_regex),
+            regex = TRUE
+          ) |>
+          setnames('GEOID','fips_res')
+      } else {
+        stop("water_type not recognized, use 'bins-simple','bins-soil', or 'ml-pred'.")
+      }
+      # Make the formula
+      water_fml =
+        paste0(
+          'i(year, ', 
+          colnames(water_dt)[-(1:2)],
+          ', ref = 1995)'
         ) |>
-        setnames('GEOID','fips_res')
-    }else{
+        paste(collapse = ' + ')
+      fml_rhs_water = paste0(water_fml,' + ',fml_controls)
+      # Merge with main table 
+      water_dt |> setkey('fips_res','year')
+      est_dt |> setkey('fips_res','year')
+      # Merge with estimating data 
+      est_dt = merge(
+        est_dt, 
+        water_dt,
+        by = c('fips_res','year'),
+        all.x = TRUE
+      )
+      rm(county_exposure_dt, water_dt); gc()
+    } else if (water_type == 'ml-pred') {
+      # Load the water-ML predictions 
+      county_exposure_pred_dt = 
+        read.fst(
+          path = here("data/watershed/county-exposure-pred-dt.fst"), 
+          as.data.table = TRUE
+        ) |>
+        setnames('GEOID', 'fips_res') |>
+        setkey('fips_res','year','month')
+      est_dt |> setkey('fips_res','year','month')
+      # Merge with estimating data 
+      est_dt = merge(
+        est_dt, 
+        county_exposure_pred_dt,
+        by = c('fips_res','year','month'),
+        all.x = TRUE
+      )
+      # Add water to formula in reduced form 
+      rhs_raw_fml = 
+        CJ(
+          controls = controls,
+          pred = str_subset(colnames(county_exposure_pred_dt), 'pred')
+        )[,.(
+          fml_string = fcase(
+            controls == 0, pred,
+            controls == 1, paste0(pred, ' + ', paste(pest_controls, collapse = '+')),
+            controls == 2, paste0(pred, ' + ', paste(econ_controls, collapse = '+')),
+            controls == 3, paste0(
+              pred,' + ',
+              paste(c(pest_controls,econ_controls), collapse = '+')
+            )
+          )
+        )]$fml_string    
+      fml_rhs_water = paste0(
+        ifelse(length(rhs_raw_fml) > 1, 'sw(', ''),
+        paste(rhs_raw_fml, collapse = ', '),
+        ifelse(length(rhs_raw_fml) > 1, ')', '')
+      )
+    } else {
       stop("water_type not recognized, use 'bins-simple','bins-soil', or 'ml-pred'.")
     }
-    # Make the formula
-    water_fml = 
-      paste0(
-        'i(year, ', 
-        colnames(water_dt)[-(1:2)],
-        ', ref = 1995)'
-      ) |> 
-      paste(collapse = ' + ')
-    fml_rhs_water = paste0(water_fml,' + ',fml_controls)
-    # Merge with main table 
-    water_dt |> setkey('fips_res','year')
-    est_dt |> setkey('fips_res','year')
-    # Merge with estimating data 
-    est_dt = merge(
-      est_dt, 
-      water_dt,
-      by = c('fips_res','year'),
-      all.x = TRUE
+    # Add water to reduced form formula
+    fml_rf_water = paste(
+      fml_y,
+      '~',
+      fml_iv, ' + ',
+      fml_rhs_water,
+      ' | ',
+      fml_fes
+    ) %>% as.formula()
+    # Estimating the reduced form
+    if (!is.null(het_split)) {
+      est_rf_water = feols(
+        fml = fml_rf_water,
+        cluster = fml_inf,
+        data = est_dt,
+        fsplit = het_split,
+        lean = TRUE
+      )
+    } else {
+      est_rf_water = feols(
+        fml = fml_rf_water,
+        cluster = fml_inf,
+        data = est_dt,
+        lean = TRUE
+      )
+    }
+    # Save
+    qsave(
+      est_rf_water,
+      file.path(dir_today, paste0('est_water_rf-', water_type,'_',base_name)),
+      preset = 'fast'
     )
-    rm(county_exposure_dt, water_dt); gc()
-  }else if(water_type == 'ml-pred'){
-    # Load the water-ML predictions 
-    county_exposure_pred_dt = 
-      read.fst(
-        path = here("data/watershed/county-exposure-pred-dt.fst"), 
-        as.data.table = TRUE
-      ) |>
-      setnames('GEOID', 'fips_res') |>
-      setkey('fips_res','year','month')
-    est_dt |> setkey('fips_res','year','month')
-    # Merge with estimating data 
-    est_dt = merge(
-      est_dt, 
-      county_exposure_pred_dt,
-      by = c('fips_res','year','month'),
-      all.x = TRUE
-    )
-    # Add water to formula in reduced form 
-    rhs_raw_fml = 
-      CJ(
-        controls = controls,
-        pred = str_subset(colnames(county_exposure_pred_dt), 'pred')
-      )[,.(
-        fml_string = fcase(
-          controls == 0, pred,
-          controls == 1, paste0(pred, ' + ', paste(pest_controls, collapse = '+')),
-          controls == 2, paste0(pred, ' + ', paste(econ_controls, collapse = '+')),
-          controls == 3, paste0(
-            pred,' + ',
-            paste(c(pest_controls,econ_controls), collapse = '+')
-          )
-        )
-      )]$fml_string    
-    fml_rhs_water = paste0(
-      ifelse(length(rhs_raw_fml) > 1, 'sw(', ''),
-      paste(rhs_raw_fml, collapse = ', '),
-      ifelse(length(rhs_raw_fml) > 1, ')', '')
-    )
-  }else{
-    stop("water_type not recognized, use 'bins-simple','bins-soil', or 'ml-pred'.")
+    rm(est_rf_water); invisible(gc())
   }
-  # Add water to reduced form formula
-  fml_rf_water = paste(
-    fml_y,
-    '~',
-    fml_iv, ' + ',
-    fml_rhs_water,
-    ' | ',
-    fml_fes
-  ) %>% as.formula()
-  # Estimating the reduced form
-  if (!is.null(het_split)) {
-    est_rf_water = feols(
-      fml = fml_rf_water,
-      cluster = fml_inf,
-      data = est_dt,
-      fsplit = het_split,
-      lean = TRUE
-    )
-  } else {
-    est_rf_water = feols(
-      fml = fml_rf_water,
-      cluster = fml_inf,
-      data = est_dt,
-      lean = TRUE
-    )
-  }
-  # Save
-  qsave(
-    est_rf_water,
-    file.path(dir_today, paste0('est_water_rf-', water_type,'_',base_name)),
-    preset = 'fast'
-  )
-  rm(est_rf_water); invisible(gc())
-}
 
 # Function: Run TFWE analysis --------------------------------------------------
   est_twfe = function(
     outcomes = c(
       'dbwt', 'dbwt_pred',
-      'dbwt_pctl_pre', 
+      'dbwt_pctl_pre',
       'i_lbw', 'i_vlbw',
       'gestation', 'i_preterm',
       'c_section', 'any_anomaly'
@@ -468,7 +474,7 @@ estimate_water_spec = function(
     # Define pesticide controls
     pest_controls = c(
       'alachlor_km2', 'atrazine_km2', 'cyanazine_km2', 'fluazifop_km2',
-      'metolachlor_km2','metribuzin_km2','nicosulfuron_km2'
+      'metolachlor_km2', 'metribuzin_km2', 'nicosulfuron_km2'
     )
     # Economic controls (currently just unemployment rate)
     econ_controls = c(
@@ -535,7 +541,7 @@ estimate_water_spec = function(
     } else {
       est_dt = natality_dt[str_detect(rural_grp, spatial_subset)]
     }
-    
+
     # Merge the datasets with the requested variables
     est_dt = merge(
       x = est_dt[, unique(c(
@@ -575,7 +581,7 @@ estimate_water_spec = function(
       gly_nonlinear == 'median', 'glyph_km2 + glyph_km2:above_median_glyph_km2', 
       default = 'glyph_km2'
     )
-    
+
     # Outcome(s)
     fml_y = paste0(
       'c(',
@@ -584,31 +590,31 @@ estimate_water_spec = function(
     )
     # Instruments: Without shift-share (event study)
     fml_iv = fcase(
-      iv_nonlinear == FALSE | is.null(gly_nonlinear), 
+      iv_nonlinear == FALSE | is.null(gly_nonlinear),
         paste0('1 + i(year, ', iv, ', ref = 1995)'),
-      iv_nonlinear == TRUE & gly_nonlinear == 'quadratic',  
+      iv_nonlinear == TRUE & gly_nonlinear == 'quadratic',
         paste0(
           '1 + i(year, ', iv,', ref = 1995)',
           '+ i(year, ', iv,'_sq, ref = 1995)'
         ),
-      iv_nonlinear == TRUE & gly_nonlinear == 'median', 
+      iv_nonlinear == TRUE & gly_nonlinear == 'median',
         paste0(
           '1 + i(year, ', iv,', ref = 1995)',
-          '+ i(year, ', iv,'*above_median_', iv,', ref = 1995)'
+          '+ i(year, ', iv,'*above_median_', iv, ', ref = 1995)'
         )
     )
     # Instruments: Shift-share approach (if iv_shift is defined)
     if (!is.null(iv_shift)) {
       fml_iv_ss = paste0(iv_shift, ' + ', iv_shift, ':', iv)
         fcase(
-          iv_nonlinear == FALSE | is.null(gly_nonlinear), 
+          iv_nonlinear == FALSE | is.null(gly_nonlinear),
             paste0(iv_shift, ' + ', iv_shift, ':', iv),
-          iv_nonlinear == TRUE & gly_nonlinear == 'quadratic',  
+          iv_nonlinear == TRUE & gly_nonlinear == 'quadratic',
             paste0(
               iv_shift, ' + ', iv_shift, ':', iv,
               iv_shift, '_sq + ', iv_shift, '_sq:', iv
             ),
-          iv_nonlinear == TRUE & gly_nonlinear == 'median', 
+          iv_nonlinear == TRUE & gly_nonlinear == 'median',
             paste0(
               iv_shift, ' + ', iv_shift, ':', iv, ' + ',
               iv_shift,':above_median_', iv_shift, ' + ',
@@ -658,7 +664,7 @@ estimate_water_spec = function(
       ' | ',
       fml_fes
     ) %>% as.formula()
-    
+
     # Formula: 2SLS via event study
     fml_2sls = paste(
       fml_y,
@@ -760,7 +766,7 @@ estimate_water_spec = function(
         preset = 'fast'
       )
       rm(est_rf); invisible(gc())
-    
+
       # Estimate: 2SLS with event study
       if (!is.null(het_split)) {
         est_2sls = feols(
@@ -840,18 +846,18 @@ estimate_water_spec = function(
       )
       rm(est_ols); invisible(gc())
     }
-    # Estimating water results 
+    # Estimating water results
     if(!is.null(water_types)){
       lapply(
-        water_types, 
-        estimate_water_spec, 
+        water_types,
+        estimate_water_spec,
         iv = iv, est_dt = est_dt, controls = controls, 
         pest_controls = pest_controls, econ_controls = econ_controls, 
-        fml_y = fml_y, fml_iv = fml_iv, 
-        fml_controls = fml_controls, 
-        fml_fes = fml_fes, fml_inf = fml_inf, 
-        het_split = het_split, 
-        dir_today = dir_today, 
+        fml_y = fml_y, fml_iv = fml_iv,
+        fml_controls = fml_controls,
+        fml_fes = fml_fes, fml_inf = fml_inf,
+        het_split = het_split,
+        dir_today = dir_today,
         base_name = base_name
       )
     }
@@ -1040,7 +1046,7 @@ estimate_water_spec = function(
 #     iv = 'all_yield_diff_percentile_gmo',
 #     iv_shift = 'glyphosate_nat_100km',
 #     spatial_subset = 'rural',
-#     county_subset = 
+#     county_subset =
 #       comb_cnty_dt[census_region == 'South' & state_fips != '12', funique(fips)],
 #     county_subset_name = 'south-nofl',
 #     base_fe = c('year_month', 'fips_res', 'fips_occ'),
@@ -1066,18 +1072,49 @@ estimate_water_spec = function(
 #   )
 
 
-# Water results ---------------------------------------------------------------
-  # This should only estimate water results (not rf or 2sls or ols)
+# # Water results ---------------------------------------------------------------
+#   # This should only estimate water results (not rf or 2sls or ols)
+# # NOTE Takes ~ 5 hours to run
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo',
+#     iv_shift = NULL,
+#     spatial_subset = 'rural',
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = 3,
+#     controls = 3,
+#     clustering = c('year', 'state_fips'),
+#     include_ols = FALSE,
+#     skip_iv = TRUE,
+#     water_types = c('ml-pred', 'bins-soil') #'bins-simple'
+#   )
+
+
+# Estimate by counties' rural status -------------------------------------------
+# NOTE Crashed during second-stage estimation
   est_twfe(
+    outcomes = 'dbwt',
     iv = 'all_yield_diff_percentile_gmo',
     iv_shift = NULL,
-    spatial_subset = 'rural',
-    het_split = NULL,
+    spatial_subset = NULL,
+    het_split = 'rural_res',
+    county_subset = NULL,
+    county_subset_name = NULL,
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
     fes = 3,
     controls = 3,
-    clustering = c('year', 'state_fips'),
-    include_ols = FALSE,
-    skip_iv = TRUE,
-    water_types = c('ml-pred', 'bins-soil') #'bins-simple'
+    clustering = c('year', 'state_fips')
+  )
+  est_twfe(
+    outcomes = 'dbwt',
+    iv = 'all_yield_diff_percentile_gmo',
+    iv_shift = NULL,
+    spatial_subset = NULL,
+    het_split = 'rural_grp',
+    county_subset = NULL,
+    county_subset_name = NULL,
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    fes = 3,
+    controls = 3,
+    clustering = c('year', 'state_fips')
   )

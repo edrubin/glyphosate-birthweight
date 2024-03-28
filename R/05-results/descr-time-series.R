@@ -3,7 +3,7 @@ library(pacman)
 p_load(
   fst, here, data.table, janitor, readxl, magrittr,
   tigris, sf, ggplot2, dplyr, purrr,
-  viridis, scales,RColorBrewer
+  viridis, scales, RColorBrewer
 )
 options(tigris_use_cache = TRUE)
 theme_set(theme_minimal(base_size = 16))
