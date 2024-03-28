@@ -68,6 +68,7 @@ p_load(
 
 # Function to extract estimates -----------------------------------------------
 extract_pred_bw_effects = function(mod_path){
+  print(paste0('starting', mod_path))
   mod = qread(mod_path)
   pred_bw_dt = 
       cbind(
@@ -78,8 +79,25 @@ extract_pred_bw_effects = function(mod_path){
   # Adding info from filename 
   pred_bw_dt[,':='(
     spatial = str_extract(mod_path, '(?<=_spatial-).*(?=_het)'),
-    cluster = str_extract(mod_path, '(?<=_cl-).*(?=_glynl)')
+    cluster = str_extract(mod_path, '(?<=_cl-).*(?=_glynl)'),
+    county_subset = str_extract(mod_path, '(?<=_county-)[a-zA-Z-]+(?=_)')
   )]
+  # Adding missing columns if they don't exist
+  if (!exists('sample', where = pred_bw_dt)) {
+      pred_bw_dt[, 'sample' := NA_character_]
+  }
+  if (!exists('sample_var', where = pred_bw_dt)) {
+    pred_bw_dt[, 'sample_var' := NA_character_]
+  }
+  if (!exists('rhs', where = pred_bw_dt)) {
+    pred_bw_dt[, 'rhs' := as.character(mod[[1]]$fml_all$linear)[3]]
+  }
+  if (!exists('fixef', where = pred_bw_dt)) {
+    pred_bw_dt[, 'fixef' := as.character(mod[[1]]$fml_all$fixef)[2]]
+  }
+  if (!exists('lhs', where = pred_bw_dt)) {
+    pred_bw_dt[, 'lhs' := as.character(mod[[1]]$fml_all$linear)[2]]
+  }
   # Some cleaning of fixef names
   pred_bw_dt[,':='(
     fixef_num = fcase(
@@ -102,8 +120,15 @@ extract_pred_bw_effects = function(mod_path){
       trt == 'allyielddiffgmo500', 'Attainable Yield, GM Avg Split at Median',
       trt == 'allyielddiffpercentilegmo', 'Attainable Yield, GM Avg Percentile',
       trt == 'allyielddiffpercentilegmomax', 'Attainable Yield, GM Max Percentile',
-      trt == 'e100myielddiffpercentilegmo', 'Attainable Yield, GM Avg Percentile, Eastern US',
+      trt == 'e100myielddiffpercentilegmo', 'Attainable Yield, GM Avg Percentile',
       trt == 'percentilegmacres','1990-1995 GM Acreage Percentile'
+    ),
+    county_subset = fcase(
+      trt == 'e100myielddiffpercentilegmo', 'Eastern US',
+      county_subset == 'mw-ne', 'Midwest and Northeast',
+      county_subset == 'south', 'South',
+      county_subset == 'south-nofl', 'South, no FL',
+      default = 'Full sample'
     )
   )]
   return(pred_bw_dt)
@@ -556,3 +581,101 @@ lapply(
   height_in = 4*1.05
 )
 plot_predbw_results_all_outcome(pctl_est_dt)
+
+
+# Now making the spec charts --------------------------------------------------
+source(here('R/functions/spec_chart_function.R'))
+# Getting coefficients  
+mod_paths = 
+  str_subset(
+    list.files(here('data/results/micro'), full.names = TRUE),
+    'est_2sls_outcome'
+  ) |>
+  str_subset('percentilegmacres', negate = TRUE)
+pred_bw_dt = 
+  lapply(mod_paths, extract_pred_bw_effects) |> 
+  rbindlist(use.names = TRUE, fill = TRUE)
+# Setup for spec chart 
+spec_chart_outcome = function(
+  pred_bw_dt, 
+  outcome_in,
+  order_in = 'decreasing'
+){
+  spec_dt = 
+    pred_bw_dt[
+      lhs == outcome_in & 
+      var_of_interest == TRUE & 
+      is.na(sample_var) 
+    ]
+  # Getting values for each group of options
+  control_num_v = unique(spec_dt$control_num)
+  fixef_num_v = unique(spec_dt$fixef_num)
+  trt_name_v = unique(spec_dt$trt_name)
+  county_subset_v = unique(spec_dt$county_subset)
+  # Adding indicator variables for each option
+  spec_dt[,
+    (paste0("i_control_num_",make_clean_names(control_num_v))) := 
+      lapply(control_num_v,\(x){control_num == x})
+  ]
+  spec_dt[,
+    (paste0("i_fixef_num_",make_clean_names(fixef_num_v))) := 
+      lapply(fixef_num_v,\(x){fixef_num == x})
+  ]
+  spec_dt[,
+    (paste0("i_trt_name_",make_clean_names(trt_name_v))) := 
+      lapply(trt_name_v,\(x){trt_name == x})
+  ]
+  spec_dt[,
+    (paste0("i_county_subset_",make_clean_names(county_subset_v))) := 
+      lapply(county_subset_v,\(x){county_subset == x})
+  ]
+  # Selecting coef/std error and dummy colummns for options
+  cols = c(
+    "estimate","std_error", 
+    str_subset(colnames(spec_dt),"^i_")
+  )
+  # Creating new data frame with just the columns needed
+  spec_df = spec_dt[,..cols] |> as.data.frame()
+  # Creating labels 
+  labels = list(
+    "Controls" = control_num_v |> as.character() |> str_replace(' and ', '+'), 
+    "Fixed Effects" = fixef_num_v |> as.character(),
+    "Attainable Yield Measure" = trt_name_v |> as.character() |> str_remove('Attainable Yield, '), 
+    "Geographic Subset" = county_subset_v |> as.character()
+  )
+  # Finding main spec to highlight
+  hl = spec_dt[
+    control_num == 'Pesticides and Unemployment' & 
+    fixef_num == 'Mother and Father FEs' & 
+    trt_name == 'Attainable Yield, GM Avg Percentile' & 
+    county_subset == 'Full sample',
+    which = TRUE
+  ]
+  # File to save in
+  jpeg(
+    filename = here(paste0(
+      "figures/micro/2sls/spec-chart-",outcome_in,".jpeg")),
+    quality = 100, res = 300, 
+    width = 3000, height = 3000
+  )
+  # Setting margins
+  par(oma=c(1,0,1,1))
+  schart(
+    spec_df, 
+    labels, 
+    highlight = hl,
+    order = order_in,
+    col.est=c("grey60","#e64173"), 
+    col.est2=c("grey70","#e64173"),
+    col.dot=c("grey60","grey95","grey95","#e64173"),
+    fonts=c(2,3),
+    ci=c(.95)
+  )
+  dev.off()
+}
+
+lapply(
+  unique(pred_bw_dt$lhs),
+  spec_chart_outcome,
+  pred_bw_dt = pred_bw_dt
+)

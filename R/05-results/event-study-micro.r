@@ -519,7 +519,7 @@ plot_reduced_form = function(
     )
   if(print) print(fs_event_cntysub_p)
   ggsave(
-    fs_event_cntrl_p, 
+    fs_event_cntysub_p, 
     filename = here(paste0(
       'figures/micro/fs-event/robust-cntysub-',outcome_in,'.jpeg'
     )), 
