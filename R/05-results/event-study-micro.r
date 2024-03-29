@@ -116,7 +116,8 @@ extract_event_study_coefs = function(mod_path){
   mod_dt[,':='(
     spatial = str_extract(mod_path, '(?<=_spatial-)[a-zA-Z-]+(?=_)'),
     cluster = str_extract(mod_path, '(?<=_cl-)[a-zA-Z-]+(?=_)'),
-    county_subset = str_extract(mod_path, '(?<=_county-)[a-zA-Z-]+(?=_)')
+    county_subset = str_extract(mod_path, '(?<=_county-)[a-zA-Z-]+(?=_)'),
+    lhs = lhs |> str_remove('^c\\(') |> str_remove('\\)$')
   )]
   # Some cleaning of fixef names
   mod_dt[,':='(
@@ -656,6 +657,98 @@ plot_reduced_form = function(
     )), 
     width = width_in*1.75, height = height_in
   )
+  # Now for both rural and non-rural residences
+  # ES NOTE: CURRENTLY DONT HAVE FIRST STAGE (3/29/2024)
+  # fs_event_residence_p = 
+  #   ggplot(
+  #     data = mod_dt[
+  #       type == '2sls-fs' & 
+  #       var_of_interest == TRUE & 
+  #       lhs == outcome_in &
+  #       fixef_num == 'Add Family FEs' & 
+  #       control_num == 'Pesticides and Unemployment' &
+  #       trt == 'all_yield_diff_percentile_gmo' & 
+  #       is.na(spatial) 
+  #       #paste0(sample_var, sample) == 'NANA' & 
+  #       #!is.na(county_subset)
+  #     ],
+  #     aes(
+  #       x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+  #       color = county_subset, 
+  #       fill = county_subset
+  #     )
+  #   ) +
+  #   geom_hline(yintercept = 0) +
+  #   geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+  #   #geom_ribbon(alpha = 0.5, color = NA) +
+  #   geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+  #   geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+  #   scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
+  #   scale_x_continuous(
+  #     name = 'Year', 
+  #     limits = c(1990,2015),
+  #     breaks = seq(1990, 2015, 5), 
+  #     minor_breaks = NULL
+  #   ) + 
+  #   scale_color_brewer(
+  #     name = 'County Subset', palette = 'Dark2',
+  #     aesthetics = c('color','fill')
+  #   )
+  # if(print) print(fs_event_residences_p)
+  # ggsave(
+  #   fs_event_residence_p, 
+  #   filename = here(paste0(
+  #     'figures/micro/fs-event/robust-residence-',outcome_in,'.jpeg'
+  #   )), 
+  #   width = width_in*1.75, height = height_in
+  # )
+  rf_res_dt = 
+    mod_dt[
+      type == 'rf' & 
+      var_of_interest == TRUE & 
+      lhs == outcome_in &
+      fixef_num == 'Add Family FEs' & 
+      control_num == 'Pesticides and Unemployment' &
+      trt == 'all_yield_diff_percentile_gmo' & 
+      sample_var == 'rural_res' & 
+      sample != 'Full sample'
+    ]
+  if(nrow(rf_res_dt) > 0){
+    rf_event_residence_p = 
+      ggplot(
+        data = rf_res_dt,
+        aes(
+          x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+          color = sample, 
+          fill = sample
+        )
+      ) +
+      geom_hline(yintercept = 0) +
+      geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+      #geom_ribbon(alpha = 0.5, color = NA) +
+      geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+      geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+      scale_y_continuous(name = y_lab, minor_breaks = NULL) +
+      scale_x_continuous(
+        name = 'Year', 
+        limits = c(1990,2015),
+        breaks = seq(1990, 2015, 5), 
+        minor_breaks = NULL
+      ) + 
+      scale_color_brewer(
+        name = 'Residence', palette = 'Dark2',
+        labels = c('Non-rural','Rural'),
+        aesthetics = c('color','fill')
+      ) 
+    if(print) print(rf_event_residence_p)
+    ggsave(
+      rf_event_residence_p, 
+      filename = here(paste0(
+        'figures/micro/rf-event/robust-residence-',outcome_in,'.jpeg'
+      )), 
+      width = width_in*1.25, height = height_in
+    )
+  }
   return(paste('Done', outcome_in))
 }
 

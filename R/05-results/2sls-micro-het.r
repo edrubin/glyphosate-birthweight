@@ -101,11 +101,11 @@ extract_pred_bw_effects = function(mod_path){
   # Some cleaning of fixef names
   pred_bw_dt[,':='(
     fixef_num = fcase(
-      fixef == 'year_month + fips_res + fips_occ', "No FEs",
+      fixef == 'year_month + fips_res + fips_occ', "No Add'l FEs",
       fixef == 'year_month + fips_res + fips_occ + sex + mage + mrace + mhisp + meduc + mar + birth_facility + restatus + total_birth_order', 'Mother FEs',
       fixef == 'year_month + fips_res + fips_occ + fage + fhisp + frace', 'Father FEs',
       fixef == 'year_month + fips_res + fips_occ + sex + mage + mrace + mhisp + meduc + mar + birth_facility + restatus + total_birth_order + fage + fhisp + frace', 'Mother and Father FEs'
-    ) |> factor(levels = c('No FEs','Mother FEs','Father FEs','Mother and Father FEs')),
+    ) |> factor(levels = c("No Add'l FEs",'Mother FEs','Father FEs','Mother and Father FEs')),
     control_num = fcase(
       str_detect(rhs, 'atrazine') & str_detect(rhs, 'unemployment'), 'Pesticides and Unemployment',
       str_detect(rhs, 'atrazine'), 'Pesticides',
@@ -677,5 +677,6 @@ spec_chart_outcome = function(
 lapply(
   unique(pred_bw_dt$lhs),
   spec_chart_outcome,
-  pred_bw_dt = pred_bw_dt
+  pred_bw_dt = pred_bw_dt,
+  order_in = 'asis'
 )
