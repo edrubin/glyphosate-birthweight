@@ -1,25 +1,26 @@
 \begin{table}[htbp]
    \centering
    \begin{threeparttable}[b]
-      \caption{\label{tab:main-outcomes} no title}
+      \caption{\label{tab:main-outcomes} \textbf{Effect of GLY on perinatal health estimated with 2SLS.}}
       \begin{tabular}{lccccccc}
          \toprule
-         Dep Var          & BW       & BW Pctl & Low BW  & Very Low BW & Gestation & Preterm & C-section\\  
-         Model:           & (1)      & (2)     & (3)     & (4)         & (5)       & (6)     & (7)\\  
+         Dep Var:       & BW       & BW Pctl & LBW     & VLBW    & Gestation & Preterm & C-section\\  
+         Model:         & (1)      & (2)     & (3)     & (4)     & (5)       & (6)     & (7)\\  
          \midrule 
-         GLY/$km^2$       & -1,376.2 & -0.698  & 0.330   & 0.075       & -9.46     & 0.963   & 0.474\\   
-                          & (640.7)  & (0.322) & (0.148) & (0.033)     & (3.42)    & (0.442) & (0.344)\\   
-         Local pesticides & Yes      & Yes     & Yes     & Yes         & Yes       & Yes     & Yes\\  
-         Unemployment     & Yes      & Yes     & Yes     & Yes         & Yes       & Yes     & Yes\\  
+         GLY/$km^2$     & -1,376.2 & -0.698  & 0.330   & 0.075   & -9.46     & 0.963   & 0.474\\   
+                        & (640.7)  & (0.322) & (0.148) & (0.033) & (3.42)    & (0.442) & (0.344)\\   
+         Pesticides     & Yes      & Yes     & Yes     & Yes     & Yes       & Yes     & Yes\\  
+         Unemployment   & Yes      & Yes     & Yes     & Yes     & Yes       & Yes     & Yes\\  
          \midrule
          \emph{Fixed-effects}\\
-         Family Demog     & Yes      & Yes     & Yes     & Yes         & Yes       & Yes     & Yes\\  
-         Yr x Mo + Cnty   & Yes      & Yes     & Yes     & Yes         & Yes       & Yes     & Yes\\  
+         Family Demog   & Yes      & Yes     & Yes     & Yes     & Yes       & Yes     & Yes\\  
+         County         & Yes      & Yes     & Yes     & Yes     & Yes       & Yes     & Yes\\  
+         Yr x Mo        & Yes      & Yes     & Yes     & Yes     & Yes       & Yes     & Yes\\  
          \midrule
          \emph{Fit statistics}\\
-         N (millions)     & 10.73    & 10.73   & 10.73   & 10.73       & 10.71     & 10.71   & 9.510\\  
-         2012 mean        & 3,271.1  &         & 0.081   & 0.014       & 38.6      & 0.207   & 0.278\\  
-         Effect at mean   & -32.0    & -0.016  & 0.008   & 0.002       & -0.220    & 0.022   & 0.011\\  
+         N (millions)   & 10.73    & 10.73   & 10.73   & 10.73   & 10.71     & 10.71   & 9.510\\  
+         2012 mean      & 3,271.1  &         & 0.081   & 0.014   & 38.6      & 0.207   & 0.278\\  
+         Effect at mean & -32.0    & -0.016  & 0.008   & 0.002   & -0.220    & 0.022   & 0.011\\  
          \midrule
          \multicolumn{8}{l}{\emph{Clustered (Year \& State) standard-errors in parentheses}}\\
       \end{tabular}

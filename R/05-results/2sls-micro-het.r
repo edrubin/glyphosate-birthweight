@@ -583,6 +583,27 @@ lapply(
 plot_predbw_results_all_outcome(pctl_est_dt)
 
 
+# Getting avg bwt by pred bwt decile 
+summary_dt = read_fst(
+  here('data/clean/prediction/summaries/pctlpred-ruralres-ecdfres.fst'),
+  as.data.table = TRUE
+)
+summary_dt[,
+  dbwt_decile := dbwt_pred_rnd_pctl_ruralres_pre |> as.character() |> str_sub(1,3)
+]
+summary_dt[,
+  dbwt_decile := fcase(
+    dbwt_decile == '0', '0.0',
+    dbwt_decile == '1', '0.9',
+    str_detect(dbwt_decile, '0\\.\\d'), dbwt_decile
+  )
+]
+p_load(collapse)
+summary_dt |>
+fselect(dbwt, dbwt_decile, n) |>
+gby(dbwt_decile) |>
+fmean(w = n)
+
 # Now making the spec charts --------------------------------------------------
 source(here('R/functions/spec_chart_function.R'))
 # Getting coefficients  
@@ -605,7 +626,8 @@ spec_chart_outcome = function(
     pred_bw_dt[
       lhs == outcome_in & 
       var_of_interest == TRUE & 
-      is.na(sample_var) 
+      (is.na(sample_var) | 
+      (sample_var == 'i_m_nonwhite' & sample != 'Full sample'))
     ]
   # Getting values for each group of options
   control_num_v = unique(spec_dt$control_num)
@@ -629,6 +651,11 @@ spec_chart_outcome = function(
     (paste0("i_county_subset_",make_clean_names(county_subset_v))) := 
       lapply(county_subset_v,\(x){county_subset == x})
   ]
+  spec_dt[,':='(
+    i_full_sample = is.na(sample),
+    i_m_white = !is.na(sample) & sample == 0,
+    i_m_nonwhite = !is.na(sample) & sample == 1
+  )]
   # Selecting coef/std error and dummy colummns for options
   cols = c(
     "estimate","std_error", 
@@ -641,14 +668,16 @@ spec_chart_outcome = function(
     "Controls" = control_num_v |> as.character() |> str_replace(' and ', '+'), 
     "Fixed Effects" = fixef_num_v |> as.character(),
     "Attainable Yield Measure" = trt_name_v |> as.character() |> str_remove('Attainable Yield, '), 
-    "Geographic Subset" = county_subset_v |> as.character()
+    "Geographic Subset" = county_subset_v |> as.character(),
+    "Mother Race" = c('All', 'White','Non-white')
   )
   # Finding main spec to highlight
   hl = spec_dt[
     control_num == 'Pesticides and Unemployment' & 
     fixef_num == 'Mother and Father FEs' & 
     trt_name == 'Attainable Yield, GM Avg Percentile' & 
-    county_subset == 'Full sample',
+    county_subset == 'Full sample' & 
+    is.na(sample),
     which = TRUE
   ]
   # File to save in

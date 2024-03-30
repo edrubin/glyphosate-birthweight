@@ -19,14 +19,14 @@ p_load(
   setFixest_dict(c(
     glyph_km2 = 'GLY/$km^2$',
     dbwt = 'BW',
-    dbwt_pred = 'Predicted BW',
+    dbwt_pred = 'Pred BW',
     dbwt_pctl_pre = 'BW Pctl',
-    i_lbw = 'Low BW',
-    i_vlbw = 'Very Low BW',
+    i_lbw = 'LBW',
+    i_vlbw = 'VLBW',
     gestation = 'Gestation',
     i_preterm = 'Preterm',
     c_section = 'C-section',
-    any_anomaly = 'Any Anomaly',
+    any_anomaly = 'Anomaly',
     year = 'Year',
     state_fips = 'State',
     alachlor_km2 = 'Alachlor/$km^2$',
@@ -106,7 +106,7 @@ p_load(
     main_mod,
     tex = TRUE,
     style.tex = style.tex(
-      depvar.title = 'Dep Var',
+      depvar.title = 'Dep Var:',
       model.format = "", 
       line.top = 'simple',
       line.bottom = 'simple',
@@ -117,11 +117,12 @@ p_load(
     digits = 3,
     signif.code = NA,
     group = list(
-      '^_Local pesticides' = 'Nicosulfuron',
+      '^_Pesticides' = 'Nicosulfuron',
       '^_Unemployment' = 'Unemp'
     ),
     fixef.group = list(
-      '-^Yr x Mo + Cnty' = 'year_month|fips',
+      '-^Yr x Mo' = 'year_month',
+      '-^County' = 'fips',
       '-^Family Demog' = 'age|sex|race|hisp|birth|mar|educ|restatus'
     ),
     se.row = FALSE,
@@ -133,7 +134,8 @@ p_load(
       '__2012 mean' = effect_at_mean_dt$mean,
       '__Effect at mean' = effect_at_mean_dt$effect_at_mean
     ),
-    label = 'tab:main-outcomes'
+    label = 'tab:main-outcomes',
+    title = '\\textbf{Effect of GLY on perinatal health estimated with 2SLS.}'
   ) |> write(here('tables/2sls/main-outcomes.tex'))
   # OLS version of table
   ols_spec = 
@@ -152,7 +154,7 @@ p_load(
     ols_mod,
     tex = TRUE,
     style.tex = style.tex(
-      depvar.title = 'Dep Var',
+      depvar.title = 'Dep Var:',
       model.format = "", 
       line.top = 'simple',
       line.bottom = 'simple',
@@ -163,11 +165,12 @@ p_load(
     digits = 3,
     signif.code = NA,
     group = list(
-      '^_Local pesticides' = 'Nicosulfuron',
+      '^_Pesticides' = 'Nicosulfuron',
       '^_Unemployment' = 'Unemp'
     ),
     fixef.group = list(
-      '-^Yr x Mo + Cnty' = 'year_month|fips',
+      '-^Yr x Mo' = 'year_month',
+      '-^County' = 'fips',
       '-^Family Demog' = 'age|sex|race|hisp|birth|mar|educ|restatus'
     ),
     se.row = FALSE,
@@ -175,7 +178,8 @@ p_load(
     digits.stats = 4,
     tpt = TRUE,
     notes = "Sample restricted to births from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
-    label = 'tab:main-outcomes-ols'
+    label = 'tab:main-outcomes-ols',
+    title = '\\textbf{Effect of GLY on perinatal health estimated with OLS.}'
   ) |> write(here('tables/ols/main-outcomes.tex'))
   rm(ols_mod, ols_spec)
 
@@ -185,7 +189,7 @@ p_load(
     main_mod,
     tex = TRUE,
     style.tex = style.tex(
-      depvar.title = 'Dep Var',
+      depvar.title = 'Dep Var:',
       model.format = "", 
       line.top = 'simple',
       line.bottom = 'simple',
@@ -195,7 +199,8 @@ p_load(
     digits = 3,
     signif.code = NA,
     fixef.group = list(
-      '-^Yr x Mo + Cnty' = 'year_month|fips',
+      '-^Yr x Mo' = 'year_month',
+      '-^County' = 'fips',
       '-^Family Demog' = 'age|sex|race|hisp|birth|mar|educ|restatus'
     ),
     se.row = FALSE,
@@ -205,7 +210,9 @@ p_load(
     extralines = list(
       '__2012 mean' = effect_at_mean_dt$mean,
       '__GLY/$km^2$ effect at mean' = effect_at_mean_dt$effect_at_mean
-    )
+    ),
+    label = 'tab:main-outcomes-controls',
+    title = '\\textbf{Effect of GLY on perinatal health estimated with 2SLS.}'
   ) |> write(here('tables/2sls/main-outcomes-cntrl-coefs.tex'))
   # Main table with OLS estimates 
   
@@ -247,7 +254,7 @@ make_outcome_control_table = function(outcome_in, mod, trt, spatial){
     tex = TRUE,
     depvar = FALSE, 
     style.tex = style.tex(
-      depvar.title = 'Dep Var',
+      depvar.title = 'Dep Var:',
       model.format = "", 
       line.top = 'simple',
       line.bottom = 'simple',
@@ -258,11 +265,12 @@ make_outcome_control_table = function(outcome_in, mod, trt, spatial){
     signif.code = NA,
     keep = 'GLY',
     group = list(
-      '^_Local pesticides' = 'Nicosulfuron',
+      '^_Pesticides' = 'Nicosulfuron',
       '^_Unemployment' = 'Unemp'
     ),
     fixef.group = list(
-      '-^Yr x Mo + Cnty' = 'year_month|fips',
+      '-^Yr x Mo' = 'year_month',
+      '-^County' = 'fips',
       '-^Family Demog' = 'age|sex|race|hisp|birth|mar|educ|restatus'
     ),
     se.row = FALSE,
@@ -278,7 +286,7 @@ make_outcome_control_table = function(outcome_in, mod, trt, spatial){
     ),
     label = paste0('tab:robust-cntrl-',outcome_in,'-',trt),
     title = paste0(
-      '\\textbf{The effect of glyphosate on ',
+      '\\textbf{The effect of GLY on ',
       outcome_name,
       ', \\\\ Robustness to alternative controls and fixed effects}' 
     ),
@@ -353,7 +361,7 @@ lapply(
     main_mod_ss,
     tex = TRUE,
     style.tex = style.tex(
-      depvar.title = 'Dep Var',
+      depvar.title = 'Dep Var:',
       model.format = "", 
       line.top = 'simple',
       line.bottom = 'simple',
@@ -364,11 +372,12 @@ lapply(
     digits = 3,
     signif.code = NA,
     group = list(
-      '^_Local pesticides' = 'Nicosulfuron',
+      '^_Pesticides' = 'Nicosulfuron',
       '^_Unemployment' = 'Unemp'
     ),
     fixef.group = list(
-      '-^Yr x Mo + Cnty' = 'year_month|fips',
+      '-^Yr x Mo' = 'year_month',
+      '-^County' = 'fips',
       '-^Family Demog' = 'age|sex|race|hisp|birth|mar|educ|restatus'
     ),
     se.row = FALSE,
@@ -380,7 +389,8 @@ lapply(
       '__2012 mean' = effect_at_mean_dt_ss$mean,
       '__Effect at mean' = effect_at_mean_dt_ss$effect_at_mean
     ),
-    label = 'tab:main-outcomes-ss'
+    label = 'tab:main-outcomes-ss',
+    title = '\\textbf{Effect of GLY on perinatal health estimated with 2SLS shift-share instrument.}'
   ) |> write(here('tables/2sls/main-outcomes-ss.tex'))
 
 
@@ -398,7 +408,7 @@ make_water_ml_table = function(outcome_in, mod){
     tex = TRUE,
     keep = 'Pred',
     style.tex = style.tex(
-      depvar.title = 'Dep Var',
+      depvar.title = 'Dep Var:',
       model.format = "", 
       line.top = 'simple',
       line.bottom = 'simple',
@@ -409,11 +419,12 @@ make_water_ml_table = function(outcome_in, mod){
     signif.code = NA,
     group = list(
       '^_Local attainable yield' = 'all_yield',
-      '^_Local pesticides' = 'Nicosulfuron',
+      '^_Pesticides' = 'Nicosulfuron',
       '^_Unemployment' = 'Unemp'
     ),
     fixef.group = list(
-      '-^Yr x Mo + Cnty' = 'year_month|fips',
+      '-^Yr x Mo' = 'year_month',
+      '-^County' = 'fips',
       '-^Family Demog' = 'age|sex|race|hisp|birth|mar|educ|restatus'
     ),
     se.row = FALSE,

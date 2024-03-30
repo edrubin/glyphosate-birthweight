@@ -207,3 +207,104 @@ map(
   gaez_crop_acreage_correlation,
   pre_acre_pctl_dt = pre_acre_pctl_dt
 )
+
+
+# Now the balance table 
+library(pacman)
+p_load(
+  data.table, fixest, fst, here, ggplot2, modelsummary,
+  stringr,dplyr, janitor, purrr, magrittr,
+  vtable
+)
+
+# Reading the data ---------------------------------------------------
+comb_dt = 
+  read.fst(
+    here("data/clean/comb-cnty-health-dt.fst"),
+    as.data.table = TRUE
+  )[,
+    trt := fcase(
+      rural == TRUE & all_yield_diff_gmo_50_0 == TRUE, "High GM Yield",
+      rural == TRUE & all_yield_diff_gmo_50_0 == FALSE, "Low GM Yield",
+      rural == FALSE, "Urban"
+    )
+  ][,
+    num_counties := uniqueN(GEOID),by = trt
+  ][,
+    pct_male := tot_male_births/tot_inf_births
+  ]
+
+vars = c(
+  "num_cnty",
+  "median_birth_wt", 
+  "pct_low_bw", 
+  "pct_male", 
+  "inf_mort", 
+  "tot_inf_births",
+  "glyph_km2",
+  "tot_km2",
+  "tot_pop",
+  "pct_hisp",
+  "unemployment_rate",
+  "hs_some_pct",
+  "hs_deg_pct",
+  "college_some_pct",
+  "college_deg_pct", 
+  "inc_per_cap")
+
+sum_dt = comb_dt[
+  year %in% 1992:1995 & !is.na(trt), .(
+    median_birth_wt = mean(median_birth_wt, na.rm = TRUE),
+    pct_low_bw = mean(pct_low_bw, na.rm = TRUE),
+    pct_male = 100*mean(pct_male, na.rm = TRUE),
+    inf_mort = mean(inf_mort, na.rm = TRUE),
+    tot_inf_births = mean(tot_inf_births, na.rm = TRUE),
+    glyph_km2  = mean(glyph_km2, na.rm = TRUE),
+    tot_km2 = 0.00404686*mean(tot_acres, na.rm = TRUE),
+    tot_pop = mean(tot_pop, na.rm = TRUE)/1000,
+    pct_hisp = 100*mean(pct_hisp,na.rm = TRUE), 
+    unemployment_rate = 100*mean(unemployment_rate,na.rm = TRUE),
+    hs_some_pct = mean(hs_some_pct, na.rm = TRUE),
+    hs_deg_pct = mean(hs_deg_pct, na.rm = TRUE),
+    college_some_pct = mean(college_some_pct, na.rm = TRUE),
+    college_deg_pct = mean(college_deg_pct, na.rm = TRUE),
+    inc_per_cap = mean(inc_per_cap_farm + inc_per_cap_nonfarm, na.rm = TRUE) 
+  ),
+  by = .(GEOID,trt)
+][,num_cnty := uniqueN(GEOID), by = trt]
+
+
+sumtable(
+  data = sum_dt,
+  group = 'trt',
+  vars = vars,
+  summ = c('mean(x)','sd(x)'),
+  labels = c(
+    "Number of Counties",
+    "Birth Weight ($g$)", 
+    "Pct Low Birth Weight", 
+    "Percent Male", 
+    "Infant Mortality", 
+    "Total Births",
+    "Glyphosate ($kg/km^2$)",
+    "Total Crop Area ($km^2$)",
+    "Total Pop (1000's)",
+    "Percent Hispanic",
+    "Unemployment Rate",
+    "Pct Some HS Degree",
+    "Pct HS Degree",
+    "Pct Some College",
+    "Pct College Degree", 
+    "Income per Capita"),
+  title = "Summary Statistics for high- and low-attainable yield counties between 1992 and 1995",
+  digits = 3,
+  out = "latex",
+  note = "Means and standard deviations are calculated on county level averages between 1992 and 1995, which is the period prior to the release of GM crops."
+)
+
+# What percentage of glyphosate is used east of 100th meridian
+comb_dt[year %in% 1992:2004,
+  sum(ifelse(e100m == TRUE,glyphosate,0),na.rm = TRUE)
+  /sum(glyphosate,na.rm = TRUE)
+]
+
