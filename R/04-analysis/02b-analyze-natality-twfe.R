@@ -1120,12 +1120,28 @@
 #   )
 
 
-# Estimate by counties' rural status -------------------------------------------
+# # Estimate on purely urban births ----------------------------------------------
+#   est_twfe(
+#     outcomes = 'dbwt',
+#     iv = 'all_yield_diff_percentile_gmo',
+#     iv_shift = NULL,
+#     spatial_subset = 'urban res; urban occ',
+#     het_split = NULL,
+#     county_subset = NULL,
+#     county_subset_name = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = 3,
+#     controls = 3,
+#     clustering = c('year', 'state_fips')
+#   )
+
+
+# Estimate on purely rural births ----------------------------------------------
   est_twfe(
     outcomes = 'dbwt',
     iv = 'all_yield_diff_percentile_gmo',
     iv_shift = NULL,
-    spatial_subset = 'urban res; urban occ',
+    spatial_subset = 'rural res; rural occ',
     het_split = NULL,
     county_subset = NULL,
     county_subset_name = NULL,
