@@ -1090,27 +1090,43 @@
 #   )
 
 
+# # Estimate by counties' rural status -------------------------------------------
+# # NOTE Crashed during second-stage estimation
+#   est_twfe(
+#     outcomes = 'dbwt',
+#     iv = 'all_yield_diff_percentile_gmo',
+#     iv_shift = NULL,
+#     spatial_subset = NULL,
+#     het_split = 'rural_res',
+#     county_subset = NULL,
+#     county_subset_name = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = 3,
+#     controls = 3,
+#     clustering = c('year', 'state_fips')
+#   )
+#   est_twfe(
+#     outcomes = 'dbwt',
+#     iv = 'all_yield_diff_percentile_gmo',
+#     iv_shift = NULL,
+#     spatial_subset = NULL,
+#     het_split = 'rural_grp',
+#     county_subset = NULL,
+#     county_subset_name = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = 3,
+#     controls = 3,
+#     clustering = c('year', 'state_fips')
+#   )
+
+
 # Estimate by counties' rural status -------------------------------------------
-# NOTE Crashed during second-stage estimation
   est_twfe(
     outcomes = 'dbwt',
     iv = 'all_yield_diff_percentile_gmo',
     iv_shift = NULL,
-    spatial_subset = NULL,
-    het_split = 'rural_res',
-    county_subset = NULL,
-    county_subset_name = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = 3,
-    controls = 3,
-    clustering = c('year', 'state_fips')
-  )
-  est_twfe(
-    outcomes = 'dbwt',
-    iv = 'all_yield_diff_percentile_gmo',
-    iv_shift = NULL,
-    spatial_subset = NULL,
-    het_split = 'rural_grp',
+    spatial_subset = 'urban res; urban occ',
+    het_split = NULL,
     county_subset = NULL,
     county_subset_name = NULL,
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
