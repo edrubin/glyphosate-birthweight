@@ -1138,7 +1138,7 @@
 
 # Estimate on purely rural births ----------------------------------------------
   est_twfe(
-    outcomes = 'dbwt',
+    outcomes = c('dbwt', 'gestation'),
     iv = 'all_yield_diff_percentile_gmo',
     iv_shift = NULL,
     spatial_subset = 'rural res; rural occ',
