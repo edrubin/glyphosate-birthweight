@@ -70,33 +70,49 @@ p_load(
 extract_pred_bw_effects = function(mod_path){
   print(paste0('starting', mod_path))
   mod = qread(mod_path)
+  if(class(mod) == 'fixest_multi'){
+    nmod = length(mod)
+    mod_1 = mod[[1]]
+    raw_coeftable = data.table(coeftable(mod))
+  }else if(class(mod) == 'fixest'){
+    nmod = 1
+    mod_1 = mod
+    raw_coeftable = coeftable(mod) |>
+      data.table(keep.rownames = TRUE) |>
+      setnames('rn','coefficient')
+  }
   pred_bw_dt = 
       cbind(
-        data.table(coeftable(mod)),
+        raw_coeftable,
         data.table(confint(mod))[,.(ci_l = `2.5 %`, ci_h = `97.5 %`)]
       ) |>
       clean_names()
+  rm(raw_coeftable)
   # Adding info from filename 
   pred_bw_dt[,':='(
-    spatial = str_extract(mod_path, '(?<=_spatial-).*(?=_het)'),
     cluster = str_extract(mod_path, '(?<=_cl-).*(?=_glynl)'),
-    county_subset = str_extract(mod_path, '(?<=_county-)[a-zA-Z-]+(?=_)')
+    county_subset = str_extract(mod_path, '(?<=_county-)[a-zA-Z-]+(?=_)'),
+    spatial = str_extract(mod_path, '(?<=_spatial-)[ ;a-zA-Z-]+(?=_)'),
+    trt = str_extract(mod_path, '(?<=iv-).*(?=_cl)')
   )]
   # Adding missing columns if they don't exist
   if (!exists('sample', where = pred_bw_dt)) {
-      pred_bw_dt[, 'sample' := NA_character_]
+      pred_bw_dt[, sample := NA_character_]
   }
   if (!exists('sample_var', where = pred_bw_dt)) {
-    pred_bw_dt[, 'sample_var' := NA_character_]
+    pred_bw_dt[, sample_var := NA_character_]
   }
   if (!exists('rhs', where = pred_bw_dt)) {
-    pred_bw_dt[, 'rhs' := as.character(mod[[1]]$fml_all$linear)[3]]
+    pred_bw_dt[, rhs := as.character(mod_1$fml_all$linear)[3]]
   }
   if (!exists('fixef', where = pred_bw_dt)) {
-    pred_bw_dt[, 'fixef' := as.character(mod[[1]]$fml_all$fixef)[2]]
+    pred_bw_dt[, fixef := as.character(mod_1$fml_all$fixef)[2]]
   }
   if (!exists('lhs', where = pred_bw_dt)) {
-    pred_bw_dt[, 'lhs' := as.character(mod[[1]]$fml_all$linear)[2]]
+    pred_bw_dt[, lhs := as.character(mod_1$fml_all$linear)[2]]
+  }
+  if (!exists('id', where = pred_bw_dt) & nmod == 1) {
+    pred_bw_dt[, id := 1]
   }
   # Some cleaning of fixef names
   pred_bw_dt[,':='(
@@ -112,7 +128,7 @@ extract_pred_bw_effects = function(mod_path){
       str_detect(rhs, 'unemployment'), 'Unemployment',
       default = 'None'
     ) |> factor(levels = c('None','Pesticides','Unemployment','Pesticides and Unemployment')),
-    trt = str_extract(mod_path, '(?<=iv-).*(?=_cl)')
+    lhs = lhs |> str_remove('^c\\(') |> str_remove('\\)$')
   )]
   pred_bw_dt[,':='(
     var_of_interest = str_detect(coefficient, 'fit_glyph_km2'),
@@ -124,12 +140,19 @@ extract_pred_bw_effects = function(mod_path){
       trt == 'percentilegmacres','1990-1995 GM Acreage Percentile'
     ),
     county_subset = fcase(
-      trt == 'e100myielddiffpercentilegmo', 'Eastern US',
-      county_subset == 'mw-ne', 'Midwest and Northeast',
-      county_subset == 'south', 'South',
-      county_subset == 'south-nofl', 'South, no FL',
-      default = 'Full sample'
-    )
+      spatial == 'rural' & trt == 'e100myielddiffpercentilegmo', 'Rural, Eastern US',
+      spatial == 'rural' & county_subset == 'mw-ne', 'Rural, Midwest and Northeast',
+      spatial == 'rural' & county_subset == 'south', 'Rural, South',
+      spatial == 'rural' & county_subset == 'south-nofl', 'Rural, South, no FL',
+      spatial == 'urban res; urban occ', 'Non-rural',
+      spatial == 'rural res; rural occ', 'Rural residence & occurrence',
+      default = 'Rural'
+    ) |> 
+    factor(levels = c(
+      "Rural", "Rural residence & occurrence", "Rural, Midwest and Northeast", 
+      "Rural, Eastern US", "Rural, South", "Rural, South, no FL", 
+      "Non-rural"
+    ))
   )]
   return(pred_bw_dt)
 }
@@ -612,7 +635,7 @@ mod_paths =
     list.files(here('data/results/micro'), full.names = TRUE),
     'est_2sls_outcome'
   ) |>
-  str_subset('percentilegmacres', negate = TRUE)
+  str_subset('percentilegmacres', negate = TRUE) 
 pred_bw_dt = 
   lapply(mod_paths, extract_pred_bw_effects) |> 
   rbindlist(use.names = TRUE, fill = TRUE)
@@ -622,76 +645,107 @@ spec_chart_outcome = function(
   outcome_in,
   order_in = 'decreasing'
 ){
-  spec_dt = 
+  print(outcome_in)
+  y_lab = fcase(
+    outcome_in == 'dbwt', 'Birthweight (g)',
+    outcome_in == 'any_anomaly', 'Any Anomaly (%)',
+    outcome_in == 'c_section', 'C Section (%)',
+    outcome_in == 'dbwt_pctl_pre', 'Birthweight Pctl (%)',
+    outcome_in == 'dbwt_pred', 'Pred Birthweight (g)',
+    outcome_in == 'gestation', 'Gestation (weeks)',
+    outcome_in == 'i_lbw', 'LBW (%)',
+    outcome_in == 'i_vlbw', 'VLBW (%)',
+    outcome_in == 'i_preterm', 'Preterm (%)',
+    default = 'Estimate'
+  )
+  if(str_detect(y_lab, '%')){
+    y_labels = scales::label_percent()
+  } else {
+    y_labels = scales::label_comma()
+  }
+  spec_dt_robust = 
     pred_bw_dt[
       lhs == outcome_in & 
       var_of_interest == TRUE & 
-      (is.na(sample_var) | 
-      (sample_var == 'i_m_nonwhite' & sample != 'Full sample'))
+      county_subset == 'Rural' & 
+      is.na(sample_var) 
+      #| (sample_var == 'i_m_nonwhite' & sample != 'Full sample'))
     ]
+  spec_dt_spatial = 
+    pred_bw_dt[
+      lhs == outcome_in & 
+      var_of_interest == TRUE & 
+      trt == 'allyielddiffpercentilegmo' &
+      fixef_num == 'Mother and Father FEs' & 
+      control_num == 'Pesticides and Unemployment' & 
+      is.na(sample_var) & 
+      county_subset != 'Rural residence & occurrence'
+    ]
+  spec_dt_mrace = 
+    pred_bw_dt[
+      lhs == outcome_in & 
+      var_of_interest == TRUE & 
+      sample_var == 'i_m_nonwhite'
+    ]
+  spec_dt_mrace[,
+    sample := fcase(
+      sample == 1, 'Mother non-white', 
+      sample == 0, 'Mother white',
+      sample == 'Full sample', 'Full sample'
+    ) |> factor(levels = c('Full sample','Mother white','Mother non-white'))
+  ]
   # Getting values for each group of options
-  control_num_v = unique(spec_dt$control_num)
-  fixef_num_v = unique(spec_dt$fixef_num)
-  trt_name_v = unique(spec_dt$trt_name)
-  county_subset_v = unique(spec_dt$county_subset)
+  control_num_v = unique(spec_dt_robust$control_num)
+  fixef_num_v = unique(spec_dt_robust$fixef_num)
+  trt_name_v = unique(spec_dt_robust$trt_name)
+  county_subset_v = unique(spec_dt_spatial$county_subset)
   # Adding indicator variables for each option
-  spec_dt[,
+  spec_dt_robust[,
     (paste0("i_control_num_",make_clean_names(control_num_v))) := 
       lapply(control_num_v,\(x){control_num == x})
   ]
-  spec_dt[,
+  spec_dt_robust[,
     (paste0("i_fixef_num_",make_clean_names(fixef_num_v))) := 
       lapply(fixef_num_v,\(x){fixef_num == x})
   ]
-  spec_dt[,
+  spec_dt_robust[,
     (paste0("i_trt_name_",make_clean_names(trt_name_v))) := 
       lapply(trt_name_v,\(x){trt_name == x})
   ]
-  spec_dt[,
-    (paste0("i_county_subset_",make_clean_names(county_subset_v))) := 
-      lapply(county_subset_v,\(x){county_subset == x})
-  ]
-  spec_dt[,':='(
-    i_full_sample = is.na(sample),
-    i_m_white = !is.na(sample) & sample == 0,
-    i_m_nonwhite = !is.na(sample) & sample == 1
-  )]
   # Selecting coef/std error and dummy colummns for options
-  cols = c(
+  cols_robust = c(
     "estimate","std_error", 
-    str_subset(colnames(spec_dt),"^i_")
+    str_subset(colnames(spec_dt_robust),"^i_")
   )
   # Creating new data frame with just the columns needed
-  spec_df = spec_dt[,..cols] |> as.data.frame()
+  spec_df_robust = spec_dt_robust[,..cols_robust] |> as.data.frame()
   # Creating labels 
-  labels = list(
+  labels_robust = list(
     "Controls" = control_num_v |> as.character() |> str_replace(' and ', '+'), 
     "Fixed Effects" = fixef_num_v |> as.character(),
-    "Attainable Yield Measure" = trt_name_v |> as.character() |> str_remove('Attainable Yield, '), 
-    "Geographic Subset" = county_subset_v |> as.character(),
-    "Mother Race" = c('All', 'White','Non-white')
+    "Attainable Yield Measure" = trt_name_v |> as.character() |> str_remove('Attainable Yield, ')
   )
   # Finding main spec to highlight
-  hl = spec_dt[
+  hl = spec_dt_robust[
     control_num == 'Pesticides and Unemployment' & 
     fixef_num == 'Mother and Father FEs' & 
     trt_name == 'Attainable Yield, GM Avg Percentile' & 
-    county_subset == 'Full sample' & 
+    county_subset == 'Rural' & 
     is.na(sample),
     which = TRUE
   ]
-  # File to save in
+  # First the Robustness chart
   jpeg(
     filename = here(paste0(
-      "figures/micro/2sls/spec-chart-",outcome_in,".jpeg")),
+      "figures/micro/2sls/spec-chart-robust-",outcome_in,".jpeg")),
     quality = 100, res = 300, 
     width = 3000, height = 3000
   )
   # Setting margins
   par(oma=c(1,0,1,1))
   schart(
-    spec_df, 
-    labels, 
+    spec_df_robust, 
+    labels_robust, 
     highlight = hl,
     order = order_in,
     col.est=c("grey60","#e64173"), 
@@ -701,10 +755,55 @@ spec_chart_outcome = function(
     ci=c(.95)
   )
   dev.off()
+  # Now spatial subsets
+  spatial_subset_p =
+    ggplot(spec_dt_spatial, aes(x = county_subset)) +
+    geom_point(aes(y = estimate)) + 
+    geom_linerange(aes(ymin = ci_l, ymax = ci_h)) +
+    geom_hline(yintercept = 0, linetype = 'dashed') + 
+    scale_y_continuous(name = y_lab, labels = y_labels) + 
+    scale_x_discrete(name = '', guide = guide_axis(n.dodge=2))+
+    theme_minimal() 
+  ggsave(
+    spatial_subset_p, 
+    filename = here(paste0(
+      "figures/micro/2sls/spec-chart-spatial-",outcome_in,".jpeg"
+    )), 
+    width = 5, height = 5, bg = 'white'
+  )
+  # Finally mother's race
+  mrace_p = 
+    ggplot(
+      data = spec_dt_mrace,
+      aes(
+        x = control_num, 
+        y = estimate, 
+        ymin = ci_l, ymax = ci_h, 
+        color = sample
+      )
+    )  +
+    geom_hline(yintercept = 0, linetype = 'solid', linewidth = 0.2) +
+    geom_point(position = position_dodge(width = 0.4), size = 2) + 
+    geom_linerange(position = position_dodge(width = 0.4), linewidth = 0.8) + 
+    facet_grid(cols = vars(fixef_num)) + 
+    scale_y_continuous(name = y_lab, labels = y_labels) +
+    scale_x_discrete(name = 'Controls') + 
+    scale_color_brewer(
+      palette = 'Dark2', 
+      name = ''
+    ) +
+    theme_minimal() 
+  ggsave(
+    mrace_p, 
+    filename = here(paste0(
+      "figures/micro/2sls/spec-chart-mrace-",outcome_in,".jpeg"
+    )), 
+    width = 7.5, height = 3.5, bg = 'white'
+  )
 }
 
 lapply(
-  unique(pred_bw_dt$lhs),
+  unique(pred_bw_dt$lhs)[1:9],
   spec_chart_outcome,
   pred_bw_dt = pred_bw_dt,
   order_in = 'asis'

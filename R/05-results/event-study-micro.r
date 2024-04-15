@@ -7,37 +7,44 @@ p_load(
 
 # Function to extract first stage from 2SLS models ----------------------------
 fs_coeftable = function(i, mod_2sls){
+  if(class(mod_2sls) == 'fixest_multi'){
+    mod_in = mod_2sls[[i]]
+  }else if(class(mod_2sls) == 'fixest'){
+    mod_in = mod_2sls
+  }else{
+    stop("can't figure out what type of fixest object this is.")
+  }
   # First getting coefs and confint 
   mod_dt_raw = 
     cbind(
       data.table(
-        coeftable(mod_2sls[[i]]$iv_first_stage$glyph_km2), 
+        coeftable(mod_in$iv_first_stage$glyph_km2), 
         keep.rownames = TRUE
       ),
       data.table(
-        confint(mod_2sls[[i]]$iv_first_stage$glyph_km2)
+        confint(mod_in$iv_first_stage$glyph_km2)
       )[,.(ci_l = `2.5 %`, ci_h = `97.5 %`)]
     ) |>
     clean_names()
   # Now adding the model info 
   mod_dt = mod_dt_raw[,.(
     id = i, 
-    fixef = mod_2sls[[i]]$model_info$fixef, 
-    lhs = mod_2sls[[i]]$model_info$lhs, 
+    fixef = mod_in$model_info$fixef, 
+    lhs = mod_in$model_info$lhs, 
     rhs = paste0(
-      mod_2sls[[i]]$iv_inst_names, " + ",
-      #mod_2sls[[i]]$model_info$rhs
-      as.character(mod_2sls[[i]]$fml_all$linear)[3]
+      mod_in$iv_inst_names, " + ",
+      #mod_in$model_info$rhs
+      as.character(mod_in$fml_all$linear)[3]
     ),
     sample_var = ifelse(
-      is.null(mod_2sls[[i]]$model_info$sample), 
+      is.null(mod_in$model_info$sample), 
       NA_character_,
-      mod_2sls[[i]]$model_info$sample$var
+      mod_in$model_info$sample$var
     ), 
     sample = ifelse(
-      is.null(mod_2sls[[i]]$model_info$sample), 
+      is.null(mod_in$model_info$sample), 
       NA_character_,
-      mod_2sls[[i]]$model_info$sample$value
+      mod_in$model_info$sample$value
     ),
     coefficient = rn,
     estimate, std_error, t_value, pr_t, ci_l, ci_h
@@ -50,6 +57,13 @@ extract_event_study_coefs = function(mod_path){
   print(paste('starting', mod_path))
   # Loading the model 
   mod = qread(mod_path)
+  if(class(mod) == 'fixest_multi'){
+    nmod = length(mod)
+    mod_1 = mod[[1]]
+  }else if(class(mod) == 'fixest'){
+    nmod = 1
+    mod_1 = mod
+  }
   # Getting coefficients---depends on rf model or first stage
   if(str_detect(mod_path, 'est_rf')){
     # Extracting coefficients and ci for reduced form model
@@ -62,36 +76,39 @@ extract_event_study_coefs = function(mod_path){
     mod_dt[,type:='rf']
     # Adding sample var and sample if not there
     if (!exists('sample', where = mod_dt)) {
-      mod_dt[, 'sample' := NA_character_]
+      mod_dt[, sample := NA_character_]
     }
     if (!exists('sample_var', where = mod_dt)) {
-      mod_dt[, 'sample_var' := NA_character_]
+      mod_dt[, sample_var := NA_character_]
     }
     if (!exists('rhs', where = mod_dt)) {
-      mod_dt[, 'rhs' := as.character(mod[[1]]$fml_all$linear)[3]]
+      mod_dt[, rhs := as.character(mod_1$fml_all$linear)[3]]
     }
     if (!exists('fixef', where = mod_dt)) {
-      mod_dt[, 'fixef' := as.character(mod[[1]]$fml_all$fixef)[2]]
+      mod_dt[, fixef := as.character(mod_1$fml_all$fixef)[2]]
     }
     if (!exists('lhs', where = mod_dt)) {
-      mod_dt[, 'lhs' := as.character(mod[[1]]$fml_all$linear)[2]]
+      mod_dt[, lhs := as.character(mod_1$fml_all$linear)[2]]
+    }
+    if (!exists('id', where = mod_dt) & nmod == 1) {
+      mod_dt[, id := 1]
     }
   }else if(str_detect(mod_path, 'est_2sls_outcome')){
     # Getting first stage coefs from 2SLS model
     mod_dt = lapply(
-      1:length(mod),
+      1:nmod,
       fs_coeftable, 
       mod_2sls = mod
     ) |> rbindlist()
     mod_dt[,type:='2sls-fs']
     if (!exists('rhs', where = mod_dt)) {
-      mod_dt[, 'rhs' := as.character(mod[[1]]$fml_all$linear)[3]]
+      mod_dt[, rhs := as.character(mod_1$fml_all$linear)[3]]
     }
     if (!exists('fixef', where = mod_dt)) {
-      mod_dt[, 'fixef' := as.character(mod[[1]]$fml_all$fixef)[2]]
+      mod_dt[, fixef := as.character(mod_1$fml_all$fixef)[2]]
     }
     if (!exists('lhs', where = mod_dt)) {
-      mod_dt[, 'lhs' := as.character(mod[[1]]$fml_all$linear)[2]]
+      mod_dt[, lhs := as.character(mod_1$fml_all$linear)[2]]
     }
   } else {
     stop('not yet able to extract model coefs')
@@ -114,7 +131,7 @@ extract_event_study_coefs = function(mod_path){
     )
   # Adding info from filename 
   mod_dt[,':='(
-    spatial = str_extract(mod_path, '(?<=_spatial-)[a-zA-Z-]+(?=_)'),
+    spatial = str_extract(mod_path, '(?<=_spatial-)[ ;a-zA-Z-]+(?=_)'),
     cluster = str_extract(mod_path, '(?<=_cl-)[a-zA-Z-]+(?=_)'),
     county_subset = str_extract(mod_path, '(?<=_county-)[a-zA-Z-]+(?=_)'),
     lhs = lhs |> str_remove('^c\\(') |> str_remove('\\)$')
@@ -493,13 +510,13 @@ plot_reduced_form = function(
         control_num == 'Pesticides and Unemployment' &
         trt == 'all_yield_diff_percentile_gmo' & 
         spatial == 'rural' &
-        paste0(sample_var, sample) == 'NANA' & 
-        !is.na(county_subset)
+        paste0(sample_var, sample) == 'NANA' 
+        #& !is.na(county_subset)
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
-        color = county_subset, 
-        fill = county_subset
+        color = ifelse(is.na(county_subset),'Full Sample', county_subset), 
+        fill = ifelse(is.na(county_subset),'Full Sample', county_subset)
       )
     ) +
     geom_hline(yintercept = 0) +
@@ -658,50 +675,52 @@ plot_reduced_form = function(
     width = width_in*1.75, height = height_in
   )
   # Now for both rural and non-rural residences
-  # ES NOTE: CURRENTLY DONT HAVE FIRST STAGE (3/29/2024)
-  # fs_event_residence_p = 
-  #   ggplot(
-  #     data = mod_dt[
-  #       type == '2sls-fs' & 
-  #       var_of_interest == TRUE & 
-  #       lhs == outcome_in &
-  #       fixef_num == 'Add Family FEs' & 
-  #       control_num == 'Pesticides and Unemployment' &
-  #       trt == 'all_yield_diff_percentile_gmo' & 
-  #       is.na(spatial) 
-  #       #paste0(sample_var, sample) == 'NANA' & 
-  #       #!is.na(county_subset)
-  #     ],
-  #     aes(
-  #       x = year, y = estimate, ymin = ci_l, ymax = ci_h,
-  #       color = county_subset, 
-  #       fill = county_subset
-  #     )
-  #   ) +
-  #   geom_hline(yintercept = 0) +
-  #   geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
-  #   #geom_ribbon(alpha = 0.5, color = NA) +
-  #   geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
-  #   geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
-  #   scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
-  #   scale_x_continuous(
-  #     name = 'Year', 
-  #     limits = c(1990,2015),
-  #     breaks = seq(1990, 2015, 5), 
-  #     minor_breaks = NULL
-  #   ) + 
-  #   scale_color_brewer(
-  #     name = 'County Subset', palette = 'Dark2',
-  #     aesthetics = c('color','fill')
-  #   )
-  # if(print) print(fs_event_residences_p)
-  # ggsave(
-  #   fs_event_residence_p, 
-  #   filename = here(paste0(
-  #     'figures/micro/fs-event/robust-residence-',outcome_in,'.jpeg'
-  #   )), 
-  #   width = width_in*1.75, height = height_in
-  # )
+  fs_res_dt = mod_dt[
+    type == '2sls-fs' & 
+    var_of_interest == TRUE & 
+    lhs == outcome_in &
+    fixef_num == 'Add Family FEs' & 
+    control_num == 'Pesticides and Unemployment' &
+    trt == 'all_yield_diff_percentile_gmo' & 
+    spatial %in% c('urban res; urban occ','rural res; rural occ')
+  ]
+  if(nrow(fs_res_dt) > 0){
+    fs_event_residence_p = 
+      ggplot(
+        data = fs_res_dt,
+        aes(
+          x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+          color = factor(spatial, levels = c('urban res; urban occ','rural res; rural occ')), 
+          fill = factor(spatial, levels = c('urban res; urban occ','rural res; rural occ'))
+        )
+      ) +
+      geom_hline(yintercept = 0) +
+      geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+      #geom_ribbon(alpha = 0.5, color = NA) +
+      geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+      geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+      scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
+      scale_x_continuous(
+        name = 'Year', 
+        limits = c(1990,2015),
+        breaks = seq(1990, 2015, 5), 
+        minor_breaks = NULL
+      ) + 
+      scale_color_brewer(
+        name = 'Spatial Subset', 
+        palette = 'Dark2',
+        labels = c('Non-rural','Rural'),
+        aesthetics = c('color','fill')
+      )
+    if(print) print(fs_event_residence_p)
+    ggsave(
+      fs_event_residence_p, 
+      filename = here(paste0(
+        'figures/micro/fs-event/robust-residence-',outcome_in,'.jpeg'
+      )), 
+      width = width_in*1.25, height = height_in
+    )
+  }
   rf_res_dt = 
     mod_dt[
       type == 'rf' & 
@@ -736,7 +755,7 @@ plot_reduced_form = function(
         minor_breaks = NULL
       ) + 
       scale_color_brewer(
-        name = 'Residence', palette = 'Dark2',
+        name = 'Spatial Subset', palette = 'Dark2',
         labels = c('Non-rural','Rural'),
         aesthetics = c('color','fill')
       ) 
