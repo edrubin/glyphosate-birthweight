@@ -193,6 +193,15 @@
       labels = 1:20, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
     )
   )]
+  # Add interaction between percentiles and sex
+  natality_dt[, `:=`(
+    pred_q5_sex = finteraction(pred_q5, sex),
+    pred_q4_sex = finteraction(pred_q4, sex),
+    pred_q3_sex = finteraction(pred_q3, sex),
+    pred_q10_sex = finteraction(pred_q10, sex),
+    pred_q14_sex = finteraction(pred_q14, sex),
+    pred_q20_sex = finteraction(pred_q20, sex)
+  )]
 
 
 # Add end-of-sample GM/suitability percentiles ---------------------------------
@@ -985,6 +994,16 @@
 #     controls = c(0, 3),
 #     clustering = c('year', 'state_fips')
 #   )
+  # Yield diff percentile GMO; heterogeneity by quintile and sex
+  est_twfe(
+    iv = 'all_yield_diff_percentile_gmo',
+    spatial_subset = 'rural',
+    het_split = 'pred_q5_sex',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    fes = 3,
+    controls = 3,
+    clustering = c('year', 'state_fips')
+  )
 
 
 # Test changing demographics ---------------------------------------------------
@@ -1136,17 +1155,17 @@
 #   )
 
 
-# Estimate on purely rural births ----------------------------------------------
-  est_twfe(
-    outcomes = c('dbwt', 'gestation'),
-    iv = 'all_yield_diff_percentile_gmo',
-    iv_shift = NULL,
-    spatial_subset = 'rural res; rural occ',
-    het_split = NULL,
-    county_subset = NULL,
-    county_subset_name = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = 3,
-    controls = 3,
-    clustering = c('year', 'state_fips')
-  )
+# # Estimate on purely rural births ----------------------------------------------
+#   est_twfe(
+#     outcomes = c('dbwt', 'gestation'),
+#     iv = 'all_yield_diff_percentile_gmo',
+#     iv_shift = NULL,
+#     spatial_subset = 'rural res; rural occ',
+#     het_split = NULL,
+#     county_subset = NULL,
+#     county_subset_name = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     fes = 3,
+#     controls = 3,
+#     clustering = c('year', 'state_fips')
+#   )
