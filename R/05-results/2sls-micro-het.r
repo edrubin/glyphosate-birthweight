@@ -40,6 +40,19 @@ p_load(
     )
   ) |>
   melt(id.vars = 'pctl')
+  # Adding sex x predq5 interaction
+  cut_dt = 
+    merge(
+      CJ(sex = c('M','F'), value = as.character(1:5)),
+      cut_dt[variable == 'pred_q5'], 
+      by = 'value', 
+      allow.cartesian = TRUE
+    )[,.(
+      pctl, 
+      variable = 'pred_q5_sex',
+      value = paste0(value,'.',sex)  
+    )] |>
+    rbind(cut_dt[variable != 'pred_q5_sex'])
   # Calculating annual mean for outcomes and GLY 
   # TODO: Use the main estimating table for this rather than county-level table
   # TODO: Integrate with sample specific means
@@ -82,11 +95,11 @@ extract_pred_bw_effects = function(mod_path){
       setnames('rn','coefficient')
   }
   pred_bw_dt = 
-      cbind(
-        raw_coeftable,
-        data.table(confint(mod))[,.(ci_l = `2.5 %`, ci_h = `97.5 %`)]
-      ) |>
-      clean_names()
+    cbind(
+      raw_coeftable,
+      data.table(confint(mod))[,.(ci_l = `2.5 %`, ci_h = `97.5 %`)]
+    ) |>
+    clean_names()
   rm(raw_coeftable)
   # Adding info from filename 
   pred_bw_dt[,':='(
@@ -462,6 +475,53 @@ plot_predbw_results = function(
     )),
     width = width_in*1.25, height = height_in
   )
+  # Quintile by sex plots 
+  quintile_sex_p = 
+    ggplot(
+      data = pctl_est_dt[
+        lhs == outcome_in &
+        trt == 'allyielddiffpercentilegmo' &
+        var_of_interest == TRUE & 
+        sample_var == 'pred_q5_sex' & 
+        fixef_num == 'Mother and Father FEs' & 
+        control_num == 'Pesticides and Unemployment' & 
+        sample != 'Full sample', 
+        -'pctl'
+      ] |> unique(), 
+      aes(
+        x = as.integer(str_extract(sample,'\\d')), y = estimate, ymin = ci_l, ymax = ci_h,
+        color = str_extract(sample, 'M|F'), fill = str_extract(sample, 'M|F')
+      ),
+    ) + 
+    geom_hline(yintercept = 0) +
+    #geom_ribbon(alpha = 0.3, color = NA) + 
+    geom_pointrange(position = position_dodge(width = 0.25), linewidth = 1.1) + 
+    #geom_line() +
+    scale_color_brewer(
+      'Sex', palette = "Dark2",
+      aesthetics = c('color','fill')
+    ) +
+    scale_x_continuous(
+      name = 'Predicted Birthweight Quintile',
+      breaks = 1:5
+    ) +
+    scale_y_continuous(
+      name = paste0('Maringal Effect on ',y_lab),
+      labels = y_labels
+    ) + 
+    theme(
+      panel.grid.minor = element_blank(),
+      legend.position = 'bottom'
+    ) 
+  if(print) print(quintile_sex_p)
+  ggsave(
+    plot = quintile_sex_p,
+    filename = here(paste0(
+      'figures/micro/2sls/predq5-sex-',outcome_in,'.jpeg'
+    )),
+    width = width_in, height = height_in
+  )
+
 }  
 
 # Function to make plots with all outcomes that are faceted -------------------
@@ -548,6 +608,52 @@ plot_predbw_results_all_outcome = function(
     )),
     width = width_in*1.5, height = height_in*2.75
   )
+  # Quintile by sex plots 
+  quintile_sex_p = 
+    ggplot(
+      data = pctl_est_dt[
+        lhs != 'dbwt_pred' &
+        trt == 'allyielddiffpercentilegmo' &
+        var_of_interest == TRUE & 
+        sample_var == 'pred_q5_sex' & 
+        fixef_num == 'Mother and Father FEs' & 
+        control_num == 'Pesticides and Unemployment' & 
+        sample != 'Full sample', 
+        -'pctl'
+      ] |> unique(), 
+      aes(
+        x = as.integer(str_extract(sample,'\\d')), y = estimate, ymin = ci_l, ymax = ci_h,
+        color = str_extract(sample, 'M|F'), fill = str_extract(sample, 'M|F')
+      ),
+    ) + 
+    geom_hline(yintercept = 0) +
+    #geom_ribbon(alpha = 0.3, color = NA) + 
+    geom_pointrange(position = position_dodge(width = 0.25), linewidth = 1.1) + 
+    #geom_line() +
+    scale_color_brewer(
+      'Sex', palette = "Dark2",
+      aesthetics = c('color','fill')
+    ) +
+    scale_x_continuous(
+      name = 'Predicted Birthweight Quintile',
+      breaks = 1:5
+    ) +
+    scale_y_continuous(
+      name = 'Maringal Effect'
+    ) + 
+    theme(
+      panel.grid.minor = element_blank(),
+      legend.position = 'bottom'
+    ) +
+    facet_wrap(~lhs_name, scales = 'free_y', ncol = 2)
+  if(print) print(quintile_sex_p)
+  ggsave(
+    plot = quintile_sex_p,
+    filename = here(paste0(
+      'figures/micro/2sls/predq5-sex-all-outcomes.jpeg'
+    )),
+     width = width_in*1.5, height = height_in*2.75
+  )
 }
 
 # Making all of the plots! ----------------------------------------------------
@@ -558,8 +664,10 @@ mod_paths =
     list.files(here('data/results/micro'), full.names = TRUE),
     'est_2sls_outcome'
   ) |>
-  str_subset('het-pred|het-month') 
-pred_bw_dt = lapply(mod_paths, extract_pred_bw_effects) |> rbindlist()
+  str_subset('het-pred|het-month')
+pred_bw_dt = 
+  lapply(mod_paths, extract_pred_bw_effects) |> 
+  rbindlist(use.names = TRUE, fill = TRUE)
 # Merging with the estimates so we can plot with pctl on x axis 
 pctl_est_dt = 
   merge(
@@ -769,7 +877,7 @@ spec_chart_outcome = function(
     filename = here(paste0(
       "figures/micro/2sls/spec-chart-spatial-",outcome_in,".jpeg"
     )), 
-    width = 5, height = 5, bg = 'white'
+    width = 5, height = 3, bg = 'white'
   )
   # Finally mother's race
   mrace_p = 
@@ -808,3 +916,53 @@ lapply(
   pred_bw_dt = pred_bw_dt,
   order_in = 'asis'
 )
+
+# Make spatial subset plot for all outcomes 
+pred_bw_dt[,
+  lhs_name := fcase(
+    lhs == 'dbwt', 'Birthweight (g)',
+    lhs == 'any_anomaly', 'Pr(Any Anomaly)',
+    lhs == 'c_section', 'Pr(C Section)',
+    lhs == 'dbwt_pctl_pre', 'Birthweight Percentile',
+    lhs == 'dbwt_pred', 'Predicted Birthweight (g)',
+    lhs == 'gestation', 'Gestation (weeks)',
+    lhs == 'i_lbw', 'Pr(Low Birthweight)',
+    lhs == 'i_vlbw', 'Pr(Very Low Birthweight)',
+    lhs == 'i_preterm', 'Pr(Preterm)',
+    lhs == 'i_female', 'Pr(Female)',
+    lhs == 'i_m_black', 'Pr(Mother Black)',
+    lhs == 'i_m_nonwhite', 'Pr(Mother Non-white)',
+    lhs == 'i_m_hispanic', 'Pr(Mother Hispanic)',
+    lhs == 'i_m_married', 'Pr(Mother Married)'
+  )
+] 
+  # Now spatial subsets
+  spatial_subset_p =
+    ggplot(
+      pred_bw_dt[
+        lhs != 'dbwt_pred' & 
+        county_subset != 'Non-rural'&
+        var_of_interest == TRUE & 
+        trt == 'allyielddiffpercentilegmo' &
+        fixef_num == 'Mother and Father FEs' & 
+        control_num == 'Pesticides and Unemployment' & 
+        is.na(sample_var) & 
+        county_subset != 'Rural residence & occurrence'
+      ], 
+      aes(x = county_subset)
+    ) +
+    geom_point(aes(y = estimate)) + 
+    geom_linerange(aes(ymin = ci_l, ymax = ci_h)) +
+    geom_hline(yintercept = 0, linetype = 'dashed') + 
+    scale_y_continuous(name = 'Marginal Effect') + 
+    scale_x_discrete(name = '', guide = guide_axis(n.dodge=2))+
+    theme_minimal() + 
+    facet_wrap(~lhs_name, ncol = 2, scales = 'free_y')
+  ggsave(
+    spatial_subset_p, 
+    filename = here(
+      "figures/micro/2sls/spec-chart-spatial-all-outcomes.jpeg"
+    ), 
+    width = 6*1.5, height = 4*2.75,
+    bg = 'white'
+  )
