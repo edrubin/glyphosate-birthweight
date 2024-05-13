@@ -13,16 +13,16 @@ sf_use_s2(FALSE)
 # Loading all of the data ---------------------------------------------------
 # Loading the USGS water sampling data 
 site_dt = fread(here(
-  "data/pesticides/usgs-monitoring/Table1. NWQN.SiteInformation.txt"
+  "data/watershed/usgs-monitoring/Table1. NWQN.SiteInformation.txt"
   )) |> clean_names()
 sample_dt = fread(here(
-  "data/pesticides/usgs-monitoring/Table2. Glyphosate.AMPA.SampleConc.txt"
+  "data/watershed/usgs-monitoring/Table2. Glyphosate.AMPA.SampleConc.txt"
   )) |> clean_names()
 annual_dt = fread(here(
-  "data/pesticides/usgs-monitoring/Table3. Glyphosate.AMPA.AnnualData.txt"
+  "data/watershed/usgs-monitoring/Table3. Glyphosate.AMPA.AnnualData.txt"
   )) |> clean_names()
 landuse_dt = fread(here(
-  "data/pesticides/usgs-monitoring/Table5. LandUseClass.txt"
+  "data/watershed/usgs-monitoring/Table5. LandUseClass.txt"
   )) |> clean_names()
 
 # Getting state shapes from tigris package
@@ -50,14 +50,14 @@ county_sf =
   st_transform(crs = 2163) 
 # Loading HydroBASINS data limiting to those in the continental US
 hydrobasin_sf = 
-  read_sf(here("data/spatial/hydrobasins/hybas_lake_na_lev08_v1c.shp")) |>
+  read_sf(here("data/watershed/hydrobasins/hybas_lake_na_lev08_v1c.shp")) |>
   st_transform(crs = 2163) |>
   #st_simplify(dTolerance = 500) |>
   clean_names()
 
 # Loading upstream pesticides 
 pesticide_upstream_dt = read.fst(
-  path = here("data-clean/watershed/pesticide-upstream-dt.fst"),
+  path = here("data/watershed/pesticide-upstream-dt.fst"),
   as.data.table = TRUE
 )#[local == FALSE]
 
@@ -157,9 +157,11 @@ ggsave(
 # Avg monthly concentrations for glyph and ampa
 month_avg_dt = 
   monitor_dt[!(region %in% c('Pacific','West')),.(
-    avg_glyph = median(gly_result),
+    median_glyph = median(gly_result),
+    avg_glyph = mean(gly_result),
     sd_glyph = sd(gly_result),
-    avg_ampa = median(ampa_result),
+    median_ampa = median(ampa_result),
+    avg_ampa = mean(ampa_result),
     sd_ampa = sd(ampa_result),
     glyph_25 = quantile(gly_result, probs = 0.25),
     glyph_75 = quantile(gly_result, probs = 0.75),
@@ -170,10 +172,10 @@ month_avg_dt =
     n = .N), 
     keyby = .( month = month(sample_date, label = TRUE))
   ][,':='(
-    l_glyph = avg_glyph + sd_glyph*qt(0.025,n-1),
-    h_glyph = avg_glyph + sd_glyph*qt(0.975,n-1),
-    l_ampa = avg_ampa + sd_ampa*qt(0.025,n-1),
-    h_ampa = avg_ampa + sd_ampa*qt(0.975,n-1)
+    l_glyph = median_glyph + sd_glyph*qt(0.025,n-1),
+    h_glyph = median_glyph + sd_glyph*qt(0.975,n-1),
+    l_ampa = median_ampa + sd_ampa*qt(0.025,n-1),
+    h_ampa = median_ampa + sd_ampa*qt(0.975,n-1)
   )] 
 
 month_distr_p = 
@@ -181,7 +183,7 @@ month_distr_p =
     melt(
       month_avg_dt,
       id.vars = c('month'),
-      measure.vars = c('avg_glyph','avg_ampa'),
+      measure.vars = c('median_glyph','median_ampa'),
       value.name = 'mean',
       variable.name = 'analyte'
     ),
@@ -213,12 +215,71 @@ ggsave(
   width = 8, height = 5,
   bg = 'white'
 )
-ggsave(
-  plot = month_distr_p,
-  filename = here("figures/descriptive/month_gly_ampa_concentrations.pdf"),
-  width = 7, height = 5,
-  device = cairo_pdf
-)
+
+# Saving tables 
+monitor_dt[,.( #!(region %in% c('Pacific','West'))
+  median_glyph = median(gly_result),
+  avg_glyph = mean(gly_result),
+  sd_glyph = sd(gly_result),
+  median_ampa = median(ampa_result),
+  avg_ampa = mean(ampa_result),
+  sd_ampa = sd(ampa_result),
+  glyph_p25 = quantile(gly_result, probs = 0.25),
+  glyph_p75 = quantile(gly_result, probs = 0.75),
+  ampa_p25 = quantile(ampa_result, probs = 0.25),
+  ampa_p75 = quantile(ampa_result, probs = 0.75),
+  pr_glyph_det = mean(gly_result > 0),
+  pr_ampa_det = mean(ampa_result > 0),
+  n = .N), 
+  keyby = .( 
+    month = month(sample_date), 
+    month_lab = month(sample_date, label = TRUE)
+  )
+] |>
+fwrite(here('data/watershed/month-avg-concentration-all.csv'))
+monitor_dt[!(region %in% c('Pacific','West')),.( 
+  median_glyph = median(gly_result),
+  avg_glyph = mean(gly_result),
+  sd_glyph = sd(gly_result),
+  median_ampa = median(ampa_result),
+  avg_ampa = mean(ampa_result),
+  sd_ampa = sd(ampa_result),
+  glyph_p25 = quantile(gly_result, probs = 0.25),
+  glyph_p75 = quantile(gly_result, probs = 0.75),
+  ampa_p25 = quantile(ampa_result, probs = 0.25),
+  ampa_p75 = quantile(ampa_result, probs = 0.75),
+  pr_glyph_det = mean(gly_result > 0),
+  pr_ampa_det = mean(ampa_result > 0),
+  n = .N), 
+  keyby = .( 
+    month = month(sample_date), 
+    month_lab = month(sample_date, label = TRUE)
+  )
+] |>
+fwrite(here('data/watershed/month-avg-concentration-no_west.csv'))
+monitor_dt[,.( 
+  median_glyph = median(gly_result),
+  avg_glyph = mean(gly_result),
+  sd_glyph = sd(gly_result),
+  median_ampa = median(ampa_result),
+  avg_ampa = mean(ampa_result),
+  sd_ampa = sd(ampa_result),
+  glyph_p25 = quantile(gly_result, probs = 0.25),
+  glyph_p75 = quantile(gly_result, probs = 0.75),
+  ampa_p25 = quantile(ampa_result, probs = 0.25),
+  ampa_p75 = quantile(ampa_result, probs = 0.75),
+  pr_glyph_det = mean(gly_result > 0),
+  pr_ampa_det = mean(ampa_result > 0),
+  n = .N), 
+  keyby = .( 
+    month = month(sample_date), 
+    month_lab = month(sample_date, label = TRUE),
+    region
+  )
+] |>
+fwrite(here('data/watershed/month-avg-concentration-region.csv'))
+
+
 
 # Regression of upstream variables on glyphosate concentrations 
 upstream_mod = feols(
