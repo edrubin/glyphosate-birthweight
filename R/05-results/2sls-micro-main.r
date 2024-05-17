@@ -2,7 +2,7 @@
 library(pacman)
 p_load(
   here, data.table, fst, fixest, ggplot2,
-  stringr, qs, collapse, janitor
+  stringr, qs, collapse, janitor, knitr, kableExtra
 )
 # Setup -----------------------------------------------------------------------
   # Creating directory to put tables in 
@@ -66,6 +66,94 @@ p_load(
     ] |>
     melt(id.var = 'year')
 
+# New Table 1: Policy and GLY effect (at mean) w/CI's -------------------------
+  gly_mean_2012 = mean_dt[year == 2012 & variable == 'glyph_km2']$value
+  # Calculating effect at GLY mean
+  main_effect_at_mean_dt = 
+    data.table(coeftable(
+      main_spec[
+        fixef = 'mage', 
+        lhs = '^dbwt$|dbwt_pctl|i_lbw|i_vlbw|preterm|section|gest'
+      ], 
+      keep = 'glyph'
+    ))[# Filtering to all controls or no controls 
+      rhs == '1' | str_detect(rhs, 'nicosulfuron_km2 \\+ unemployment')
+      ,.(
+      i = .I,
+      type = fcase(
+        rhs == '1', 'policy', 
+        str_detect(rhs, 'nicosulfuron_km2 \\+ unemployment'), 'gly'
+      ) |> factor(levels = c('policy','gly')),
+      lhs, 
+      effect = fcase(
+        lhs == 'dbwt', round(Estimate*gly_mean_2012,1),
+        lhs == 'gestation', round(Estimate*gly_mean_2012*7,2),
+        !(lhs %in% c('dbwt','gestation')), round(Estimate*gly_mean_2012*100,2)
+      ),
+      ci = paste0('[', 
+        fcase(
+          lhs == 'dbwt', round((Estimate + qnorm(0.025)*`Std. Error`)*gly_mean_2012, 1), 
+          lhs == 'gestation', round((Estimate + qnorm(0.025)*`Std. Error`)*gly_mean_2012*7, 2), 
+          !(lhs %in% c('dbwt','gestation')), round((Estimate + qnorm(0.025)*`Std. Error`)*gly_mean_2012*100, 2)
+        ), ', ',
+        fcase(
+          lhs == 'dbwt', round((Estimate + qnorm(0.975)*`Std. Error`)*gly_mean_2012, 1), 
+          lhs == 'gestation', round((Estimate + qnorm(0.975)*`Std. Error`)*gly_mean_2012*7, 2), 
+          !(lhs %in% c('dbwt','gestation')), round((Estimate + qnorm(0.975)*`Std. Error`)*gly_mean_2012*100, 2)
+        ), ']'
+      )
+    )] |>
+    dcast(
+      formula = lhs ~ type,
+      value.var = c('effect','ci')
+    ) |>
+    merge(
+      mean_dt[year == 2012,-'year'], 
+      by.x = 'lhs', 
+      by.y = 'variable', 
+      all.x = TRUE
+    )
+    # Making the nice looking table 
+    main_effect_at_mean_dt[,.(
+      Outcome = 
+        fcase(
+          lhs == 'dbwt', 'Birthweight (g)', 
+          lhs == 'dbwt_pctl_pre', 'Birthweight Percentile (%pt)',
+          lhs == 'i_lbw', 'Low Birthweight (%pt)',
+          lhs == 'i_vlbw', 'Very Low Birthweight (%pt)',
+          lhs == 'gestation', 'Gestation Length (days)',
+          lhs == 'i_preterm', 'Preterm (%pt)',
+          lhs == 'c_section', 'C-section (%pt)'
+        ) |> 
+        factor(levels = c(
+          'Birthweight (g)', 
+          'Birthweight Percentile (%pt)',
+          'Gestation Length (days)',
+          'Low Birthweight (%pt)',
+          'Very Low Birthweight (%pt)',
+          'Preterm (%pt)',
+          'C-section (%pt)'
+        )),
+      `Estimate` = as.character(effect_policy), 
+      `Conf. Interval` = ci_policy, 
+      `Estimate` = as.character(effect_gly), 
+      `Conf. Interval` = ci_gly, 
+      `2012 Mean` = fcase(
+        lhs == 'dbwt', round(value,1),
+        lhs == 'gestation', round(value*7,1),
+        !(lhs %in% c('dbwt','gestation')), round(value*100,1)
+      )
+    )][order(Outcome)]  |>
+    kbl(
+      format = 'latex',
+      align = 'lrrrrr'
+    ) |>
+    kable_classic() |>
+    column_spec(1, bold = T) |>
+    add_header_above(c(" " = 1, '\\textit{Policy Effect}' = 2, '\\textit{GLY Effect}' = 2, ' ' = 1)) |>
+    footnote(general = 
+      "\\textit{Policy Effect} is from TSLS regression of GLY on infant health controlling for family demographics. \\textit{GLY Effect} is from TSLS regression of GLY on infant health, controlling for other pesticides and unemployment. See Methods for details. All reported estimates are the effect at the mean level of GLY/$km^2$ in 2012. 95% confidence intervals calculated using standard errors clustered by year and state. Sample restricted to births occurring in rural counties or from mothers residing in rural counties. Instruments in TSLS regressions are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron."
+    )
 # First the main table: Main spec with different outcomes ---------------------
   main_spec = 
     qread(
@@ -129,7 +217,7 @@ p_load(
     fitstat = ~n_millions,
     digits.stats = 4,
     tpt = TRUE,
-    notes = "Sample restricted to births from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
+    notes = "Sample restricted to births occuring in rural countries or from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
     extralines = list(
       '__2012 mean' = effect_at_mean_dt$mean,
       '__Effect at mean' = effect_at_mean_dt$effect_at_mean
@@ -177,11 +265,12 @@ p_load(
     fitstat = ~n_millions,
     digits.stats = 4,
     tpt = TRUE,
-    notes = "Sample restricted to births from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
+    notes = "Sample restricted to births occuring in rural countries or from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
     label = 'tab:main-outcomes-ols',
     title = '\\textbf{Effect of GLY on perinatal health estimated with OLS.}'
   ) |> write(here('tables/ols/main-outcomes.tex'))
   rm(ols_mod, ols_spec)
+
 
 # Appendix tables -------------------------------------------------------------
   # Main table but with estimates of control variables included 
@@ -206,7 +295,7 @@ p_load(
     se.row = FALSE,
     fitstat = ~n_millions,
     digits.stats = 4,
-    notes = "Sample restricted to births from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
+    notes = "Sample restricted to births occuring in rural countries or from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
     extralines = list(
       '__2012 mean' = effect_at_mean_dt$mean,
       '__GLY/$km^2$ effect at mean' = effect_at_mean_dt$effect_at_mean
@@ -384,7 +473,7 @@ lapply(
     fitstat = ~n_millions,
     digits.stats = 4,
     tpt = TRUE,
-    notes = "Sample restricted to births from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
+    notes = "Sample restricted to births occuring in rural countries or from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
     extralines = list(
       '__2012 mean' = effect_at_mean_dt_ss$mean,
       '__Effect at mean' = effect_at_mean_dt_ss$effect_at_mean
