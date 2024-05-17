@@ -264,6 +264,96 @@ plot_predbw_results = function(
     )),
     width = width_in, height = height_in*0.85
   )
+  # Effect at mean for deciles: Policy effect
+  decile_effatmean_policy_p = 
+    ggplot(
+      data = pctl_est_dt[
+        lhs == outcome_in & 
+        trt == 'allyielddiffpercentilegmo' &
+        sample_var == 'pred_q10' & 
+        var_of_interest == TRUE & 
+        fixef_num == 'Mother and Father FEs' & 
+        control_num == 'None',
+        -'pctl'
+      ] |> unique(), 
+      aes(
+        x = as.integer(sample), 
+        y = effect_at_mean, ymin = effect_at_mean_l, ymax = effect_at_mean_h
+      ),
+    ) + 
+    geom_hline(yintercept = 0) +
+    geom_ribbon(alpha = 0.3, color = NA) + 
+    geom_point() + 
+    geom_line() +
+    scale_x_continuous(
+      name = 'Predicted Birthweight Decile',
+      breaks = 1:10
+    ) +
+    scale_y_continuous(
+      name = paste0('Effect at Mean on ',y_lab),
+      labels = y_labels
+    ) + 
+    theme(panel.grid.minor = element_blank())
+  if(print) print(decile_effatmean_policy_p)
+  ggsave(
+    plot = decile_effatmean_policy_p,
+    filename = here(paste0(
+      'figures/micro/2sls/deciles-at-mean-policy-',outcome_in,'.jpeg'
+    )),
+    width = width_in, height = height_in*0.85
+  )
+  # Policy and GLY effect
+  decile_effatmean_policy_gly_p = 
+    ggplot(
+      data = pctl_est_dt[
+        lhs == outcome_in & 
+        trt == 'allyielddiffpercentilegmo' &
+        sample_var == 'pred_q10' & 
+        var_of_interest == TRUE & 
+        fixef_num == 'Mother and Father FEs',
+        -'pctl'
+      ] |> unique(), 
+      aes(
+        x = as.integer(sample), 
+        y = effect_at_mean, ymin = effect_at_mean_l, ymax = effect_at_mean_h, 
+        color = control_num, fill = control_num
+      ),
+    ) + 
+    geom_hline(yintercept = 0) +
+    #geom_ribbon(alpha = 0.3, color = NA) + 
+    #geom_point() + 
+    #geom_line() +
+    geom_pointrange(
+      linewidth = 0.75,
+      position = position_dodge(width = 0.5)
+    ) +
+    scale_color_viridis_d(
+      name = '', 
+      option = 'magma' ,
+      begin = 0.2, end = 0.9,
+      labels = c('Policy Effect','GLY Effect'),
+      aesthetics = c('fill','color')
+    ) +
+    scale_x_continuous(
+      name = 'Predicted Birthweight Decile',
+      breaks = 1:10
+    ) +
+    scale_y_continuous(
+      name = paste0('Effect at Mean on ',y_lab),
+      labels = y_labels
+    ) + 
+    theme(
+      panel.grid.minor = element_blank(), 
+      legend.position = 'bottom'
+    ) 
+  if(print) print(decile_effatmean_policy_gly_p)
+  ggsave(
+    plot = decile_effatmean_policy_gly_p,
+    filename = here(paste0(
+      'figures/micro/2sls/deciles-at-mean-policy-gly-',outcome_in,'.jpeg'
+    )),
+    width = width_in, height = height_in
+  )
   # Now a plot with all three splits 
   all_splits_p = 
     ggplot(
@@ -274,7 +364,8 @@ plot_predbw_results = function(
         fixef_num == 'Mother and Father FEs' & 
         control_num == 'Pesticides and Unemployment' & 
         sample_var != 'month' & 
-        sample_var != 'pred_q14'
+        sample_var != 'pred_q14'& 
+        sample_var != 'pred_q5_sex'
       ], 
       aes(
         x = pctl, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -285,9 +376,10 @@ plot_predbw_results = function(
     geom_hline(yintercept = 0) +
     geom_ribbon(alpha = 0.3, color = NA) + 
     geom_line() +
-    scale_color_brewer(
-      'Number of Bins', 
-      palette = "Dark2",
+    scale_color_viridis_d(
+      option = 'magma', 
+      end = 0.9,
+      name = 'Number of Bins', 
       aesthetics = c('color','fill')
     ) +
     scale_x_continuous(
@@ -323,11 +415,16 @@ plot_predbw_results = function(
       ),
     ) + 
     geom_hline(yintercept = 0) +
-    geom_ribbon(alpha = 0.3, color = NA) + 
-    geom_point() + 
-    geom_line() +
-    scale_color_brewer(
-      'Controls', palette = "Dark2",
+    #geom_ribbon(alpha = 0.3, color = NA) + 
+    #geom_line() +
+    geom_pointrange(
+      linewidth = 0.75,
+      position = position_dodge(width= 0.5)
+      ) + 
+    scale_color_viridis_d(
+      option = 'magma', 
+      begin = 0.2, end = 0.9,
+      name = 'Controls', 
       aesthetics = c('color','fill')
     ) +
     scale_x_continuous(
@@ -364,15 +461,20 @@ plot_predbw_results = function(
       ] |> unique(), 
       aes(
         x = as.integer(sample), y = estimate, ymin = ci_l, ymax = ci_h,
-        color = trt_name, fill = trt_name
+        color = county_subset, fill = county_subset
       ),
     ) + 
     geom_hline(yintercept = 0) +
-    geom_ribbon(alpha = 0.3, color = NA) + 
-    geom_line() +
-    geom_point() + 
-    scale_color_brewer(
-      'Instrument', palette = "Dark2",
+    #geom_ribbon(alpha = 0.3, color = NA) + 
+    #geom_line() +
+    geom_pointrange(
+      linewidth = 0.75,
+      position = position_dodge(width= 0.5)
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma', 
+      begin = 0.2, end = 0.9,
+      name = '', 
       aesthetics = c('color','fill')
     ) +
     scale_x_continuous(
@@ -405,15 +507,29 @@ plot_predbw_results = function(
         sample_var == 'month' & 
         var_of_interest == TRUE & 
         fixef_num == 'Mother and Father FEs' & 
-        control_num == 'Pesticides and Unemployment' & 
+        #control_num == 'Pesticides and Unemployment' & 
         sample != 'Full sample'
       ], 
-      aes(x = as.integer(sample), y = estimate, ymin = ci_l, ymax = ci_h),
+      aes(
+        x = as.integer(sample), 
+        y = estimate, ymin = ci_l, ymax = ci_h, 
+        color = control_num
+      ),
     ) + 
     geom_hline(yintercept = 0) +
-    geom_ribbon(alpha = 0.3, color = NA) + 
-    geom_point() + 
-    geom_line() +
+    #geom_ribbon(alpha = 0.3, color = NA) + 
+    #geom_line()  + 
+    geom_pointrange(
+      linewidth = 0.75, 
+      position = position_dodge(width = 0.5)
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma', 
+      begin = 0.2, end = 0.9,
+      name = '', 
+      labels = c('Policy Effect', 'GLY Effect'),
+      aesthetics = c('color','fill')
+    ) +
     scale_x_continuous(
       name = 'Month of Birth',
       breaks = 1:12
@@ -447,11 +563,16 @@ plot_predbw_results = function(
       ),
     ) + 
     geom_hline(yintercept = 0) +
-    geom_ribbon(alpha = 0.3, color = NA) + 
-    geom_point() + 
-    geom_line() +
-    scale_color_brewer(
-      'Controls', palette = "Dark2",
+    #geom_ribbon(alpha = 0.3, color = NA) + 
+    #geom_line() +
+    geom_pointrange(
+      linewidth = 0.75, 
+      position = position_dodge(width =0.5)
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      begin = 0.2, end = 0.9,
+      name = 'Controls', 
       aesthetics = c('color','fill')
     ) +
     scale_x_continuous(
@@ -495,10 +616,15 @@ plot_predbw_results = function(
     ) + 
     geom_hline(yintercept = 0) +
     #geom_ribbon(alpha = 0.3, color = NA) + 
-    geom_pointrange(position = position_dodge(width = 0.25), linewidth = 1.1) + 
+    geom_pointrange(
+      linewidth = 0.75,
+      position = position_dodge(width= 0.5)
+    ) + 
     #geom_line() +
-    scale_color_brewer(
-      'Sex', palette = "Dark2",
+    scale_color_viridis_d(
+      option = 'magma', 
+      begin = 0.2, end = 0.9,
+      name = 'Sex', 
       aesthetics = c('color','fill')
     ) +
     scale_x_continuous(
@@ -528,6 +654,7 @@ plot_predbw_results = function(
 plot_predbw_results_all_outcome = function(
   pctl_est_dt, print = TRUE, width_in = 6, height_in = 4
 ){
+  # All pred bw het splits--marginal effect
   all_splits_p = 
     ggplot(
       data = pctl_est_dt[
@@ -537,6 +664,7 @@ plot_predbw_results_all_outcome = function(
         control_num == 'Pesticides and Unemployment' & 
         sample_var != 'month' & 
         sample_var != 'pred_q14' &
+        sample_var != 'pred_q5_sex' &
         lhs != 'dbwt_pred'
       ], 
       aes(
@@ -548,9 +676,10 @@ plot_predbw_results_all_outcome = function(
     geom_hline(yintercept = 0) +
     geom_ribbon(alpha = 0.3, color = NA) + 
     geom_line() +
-    scale_color_brewer(
-      'Number of Pred BW Bins', 
-      palette = "Dark2",
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Number of Pred BW Bins', 
       aesthetics = c('color','fill')
     ) +
     scale_x_continuous(
@@ -572,6 +701,54 @@ plot_predbw_results_all_outcome = function(
     )),
     width = width_in*1.5, height = height_in*2.75
   )
+  # All pred bw het splits--effect at mean for Policy
+  all_splits_at_mean_policy_p = 
+    ggplot(
+      data = pctl_est_dt[
+        var_of_interest == TRUE & 
+        trt == 'allyielddiffpercentilegmo' &
+        fixef_num == 'Mother and Father FEs' & 
+        control_num == 'None' & 
+        sample_var != 'month' & 
+        sample_var != 'pred_q14' &
+        sample_var != 'pred_q5_sex' &
+        lhs != 'dbwt_pred'
+      ], 
+      aes(
+        x = pctl, 
+        y = effect_at_mean, ymin = effect_at_mean_l, ymax = effect_at_mean_h,
+        color = str_remove(sample_var, 'pred_q')|> as.integer() |> as.factor(), 
+        fill  = str_remove(sample_var, 'pred_q')|> as.integer() |> as.factor()
+      ),
+    ) + 
+    geom_hline(yintercept = 0) +
+    geom_ribbon(alpha = 0.3, color = NA) + 
+    geom_line() +
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Number of Pred BW Bins', 
+      aesthetics = c('color','fill')
+    ) +
+    scale_x_continuous(
+      name = 'Predicted Birthweight Percentile',
+      labels = scales::label_percent()
+    ) +
+    scale_y_continuous(name = 'Effect at Mean') + 
+    theme(
+      panel.grid.minor = element_blank(),
+      legend.position = 'bottom',
+      strip.text = element_text(size = 16)
+    ) + 
+    facet_wrap(~lhs_name, ncol = 2, scales = 'free_y')
+  if(print) print(all_splits_at_mean_policy_p)
+  ggsave(
+    plot = all_splits_at_mean_policy_p,
+    filename = here(paste0(
+      'figures/micro/2sls/all-splits-all-outcomes-at-mean-policy.jpeg'
+    )),
+    width = width_in*1.5, height = height_in*2.75
+  )
   # Now for heterogeneity by month of birth 
   month_p = 
     ggplot(
@@ -581,15 +758,29 @@ plot_predbw_results_all_outcome = function(
         sample_var == 'month' & 
         var_of_interest == TRUE & 
         fixef_num == 'Mother and Father FEs' & 
-        control_num == 'Pesticides and Unemployment' & 
+        #control_num == 'Pesticides and Unemployment' & 
         sample != 'Full sample'
       ], 
-      aes(x = as.integer(sample), y = estimate, ymin = ci_l, ymax = ci_h),
+      aes(
+        x = as.integer(sample), 
+        y = effect_at_mean, 
+        ymin = effect_at_mean_l, ymax = effect_at_mean_h, 
+        color = control_num
+      ),
     ) + 
     geom_hline(yintercept = 0) +
-    geom_ribbon(alpha = 0.3, color = NA) + 
-    geom_point() + 
-    geom_line() +
+    #geom_ribbon(alpha = 0.3, color = NA) + 
+    #geom_line() +
+    geom_pointrange(
+      linewidth = 0.75, 
+      position = position_dodge(width = 0.5)
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      begin = 0.2, end = 0.9,
+      name = '',
+      labels = c('Policy Effect','GLY Effect')
+    ) +
     scale_x_continuous(
       name = 'Month of Birth',
       breaks = 1:12
@@ -628,10 +819,15 @@ plot_predbw_results_all_outcome = function(
     ) + 
     geom_hline(yintercept = 0) +
     #geom_ribbon(alpha = 0.3, color = NA) + 
-    geom_pointrange(position = position_dodge(width = 0.25), linewidth = 1.1) + 
+    geom_pointrange(
+      linewidth = 0.75,
+      position = position_dodge(width= 0.5)
+    ) + 
     #geom_line() +
-    scale_color_brewer(
-      'Sex', palette = "Dark2",
+    scale_color_viridis_d(
+      option = 'magma',
+      begin = 0.2, end = 0.9,
+      name = 'Sex',
       aesthetics = c('color','fill')
     ) +
     scale_x_continuous(
@@ -747,11 +943,15 @@ mod_paths =
 pred_bw_dt = 
   lapply(mod_paths, extract_pred_bw_effects) |> 
   rbindlist(use.names = TRUE, fill = TRUE)
+pred_bw_dt[,':='(
+  effect_at_mean_l = ci_l*mean_dt[year == 2012 & variable == 'glyph_km2']$value,
+  effect_at_mean = estimate*mean_dt[year == 2012 & variable == 'glyph_km2']$value,effect_at_mean_h = ci_h*mean_dt[year == 2012 & variable == 'glyph_km2']$value
+)]
 # Setup for spec chart 
 spec_chart_outcome = function(
   pred_bw_dt, 
   outcome_in,
-  order_in = 'decreasing'
+  order_in = 'asis'
 ){
   print(outcome_in)
   y_lab = fcase(
@@ -834,7 +1034,15 @@ spec_chart_outcome = function(
     "Attainable Yield Measure" = trt_name_v |> as.character() |> str_remove('Attainable Yield, ')
   )
   # Finding main spec to highlight
-  hl = spec_dt_robust[
+  hl_policy = spec_dt_robust[
+    control_num == 'None' & 
+    fixef_num == 'Mother and Father FEs' & 
+    trt_name == 'Attainable Yield, GM Avg Percentile' & 
+    county_subset == 'Rural' & 
+    is.na(sample),
+    which = TRUE
+  ]
+  hl_gly = spec_dt_robust[
     control_num == 'Pesticides and Unemployment' & 
     fixef_num == 'Mother and Father FEs' & 
     trt_name == 'Attainable Yield, GM Avg Percentile' & 
@@ -854,10 +1062,10 @@ spec_chart_outcome = function(
   schart(
     spec_df_robust, 
     labels_robust, 
-    highlight = hl,
+    highlight = c(hl_gly, hl_policy),
     order = order_in,
-    col.est=c("grey60","#e64173"), 
-    col.est2=c("grey70","#e64173"),
+    col.est=c("grey85","#e64173"), 
+    col.est2=c("grey85","#e64173"),
     col.dot=c("grey60","grey95","grey95","#e64173"),
     fonts=c(2,3),
     ci=c(.95)
@@ -866,8 +1074,10 @@ spec_chart_outcome = function(
   # Now spatial subsets
   spatial_subset_p =
     ggplot(spec_dt_spatial, aes(x = county_subset)) +
-    geom_point(aes(y = estimate)) + 
-    geom_linerange(aes(ymin = ci_l, ymax = ci_h)) +
+    geom_pointrange(
+      linewidth = 0.75,
+      aes(y = estimate, ymin = ci_l, ymax = ci_h)
+    ) +
     geom_hline(yintercept = 0, linetype = 'dashed') + 
     scale_y_continuous(name = y_lab, labels = y_labels) + 
     scale_x_discrete(name = '', guide = guide_axis(n.dodge=2))+
@@ -882,22 +1092,31 @@ spec_chart_outcome = function(
   # Finally mother's race
   mrace_p = 
     ggplot(
-      data = spec_dt_mrace,
+      data = spec_dt_mrace[fixef_num == 'Mother and Father FEs'],
       aes(
         x = control_num, 
-        y = estimate, 
-        ymin = ci_l, ymax = ci_h, 
+        y = effect_at_mean, 
+        ymin = effect_at_mean_l, ymax = effect_at_mean_h, 
         color = sample
       )
     )  +
     geom_hline(yintercept = 0, linetype = 'solid', linewidth = 0.2) +
-    geom_point(position = position_dodge(width = 0.4), size = 2) + 
-    geom_linerange(position = position_dodge(width = 0.4), linewidth = 0.8) + 
-    facet_grid(cols = vars(fixef_num)) + 
-    scale_y_continuous(name = y_lab, labels = y_labels) +
-    scale_x_discrete(name = 'Controls') + 
-    scale_color_brewer(
-      palette = 'Dark2', 
+    geom_pointrange(
+      position = position_dodge(width = 0.5), 
+      linewidth = 0.75
+    ) + 
+    #facet_grid(cols = vars(fixef_num)) + 
+    scale_y_continuous(
+      name = paste('Effect at Mean for ', y_lab), 
+      labels = y_labels
+    ) +
+    scale_x_discrete(
+      name = '', 
+      labels = c('Policy Effect','GLY Effect')
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma', 
+      end = 0.9,
       name = ''
     ) +
     theme_minimal() 
@@ -906,7 +1125,7 @@ spec_chart_outcome = function(
     filename = here(paste0(
       "figures/micro/2sls/spec-chart-mrace-",outcome_in,".jpeg"
     )), 
-    width = 7.5, height = 3.5, bg = 'white'
+    width = 6, height = 3.5, bg = 'white'
   )
 }
 
@@ -949,12 +1168,18 @@ pred_bw_dt[,
         is.na(sample_var) & 
         county_subset != 'Rural residence & occurrence'
       ], 
-      aes(x = county_subset)
+      aes(
+        x = county_subset,
+        y = effect_at_mean, 
+        ymin = effect_at_mean_l, ymax = effect_at_mean_h 
+      )
     ) +
-    geom_point(aes(y = estimate)) + 
-    geom_linerange(aes(ymin = ci_l, ymax = ci_h)) +
+    geom_pointrange(
+      linewidth = 0.75, 
+      position = position_dodge(width = 0.5)
+    ) +
     geom_hline(yintercept = 0, linetype = 'dashed') + 
-    scale_y_continuous(name = 'Marginal Effect') + 
+    scale_y_continuous(name = 'GLY Effect at Mean') + 
     scale_x_discrete(name = '', guide = guide_axis(n.dodge=2))+
     theme_minimal() + 
     facet_wrap(~lhs_name, ncol = 2, scales = 'free_y')
@@ -965,4 +1190,53 @@ pred_bw_dt[,
     ), 
     width = 6*1.5, height = 4*2.75,
     bg = 'white'
+  )
+
+# Now mrace plot for all outcomes
+mrace_all_p = 
+  pred_bw_dt[
+    var_of_interest == TRUE & 
+    sample_var == 'i_m_nonwhite' & 
+    fixef_num == 'Mother and Father FEs' & 
+    lhs != 'dbwt_pred',.(
+      lhs_name,
+      control_num, 
+      effect_at_mean_l, 
+      effect_at_mean, 
+      effect_at_mean_h, 
+      sample = fcase(
+        sample == 1, 'Mother non-white', 
+        sample == 0, 'Mother white',
+        sample == 'Full sample', 'Full sample'
+      ) |> factor(levels = c('Full sample','Mother white','Mother non-white'))
+  )] |>
+    ggplot(
+      aes(
+        x = control_num, 
+        y = effect_at_mean, 
+        ymin = effect_at_mean_l, ymax = effect_at_mean_h, 
+        color = sample
+      )
+    )  +
+    geom_hline(yintercept = 0, linetype = 'solid', linewidth = 0.2) +
+    geom_point(position = position_dodge(width = 0.4), size = 2) + 
+    geom_linerange(position = position_dodge(width = 0.4), linewidth = 0.8) + 
+    scale_y_continuous(name = 'Effect at Mean') +
+    scale_x_discrete(
+      name = '', 
+      labels = c('Policy Effect','GLY Effect')
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma', 
+      end = 0.9,
+      name = ''
+    ) +
+    theme_minimal() + 
+    facet_wrap(~lhs_name, ncol = 2, scales = 'free_y')
+  ggsave(
+    mrace_all_p, 
+    filename = here(paste0(
+      "figures/micro/2sls/spec-chart-mrace-all-outcomes.jpeg"
+    )), 
+    width = 6*1.6*0.7, height = 4*2.5*0.7, bg = 'white'
   )

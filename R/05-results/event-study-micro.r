@@ -251,6 +251,45 @@ plot_reduced_form = function(
       width = width_in, height = height_in
     )
   }
+  fs_event_main_policy_dt = 
+    mod_dt[
+      type == '2sls-fs' & 
+      var_of_interest == TRUE & 
+      lhs == outcome_in &
+      fixef_num == 'Add Family FEs' & 
+      control_num == 'None' &
+      trt == 'all_yield_diff_percentile_gmo' & 
+      spatial == 'rural' &
+      paste0(sample_var, sample) == 'NANA' & 
+      is.na(county_subset)
+    ]
+  if(nrow(fs_event_main_policy_dt) > 0){
+    fs_event_policy_p = 
+      ggplot(
+        data = fs_event_main_policy_dt,
+        aes(x = year, y = estimate, ymin = ci_l, ymax = ci_h)
+      ) +
+      geom_hline(yintercept = 0) +
+      geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+      geom_ribbon(fill = pink, alpha = 0.5) +
+      geom_point(color = pink, size = 2.5) +
+      geom_line(linewidth = 0.3, color = pink) +
+      scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
+      scale_x_continuous(
+        name = 'Year', 
+        limits = c(1990,2015),
+        breaks = seq(1990, 2015, 5), 
+        minor_breaks = NULL
+      ) 
+    if(print) print(fs_event_policy_p)
+    ggsave(
+      fs_event_policy_p, 
+      filename = here(paste0(
+        'figures/micro/fs-event/main-policy-',outcome_in,'.jpeg'
+      )), 
+      width = width_in, height = height_in
+    )
+  }
   # Main plot--reduced form
   rf_event_main_dt = 
     mod_dt[
@@ -287,6 +326,45 @@ plot_reduced_form = function(
       rf_event_p, 
       filename = here(paste0(
         'figures/micro/rf-event/main-',outcome_in,'.jpeg'
+      )), 
+      width = width_in, height = height_in
+    )
+  }
+  rf_event_main_policy_dt = 
+    mod_dt[
+      type == 'rf' & 
+      var_of_interest == TRUE & 
+      lhs == outcome_in &
+      fixef_num == 'Add Family FEs' & 
+      control_num == 'None' &
+      trt == 'all_yield_diff_percentile_gmo' & 
+      spatial == 'rural' &
+      paste0(sample_var, sample) == 'NANA' & 
+      is.na(county_subset)
+    ]
+  if(nrow(rf_event_main_policy_dt)>0){
+    rf_event_policy_p = 
+      ggplot(
+        data = rf_event_main_policy_dt,
+        aes(x = year, y = estimate, ymin = ci_l, ymax = ci_h)
+      ) +
+      geom_hline(yintercept = 0) +
+      geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+      geom_ribbon(fill = pink, alpha = 0.5) +
+      geom_point(color = pink, size = 2.5) +
+      geom_line(linewidth = 0.3, color = pink) +
+      scale_y_continuous(name = y_lab, minor_breaks = NULL) +
+      scale_x_continuous(
+        name = 'Year', 
+        limits = c(1990,2015),
+        breaks = seq(1990, 2015, 5), 
+        minor_breaks = NULL
+      ) 
+    if(print) print(rf_event_policy_p)
+    ggsave(
+      rf_event_policy_p, 
+      filename = here(paste0(
+        'figures/micro/rf-event/main-policy-',outcome_in,'.jpeg'
       )), 
       width = width_in, height = height_in
     )
@@ -363,8 +441,10 @@ plot_reduced_form = function(
       breaks = seq(1990, 2015, 5), 
       minor_breaks = NULL
     ) + 
-    scale_color_brewer(
-      name = 'Attainable Yield Measure', palette = 'Dark2',
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Attainable Yield Measure', 
       aesthetics = c('color','fill')
     ) 
   if(print) print(fs_event_trt_p)
@@ -402,8 +482,10 @@ plot_reduced_form = function(
       breaks = seq(1990, 2015, 5), 
       minor_breaks = NULL
     ) + 
-    scale_color_brewer(
-      name = 'Attainable Yield Measure', palette = 'Dark2',
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Attainable Yield Measure', 
       aesthetics = c('color','fill')
     ) 
   if(print) print(rf_event_trt_p)
@@ -444,8 +526,10 @@ plot_reduced_form = function(
       breaks = seq(1990, 2015, 5), 
       minor_breaks = NULL
     ) + 
-    scale_color_brewer(
-      name = 'Controls', palette = 'Dark2',
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Controls', 
       aesthetics = c('color','fill')
     ) +
     facet_grid(rows = vars(fixef_num))
@@ -486,8 +570,10 @@ plot_reduced_form = function(
       breaks = seq(1990, 2015, 5), 
       minor_breaks = NULL
     ) + 
-    scale_color_brewer(
-      name = 'Controls', palette = 'Dark2',
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Controls', 
       aesthetics = c('color','fill')
     ) +
     facet_grid(rows = vars(fixef_num))
@@ -531,8 +617,10 @@ plot_reduced_form = function(
       breaks = seq(1990, 2015, 5), 
       minor_breaks = NULL
     ) + 
-    scale_color_brewer(
-      name = 'County Subset', palette = 'Dark2',
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'County Subset', 
       aesthetics = c('color','fill')
     )
   if(print) print(fs_event_cntysub_p)
@@ -574,8 +662,10 @@ plot_reduced_form = function(
       breaks = seq(1990, 2015, 5), 
       minor_breaks = NULL
     ) + 
-    scale_color_brewer(
-      name = 'County Subset', palette = 'Dark2',
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'County Subset', 
       aesthetics = c('color','fill')
     ) 
   if(print) print(rf_event_cntysub_p)
@@ -594,7 +684,7 @@ plot_reduced_form = function(
         var_of_interest == TRUE & 
         lhs == outcome_in &
         fixef_num == 'Add Family FEs' & 
-        control_num == 'Pesticides and Unemployment' &
+        control_num == 'None' &
         trt == 'all_yield_diff_percentile_gmo' & 
         spatial == 'rural' &
         sample_var == 'pred_q5' & 
@@ -621,6 +711,8 @@ plot_reduced_form = function(
     ) + 
     scale_color_viridis_d(
       name = 'Predicted BW Quintile',
+      option = 'magma',
+      end = 0.9,
       aesthetics = c('color','fill')
     ) 
   if(print) print(fs_event_het_predbw_p)
@@ -637,7 +729,7 @@ plot_reduced_form = function(
         type == 'rf' & 
         var_of_interest == TRUE & lhs == outcome_in &
         fixef_num == 'Add Family FEs' & 
-        control_num == 'Pesticides and Unemployment' &
+        control_num == 'None' &
         trt == 'all_yield_diff_percentile_gmo' & 
         spatial == 'rural' &
         sample_var == 'pred_q5' & 
@@ -664,6 +756,8 @@ plot_reduced_form = function(
     ) + 
     scale_color_viridis_d(
       name = 'Predicted BW Quintile',
+      option = 'magma',
+      end = 0.9,
       aesthetics = c('color','fill')
     ) 
   if(print) print(rf_event_het_predbw_p)
@@ -706,9 +800,10 @@ plot_reduced_form = function(
         breaks = seq(1990, 2015, 5), 
         minor_breaks = NULL
       ) + 
-      scale_color_brewer(
+      scale_color_viridis_d(
+        option = 'magma',
+        begin = 0.2, end = 0.9,
         name = 'Spatial Subset', 
-        palette = 'Dark2',
         labels = c('Non-rural','Rural'),
         aesthetics = c('color','fill')
       )
@@ -754,8 +849,10 @@ plot_reduced_form = function(
         breaks = seq(1990, 2015, 5), 
         minor_breaks = NULL
       ) + 
-      scale_color_brewer(
-        name = 'Spatial Subset', palette = 'Dark2',
+      scale_color_viridis_d(
+        option = 'magma',
+        begin = 0.2, end = 0.9,
+        name = 'Spatial Subset', 
         labels = c('Non-rural','Rural'),
         aesthetics = c('color','fill')
       ) 
@@ -815,6 +912,48 @@ plot_results_faceted_outcomes = function(mod_dt, print = FALSE, width_in = 6, he
       width = width_in*1.5, height = height_in*2.75
     )
   }
+  # First the main results
+  rf_event_main_policy_dt = 
+    mod_dt[
+      type == 'rf' & 
+      lhs != 'dbwt_pred' &
+      var_of_interest == TRUE & 
+      fixef_num == 'Add Family FEs' & 
+      control_num == 'None' &
+      trt == 'all_yield_diff_percentile_gmo' & 
+      spatial == 'rural' &
+      paste0(sample_var, sample) == 'NANA' & 
+      is.na(county_subset )
+    ]
+  if(nrow(rf_event_main_policy_dt)>0){
+    rf_event_policy_p = 
+      ggplot(
+        data = rf_event_main_policy_dt,
+        aes(x = year, y = estimate, ymin = ci_l, ymax = ci_h)
+      ) +
+      geom_hline(yintercept = 0) +
+      geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+      geom_ribbon(fill = pink, alpha = 0.5) +
+      geom_point(color = pink, size = 2.5) +
+      geom_line(linewidth = 0.3, color = pink) +
+      scale_y_continuous(name = '', minor_breaks = NULL) +
+      scale_x_continuous(
+        name = 'Year', 
+        limits = c(1990,2015),
+        breaks = seq(1990, 2015, 5), 
+        minor_breaks = NULL
+      ) +
+      facet_wrap(~lhs_name,ncol = 2, scales = 'free_y') + 
+      theme(strip.text = element_text(size = 16))
+    if(print) print(rf_event_policy_p)
+    ggsave(
+      rf_event_policy_p, 
+      filename = here(paste0(
+        'figures/micro/rf-event/main-policy-all-other-lhs.jpeg'
+      )), 
+      width = width_in*1.5, height = height_in*2.75
+    )
+  }
   # Now the demographic outcomes
   rf_event_demog_dt = 
     mod_dt[
@@ -866,7 +1005,7 @@ plot_results_faceted_outcomes = function(mod_dt, print = FALSE, width_in = 6, he
       lhs != 'dbwt_pred' &
       var_of_interest == TRUE & 
       fixef_num == 'Add Family FEs' & 
-      control_num == 'Pesticides and Unemployment' &
+      control_num == 'None' & #'Pesticides and Unemployment' &
       trt == 'all_yield_diff_percentile_gmo' & 
       spatial == 'rural' &
       sample_var == 'i_m_nonwhite' &
@@ -885,11 +1024,12 @@ plot_results_faceted_outcomes = function(mod_dt, print = FALSE, width_in = 6, he
       geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
       geom_linerange(position = position_dodge(width = 0.63)) +
       #geom_line(linewidth = 0.3) +
-      scale_color_brewer(
-        palette = 'Dark2', 
+      scale_color_viridis_d(
+        option = 'magma',
+        begin = 0.2, end = 0.9,
         name = '',
-        labels = c('Mother White', 'Mother Non-white'),
-        aesthetics = c('fill','color')
+        aesthetics = c('fill','color'),
+        labels = c('Mother White', 'Mother Non-white')
       ) +
       scale_y_continuous(name = '', minor_breaks = NULL) +
       scale_x_continuous(

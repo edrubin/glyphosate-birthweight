@@ -60,9 +60,16 @@ options(tigris_use_cache = TRUE)
       ) |>
       ggplot() + 
       geom_sf(aes(fill = value, color = value)) + 
-      geom_sf(data = states_sf, color = "black", fill = NA) +
+      geom_sf(
+        data = states_sf, 
+        color = "grey80", 
+        fill = NA, 
+        linewidth = 0.05
+      ) +
       scale_color_viridis_c(
         name = "", 
+        option = 'magma',
+        direction = 1,
         aesthetics = c('fill','color'),
         labels = scales::label_percent(), 
         breaks = seq(0,1, by = 0.25)
@@ -87,28 +94,47 @@ options(tigris_use_cache = TRUE)
   )
 
 # Plotting change in glyphosate -----------------------------------------------
-  change_glyph_p = 
-    left_join(
-      county_sf, 
-      comb_cnty_dt[
-        year %in% c(1995, 2012), 
-        .(GEOID, year = as.factor(year), glyph_km2)
-      ] |>
-        gby(GEOID) |>
-        fdiff(t = year) %>% 
-        .[!is.na(glyph_km2)],
-      by = 'GEOID'
-    )|>
-    ggplot() + 
-    geom_sf(aes(fill = glyph_km2, color = glyph_km2)) + 
-    geom_sf(data = states_sf, color = "black", fill = NA) +
-    scale_color_viridis_c(
-      name = "", 
-      aesthetics = c('fill','color')
-    ) 
-  ggsave(
-    change_glyph_p,
-    filename = here("figures/descriptive/glyph-km2-diff-9512.jpeg"),
-    width = 8, height = 8/1.4,
-    bg = 'white'
+gly_change_dt = 
+  comb_cnty_dt[
+    year %in% c(1995, 2012), 
+    .(GEOID, year = as.factor(year), glyph_km2)
+  ] |>
+  gby(GEOID) |>
+  fdiff(t = year) %>% 
+  .[!is.na(glyph_km2)]
+# Censoring 
+gly_change_dt[,
+  glyph_km2 := fcase(
+    glyph_km2 < fnth(gly_change_dt$glyph_km2, 0.01), fnth(gly_change_dt$glyph_km2, 0.01),
+    glyph_km2 > fnth(gly_change_dt$glyph_km2, 0.99), fnth(gly_change_dt$glyph_km2, 0.99),
+    glyph_km2 >= fnth(gly_change_dt$glyph_km2, 0.01) & 
+    glyph_km2 <= fnth(gly_change_dt$glyph_km2, 0.99), glyph_km2
   )
+]
+# Make the map
+change_glyph_p = 
+  left_join(
+    county_sf, 
+    gly_change_dt,
+    by = 'GEOID'
+  )|>
+  ggplot() + 
+  geom_sf(aes(fill = glyph_km2, color = glyph_km2)) + 
+  geom_sf(
+    data = states_sf, 
+    color = "grey80", 
+    fill = NA, 
+    linewidth = 0.05
+  ) +
+  scale_color_viridis_c(
+    name = "", 
+    option = 'magma',
+    direction = 1,
+    aesthetics = c('fill','color')
+  ) 
+ggsave(
+  change_glyph_p,
+  filename = here("figures/descriptive/glyph-km2-diff-9512.jpeg"),
+  width = 8, height = 8/1.4,
+  bg = 'white'
+)

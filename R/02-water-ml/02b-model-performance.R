@@ -7,10 +7,10 @@ p_load(
 
 # Loading data ----------------------------------------------------------------
   # First the models 
-  test_glyph_rf = qread(here('data-clean/ml-water/test-glyph-fit-rf.qs'))
-  test_ampa_rf = qread(here('data-clean/ml-water/test-ampa-fit-rf.qs'))
-  test_glyph_lasso = qread(here('data-clean/ml-water/test-glyph-fit-lasso.qs'))
-  test_ampa_lasso = qread(here('data-clean/ml-water/test-ampa-fit-lasso.qs'))
+  test_glyph_rf = qread(here('data/results/ml-water/test-glyph-fit-rf.qs'))
+  test_ampa_rf = qread(here('data/results/ml-water/test-ampa-fit-rf.qs'))
+  test_glyph_lasso = qread(here('data/results/ml-water/test-glyph-fit-lasso.qs'))
+  test_ampa_lasso = qread(here('data/results/ml-water/test-ampa-fit-lasso.qs'))
 
 # Checking performance --------------------------------------------------------
   # RMSE and R2 
@@ -68,12 +68,17 @@ p_load(
   # Plot results for glyphosate 
   pred_glyph_p = 
     pred_dt[chemical == 'Glyphosate'] |>
-    ggplot(aes(x = actual, y = pred, color = model)) + 
+    ggplot(aes(x = actual, y = pred, color = model, shape = model)) + 
     geom_point(alpha = 0.2) +
     geom_smooth(se = TRUE) +
     scale_x_continuous("Actual", limits = c(0,1.0))+ 
     scale_y_continuous("Predicted", limits = c(0,1.0)) + 
-    scale_color_brewer(palette = 'Dark2', name = 'Model') + 
+    scale_shape_manual(name = 'Model', values = c(16,17))+
+    scale_color_viridis_d(
+      option = 'magma', 
+      begin = 0.2, end = 0.9, 
+      name = 'Model'
+    ) + 
     geom_abline(slope = 1, intercept = 0, linetype = 'dashed') + 
     theme_minimal() 
   ggsave(
@@ -85,16 +90,21 @@ p_load(
   # Now for AMPA
   pred_ampa_p = 
     pred_dt[chemical == 'AMPA'] |>
-    ggplot(aes(x = actual, y = pred, color = model)) + 
+    ggplot(aes(x = actual, y = pred, color = model, shape = model)) + 
     geom_point(alpha = 0.2) +
     geom_smooth(se = TRUE) +
     scale_x_continuous("Actual", limits = c(0,1.0))+ 
     scale_y_continuous("Predicted", limits = c(0,1.0)) + 
-    scale_color_brewer(palette = 'Dark2', name = 'Model') + 
+    scale_shape_manual(name = 'Model', values = c(16,17))+
+    scale_color_viridis_d(
+      option = 'magma', 
+      begin = 0.2, end = 0.9, 
+      name = 'Model'
+    ) + 
     geom_abline(slope = 1, intercept = 0, linetype = 'dashed') + 
     theme_minimal() 
   ggsave(
-    plot = pred_ampa_p, 
+    plot =  pred_ampa_p, 
     filename = here('figures/water-ml/pred-v-actual-ampa.jpeg'), 
     width = 5, height = 3, 
     bg = 'white'
@@ -114,8 +124,9 @@ p_load(
     )]|>
     ggplot(aes(x = value, fill = data, color = data)) + 
     geom_density(alpha = 0.3) +
-    scale_fill_brewer(
-      palette = 'Dark2', 
+    scale_color_viridis_d(
+      option = 'magma', 
+      end = 0.9, 
       name = '',
       aesthetics = c('color','fill')
     ) +

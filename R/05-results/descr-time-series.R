@@ -55,9 +55,10 @@ glyph_ts_p =
   geom_point(size = 3) + 
   geom_vline(xintercept = 1995.5, col = 'black', size = 1, linetype ='dashed') +
   geom_hline(yintercept = 0) +
-  scale_color_brewer(
+  scale_color_viridis_d(
+    option = 'magma', 
+    end = 0.9, begin = 0.2,
     name = "Attainable Yield", 
-    palette = 'Dark2',
     labels = c('Low','High')
   ) + 
   scale_y_continuous('GLY (kg/km²)') +
@@ -69,10 +70,11 @@ ggsave(
     theme(
       legend.text=element_text(size=20), 
       legend.position = 'bottom',
-      legend.margin=margin(t=-25)
+      legend.margin=margin(t=-25), 
+      panel.grid.minor = element_blank()
     ),
   filename = here("figures/descriptive/ts-glyph.jpeg"),
-  width = 8, height = 6,
+  width = 8*0.8, height = 6*0.8,
   bg = 'white'
 )  
 # Time series without groups 

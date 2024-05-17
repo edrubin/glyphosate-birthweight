@@ -164,8 +164,9 @@ plot_event_study_water = function(outcome_in, mod_dt, print = FALSE, width_in = 
         breaks = seq(1990, 2015, 5), 
         minor_breaks = NULL
       ) +
-      scale_color_brewer(
-        palette = 'Dark2', 
+      scale_color_viridis_d(
+        option ='magma', 
+        begin = 0.2, end = 0.9,
         name = 'Erodibility and Rainfall', 
         labels = c('Low','High'), 
         aesthetics = c('color','fill')

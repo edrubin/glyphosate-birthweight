@@ -67,6 +67,12 @@ p_load(
     melt(id.var = 'year')
 
 # New Table 1: Policy and GLY effect (at mean) w/CI's -------------------------
+  main_spec = 
+    qread(
+      list.files(here('data/results/micro'), full.names = TRUE) |>
+      str_subset('est_2sls_outcome') |>
+      str_subset('controls-0123_spatial-rural_het-_iv-allyielddiffpercentilegmo')
+    )
   gly_mean_2012 = mean_dt[year == 2012 & variable == 'glyph_km2']$value
   # Calculating effect at GLY mean
   main_effect_at_mean_dt = 
@@ -152,19 +158,13 @@ p_load(
     column_spec(1, bold = T) |>
     add_header_above(c(" " = 1, '\\textit{Policy Effect}' = 2, '\\textit{GLY Effect}' = 2, ' ' = 1)) |>
     footnote(general = 
-      "\\textit{Policy Effect} is from TSLS regression of GLY on infant health controlling for family demographics. \\textit{GLY Effect} is from TSLS regression of GLY on infant health, controlling for other pesticides and unemployment. See Methods for details. All reported estimates are the effect at the mean level of GLY/$km^2$ in 2012. 95% confidence intervals calculated using standard errors clustered by year and state. Sample restricted to births occurring in rural counties or from mothers residing in rural counties. Instruments in TSLS regressions are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron."
+      "All reported estimates are the effect at the weighted mean of GLY in 2012, where we weight by total births. \textit{Policy Effect} is from 2SLS regression of perinatal health on GLY, controlling for family demographics. \textit{GLY Effect} is from 2SLS regression of perinatal health on GLY, controlling for other pesticides and unemployment. See text for details. 95\\% confidence intervals calculated using standard errors clustered by year and state. Sample restricted to births occurring in rural counties or to mothers residing in rural counties. "
     )
 # First the main table: Main spec with different outcomes ---------------------
-  main_spec = 
-    qread(
-      list.files(here('data/results/micro'), full.names = TRUE) |>
-      str_subset('est_2sls_outcome') |>
-      str_subset('controls-0123_spatial-rural_het-_iv-allyielddiffpercentilegmo')
-    )
   # Filtering down to all controls and fixed effects
   main_mod = main_spec[
     fixef = 'mage', 
-    rhs = 'nicosulfuron_km2 \\+ unemployment',
+    rhs = 'nicosulfuron_km2 \\+ unemployment|1',
     lhs = '^dbwt$|dbwt_pctl|i_lbw|i_vlbw|preterm|section|gest'
   ]
   # Calculating effect at GLY mean
@@ -172,6 +172,7 @@ p_load(
     data.table(coeftable(main_mod, keep = 'glyph'))[,.(
       i = .I,
       lhs, 
+      rhs, 
       effect_at_mean = Estimate*mean_dt[
           year == 2012 & variable == 'glyph_km2'
         ]$value
@@ -189,9 +190,9 @@ p_load(
       by.y = 'variable',
       all.x = TRUE
     )[order(i)]
-  # Making the table 
+  # Making Two tables: first is policy effect, second is gly effect
   etable(
-    main_mod,
+    main_mod[rhs = '1'],
     tex = TRUE,
     style.tex = style.tex(
       depvar.title = 'Dep Var:',
@@ -219,27 +220,15 @@ p_load(
     tpt = TRUE,
     notes = "Sample restricted to births occuring in rural countries or from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
     extralines = list(
-      '__2012 mean' = effect_at_mean_dt$mean,
-      '__Effect at mean' = effect_at_mean_dt$effect_at_mean
+      '__2012 mean' = effect_at_mean_dt[rhs == '1']$mean,
+      '__Effect at mean' = effect_at_mean_dt[rhs == '1']$effect_at_mean
     ),
-    label = 'tab:main-outcomes',
-    title = '\\textbf{Effect of GLY on perinatal health estimated with 2SLS.}'
-  ) |> write(here('tables/2sls/main-outcomes.tex'))
-  # OLS version of table
-  ols_spec = 
-    qread(
-      list.files(here('data/results/micro'), full.names = TRUE) |>
-      str_subset('est_ols_outcome') |>
-      str_subset('controls-0123_spatial-rural_het-predq5')
-    )
-  ols_mod = ols_spec[
-    fixef = 'mage', 
-    rhs = 'nicosulfuron_km2 \\+ unemployment',
-    lhs = '^dbwt$|dbwt_pctl|i_lbw|i_vlbw|preterm|section|gest',
-    sample = 'Full'
-  ]
+    label = 'tab:main-outcomes-policy',
+    title = '\\textbf{Policy Effect of GLY on perinatal health estimated with 2SLS.}'
+  ) |> write(here('tables/2sls/main-outcomes-policy.tex'))
+  # Making the table 
   etable(
-    ols_mod,
+    main_mod[rhs = 'nicosulfuron'],
     tex = TRUE,
     style.tex = style.tex(
       depvar.title = 'Dep Var:',
@@ -266,9 +255,88 @@ p_load(
     digits.stats = 4,
     tpt = TRUE,
     notes = "Sample restricted to births occuring in rural countries or from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
-    label = 'tab:main-outcomes-ols',
+    extralines = list(
+      '__2012 mean' = effect_at_mean_dt[str_detect(rhs, 'nicosulfuron')]$mean,
+      '__Effect at mean' = effect_at_mean_dt[str_detect(rhs, 'nicosulfuron')]$effect_at_mean
+    ),
+    label = 'tab:main-outcomes-gly',
+    title = '\\textbf{Effect of GLY on perinatal health estimated with 2SLS.}'
+  ) |> write(here('tables/2sls/main-outcomes-gly.tex'))
+  # OLS version of table
+  ols_spec = 
+    qread(
+      list.files(here('data/results/micro'), full.names = TRUE) |>
+      str_subset('est_ols_outcome') |>
+      str_subset('controls-0123_spatial-rural_het-predq5')
+    )
+  ols_mod = ols_spec[
+    fixef = 'mage', 
+    rhs = 'nicosulfuron_km2 \\+ unemployment|1',
+    lhs = '^dbwt$|dbwt_pctl|i_lbw|i_vlbw|preterm|section|gest',
+    sample = 'Full'
+  ]
+  etable(
+    ols_mod[rhs = 'nicosulfuron'],
+    tex = TRUE,
+    style.tex = style.tex(
+      depvar.title = 'Dep Var:',
+      model.format = "", 
+      line.top = 'simple',
+      line.bottom = 'simple',
+      var.title = '\\midrule'
+    ),
+    se.below = TRUE,
+    keep = 'GLY',
+    digits = 3,
+    signif.code = NA,
+    group = list(
+      '^_Pesticides' = 'Nicosulfuron',
+      '^_Unemployment' = 'Unemp'
+    ),
+    fixef.group = list(
+      '-^Yr x Mo' = 'year_month',
+      '-^County' = 'fips',
+      '-^Family Demog' = 'age|sex|race|hisp|birth|mar|educ|restatus'
+    ),
+    se.row = FALSE,
+    fitstat = ~n_millions,
+    digits.stats = 4,
+    tpt = TRUE,
+    notes = "Sample restricted to births occuring in rural countries or from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
+    label = 'tab:main-outcomes-ols-gly',
     title = '\\textbf{Effect of GLY on perinatal health estimated with OLS.}'
-  ) |> write(here('tables/ols/main-outcomes.tex'))
+  ) |> write(here('tables/ols/main-outcomes-gly.tex'))
+  etable(
+    ols_mod[rhs = '1'],
+    tex = TRUE,
+    style.tex = style.tex(
+      depvar.title = 'Dep Var:',
+      model.format = "", 
+      line.top = 'simple',
+      line.bottom = 'simple',
+      var.title = '\\midrule'
+    ),
+    se.below = TRUE,
+    keep = 'GLY',
+    digits = 3,
+    signif.code = NA,
+    group = list(
+      '^_Pesticides' = 'Nicosulfuron',
+      '^_Unemployment' = 'Unemp'
+    ),
+    fixef.group = list(
+      '-^Yr x Mo' = 'year_month',
+      '-^County' = 'fips',
+      '-^Family Demog' = 'age|sex|race|hisp|birth|mar|educ|restatus'
+    ),
+    se.row = FALSE,
+    fitstat = ~n_millions,
+    digits.stats = 4,
+    tpt = TRUE,
+    notes = "Sample restricted to births occuring in rural countries or from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
+    label = 'tab:main-outcomes-ols-policy',
+    title = '\\textbf{Effect of GLY on perinatal health estimated with OLS.}'
+  ) |> write(here('tables/ols/main-outcomes-policy.tex'))
   rm(ols_mod, ols_spec)
 
 
@@ -421,13 +489,14 @@ lapply(
   )[1])
   main_mod_ss = main_spec_ss[
       fixef = 'mage', 
-      rhs = 'nicosulfuron_km2 \\+ unemployment',
+      rhs = 'nicosulfuron_km2 \\+ unemployment|1',
       lhs = '^dbwt$|dbwt_pctl|i_lbw|i_vlbw|preterm|section|gest'
     ]
   # Calculating effect at GLY mean
   effect_at_mean_dt_ss = 
     data.table(coeftable(main_mod_ss, keep = 'glyph'))[,.(
       i = .I,
+      rhs,
       lhs, 
       effect_at_mean = Estimate*mean_dt[
           year == 2012 & variable == 'glyph_km2'
@@ -447,7 +516,7 @@ lapply(
       all.x = TRUE
     )[order(i)]
   etable(
-    main_mod_ss,
+    main_mod_ss[rhs = '1'],
     tex = TRUE,
     style.tex = style.tex(
       depvar.title = 'Dep Var:',
@@ -473,14 +542,49 @@ lapply(
     fitstat = ~n_millions,
     digits.stats = 4,
     tpt = TRUE,
-    notes = "Sample restricted to births occuring in rural countries or from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
+    notes = "Sample restricted to births occuring in rural countries or from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with national GLY usage, excluding counties within 100km or upstream. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
     extralines = list(
-      '__2012 mean' = effect_at_mean_dt_ss$mean,
-      '__Effect at mean' = effect_at_mean_dt_ss$effect_at_mean
+      '__2012 mean' = effect_at_mean_dt_ss[rhs == '1']$mean,
+      '__Effect at mean' = effect_at_mean_dt_ss[rhs == '1']$effect_at_mean
     ),
-    label = 'tab:main-outcomes-ss',
+    label = 'tab:main-outcomes-ss-policy',
     title = '\\textbf{Effect of GLY on perinatal health estimated with 2SLS shift-share instrument.}'
-  ) |> write(here('tables/2sls/main-outcomes-ss.tex'))
+  ) |> write(here('tables/2sls/main-outcomes-ss-policy.tex'))
+  etable(
+    main_mod_ss[rhs = 'nicosulfuron'],
+    tex = TRUE,
+    style.tex = style.tex(
+      depvar.title = 'Dep Var:',
+      model.format = "", 
+      line.top = 'simple',
+      line.bottom = 'simple',
+      var.title = '\\midrule'
+    ),
+    se.below = TRUE,
+    keep = 'GLY',
+    digits = 3,
+    signif.code = NA,
+    group = list(
+      '^_Pesticides' = 'Nicosulfuron',
+      '^_Unemployment' = 'Unemp'
+    ),
+    fixef.group = list(
+      '-^Yr x Mo' = 'year_month',
+      '-^County' = 'fips',
+      '-^Family Demog' = 'age|sex|race|hisp|birth|mar|educ|restatus'
+    ),
+    se.row = FALSE,
+    fitstat = ~n_millions,
+    digits.stats = 4,
+    tpt = TRUE,
+    notes = "Sample restricted to births occuring in rural countries or from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with national GLY usage, excluding counties within 100km or upstream. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.",
+    extralines = list(
+      '__2012 mean' = effect_at_mean_dt_ss[str_detect(rhs, 'nicosulf')]$mean,
+      '__Effect at mean' = effect_at_mean_dt_ss[str_detect(rhs, 'nicosulf')]$effect_at_mean
+    ),
+    label = 'tab:main-outcomes-ss-gly',
+    title = '\\textbf{Effect of GLY on perinatal health estimated with 2SLS shift-share instrument.}'
+  ) |> write(here('tables/2sls/main-outcomes-ss-gly.tex'))
 
 
 # Table for water ml model ----------------------------------------------------
