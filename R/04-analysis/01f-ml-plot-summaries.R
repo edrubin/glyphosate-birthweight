@@ -55,8 +55,18 @@
     vars_ord = c('total_birth_order', 'live_birth_order')
     vars_pct = c('i_female', 'i_m_black', 'i_m_white', 'i_married')
     vars_edu = c('i_m_educ_nohs', 'i_m_educ_hs', 'i_m_educ_bs')
+    vars_gly = c('glyph_km2')
+    vars_crp = c(
+      'all_yield_diff_percentile_gmo',
+      'all_yield_diff_percentile_mze',
+      'all_yield_diff_percentile_soy',
+      'all_yield_diff_percentile_cot'
+    )
     # All variables
-    vars_all = c('pctl', 'n', vars_dbwt, vars_age, vars_ord, vars_pct, vars_edu)
+    vars_all = c(
+      'pctl', 'n',
+      vars_dbwt, vars_age, vars_ord, vars_pct, vars_edu, vars_gly, vars_crp
+    )
     # Load the data
     pctl_dt =
       here(
@@ -82,7 +92,9 @@
         'Mother Age', 'Father Age',
         'Total Birth Order', 'Live Birth Order',
         'Pct. Female', 'Pct. Black Mother', 'Pct. White Mother', 'Pct. Married',
-        'Pct. No HS', 'Pct. HS Grad.', 'Pct. BS Grad.'
+        'Pct. No HS', 'Pct. HS Grad.', 'Pct. BS Grad.',
+        'GLY (kg/km²)',
+        'All GM Crops', 'Corn', 'Soy', 'Cotton'
       )
     )]
     # Create x-axis label
@@ -175,7 +187,43 @@
         y = 'Percent of births'
       ) +
       theme(legend.position = 'bottom')
-    # Save the plots
+    # Plot: Glyphosate
+    plot_gly =
+      plot_dt |>
+      fsubset(variable %in% vars_gly) |>
+      ggplot(aes(x = pctl)) +
+      geom_vline(xintercept = 0) +
+      # geom_hline(yintercept = 0) +
+      # geom_point(aes(y = value, color = var_f), size = 1.8) +
+      geom_line(aes(y = value, color = var_f), linewidth = 1.2) +
+      scale_fill_viridis_d('', option = 'magma', end = 0.9) +
+      scale_color_viridis_d('', option = 'magma', end = 0.9) +
+      theme_minimal(base_size = 12) +
+      scale_y_continuous(labels = scales::comma) +
+      labs(
+        x = x_lab,
+        y = 'GLY (kg/km²)'
+      ) +
+      theme(legend.position = 'bottom')
+    # Plot: Agriculture
+    plot_crp =
+      plot_dt |>
+      fsubset(variable %in% vars_crp) |>
+      ggplot(aes(x = pctl)) +
+      geom_vline(xintercept = 0) +
+      # geom_hline(yintercept = 0) +
+      # geom_point(aes(y = value, color = var_f), size = 1.8) +
+      geom_line(aes(y = value, color = var_f), linewidth = 1.2) +
+      scale_fill_viridis_d('', option = 'magma', end = 0.9) +
+      scale_color_viridis_d('', option = 'magma', end = 0.9) +
+      theme_minimal(base_size = 12) +
+      scale_y_continuous(labels = scales::percent) +
+      labs(
+        x = x_lab,
+        y = 'Suitability percentile'
+      ) +
+      theme(legend.position = 'bottom')
+    # Save the BWT plot
     ggsave(
       plot = plot_bwt,
       filename = here(
@@ -189,7 +237,7 @@
       width = 7, height = 4,
       bg = 'white'
     )
-    # Save the plots
+    # Save the age plot
     ggsave(
       plot = plot_age,
       filename = here(
@@ -203,7 +251,7 @@
       width = 7, height = 4,
       bg = 'white'
     )
-    # Save the plots
+    # Save the birth-order plot
     ggsave(
       plot = plot_ord,
       filename = here(
@@ -217,7 +265,7 @@
       width = 7, height = 4,
       bg = 'white'
     )
-    # Save the plots
+    # Save the demographic plot
     ggsave(
       plot = plot_dem,
       filename = here(
@@ -231,7 +279,7 @@
       width = 7, height = 4,
       bg = 'white'
     )
-    # Save the plots
+    # Save the education plot
     ggsave(
       plot = plot_edu,
       filename = here(
@@ -239,6 +287,34 @@
         paste(
           bwt_type, pop_sum, pop_ecdf, sub_time,
           paste0('edu-', round(1 / bin_width), '.png'),
+          sep = '-'
+        )
+      ),
+      width = 7, height = 4,
+      bg = 'white'
+    )
+    # Save the glyphosate plot
+    ggsave(
+      plot = plot_gly,
+      filename = here(
+        save_dir,
+        paste(
+          bwt_type, pop_sum, pop_ecdf, sub_time,
+          paste0('gly-', round(1 / bin_width), '.png'),
+          sep = '-'
+        )
+      ),
+      width = 7, height = 4,
+      bg = 'white'
+    )
+    # Save the suitability plot
+    ggsave(
+      plot = plot_crp,
+      filename = here(
+        save_dir,
+        paste(
+          bwt_type, pop_sum, pop_ecdf, sub_time,
+          paste0('crp-', round(1 / bin_width), '.png'),
           sep = '-'
         )
       ),

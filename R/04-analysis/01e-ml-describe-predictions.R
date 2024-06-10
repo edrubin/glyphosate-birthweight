@@ -23,9 +23,24 @@
   ) %>% read_fst(
     as.data.table = TRUE
   )
+  # Yield-potential treatment definitions
+  comb_cnty_dt = here(
+    'data', 'clean', 'comb-cnty-dt.fst'
+  ) %>% read_fst(as.data.table = TRUE)
+  # Subset to 2012 (for comparability)
+  comb_cnty_dt %<>% .[year == 2012]
+  # Grab desired variables
+  comb_cnty_dt %<>% .[, .(
+    fips_res = GEOID,
+    glyph_km2,
+    all_yield_diff_percentile_gmo,
+    all_yield_diff_percentile_mze,
+    all_yield_diff_percentile_soy,
+    all_yield_diff_percentile_cot
+  )]
 
 
-# More datases ---------------------------------------------------------------------------
+# Join datasets --------------------------------------------------------------------------
   # Create row ID in natality for joins (matches approach in '01a*')
   natality_dt[, row := seq_len(.N)]
   # Add predictions to the full natality dataset (using row ID)
@@ -48,6 +63,15 @@
   # Drop natality dataset and clean up
   rm(natality_dt)
   invisible(gc())
+  # Add yield potential data
+  prediction_dt %<>% join(
+    x = .,
+    y = comb_cnty_dt,
+    on = 'fips_res',
+    how = 'left',
+    validate = 'm:1',
+    sort = FALSE
+  )
 
 
 # Add percentiles ------------------------------------------------------------------------
