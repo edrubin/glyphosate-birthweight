@@ -1,43 +1,43 @@
 \begin{table}[htbp]
    \caption{\label{tab:main-outcomes-controls} \textbf{Effect of GLY on perinatal health estimated with 2SLS.}}
    \centering
-   \begin{tabular}{lccccccc}
+   \begin{tabular}{lcccccccccccc}
       \toprule
-      Dep Var:                  & BW         & BW Pctl & LBW     & VLBW    & Gestation & Preterm & C-section\\  
-      Model:                    & (1)        & (2)     & (3)     & (4)     & (5)       & (6)     & (7)\\  
+      Dep Var:                  & BW       & LBW     & VLBW    & Gestation & Preterm & C-section & BW         & LBW     & VLBW    & Gestation & Preterm & C-section\\  
+      Model:                    & (1)      & (2)     & (3)     & (4)       & (5)     & (6)       & (7)        & (8)     & (9)     & (10)      & (11)    & (12)\\  
       \midrule 
-      GLY/$km^2$                & -1,376.2   & -0.698  & 0.330   & 0.075   & -9.46     & 0.963   & 0.474\\   
-                                & (640.7)    & (0.322) & (0.148) & (0.033) & (3.42)    & (0.442) & (0.344)\\   
-      Alachlor/$km^2$           & -317.7     & -0.192  & 0.077   & 0.011   & -3.04     & 0.324   & 0.211\\   
-                                & (346.0)    & (0.173) & (0.090) & (0.019) & (1.87)    & (0.222) & (0.188)\\   
-      Atrazine/$km^2$           & 488.0      & 0.249   & -0.110  & -0.023  & 3.74      & -0.429  & -0.273\\   
-                                & (289.7)    & (0.149) & (0.062) & (0.016) & (1.76)    & (0.227) & (0.155)\\   
-      Cyanazine/$km^2$          & -808.9     & -0.403  & 0.227   & 0.060   & -4.90     & 0.469   & 0.157\\   
-                                & (568.3)    & (0.285) & (0.146) & (0.034) & (3.58)    & (0.416) & (0.243)\\   
-      Fluazifop/$km^2$          & -12,948.1  & -6.57   & 2.26    & 0.710   & -86.4     & 5.33    & 8.08\\   
-                                & (9,984.1)  & (5.03)  & (2.11)  & (0.676) & (60.4)    & (7.23)  & (6.05)\\   
-      Metolachlor/$km^2$        & -730.7     & -0.373  & 0.213   & 0.044   & -4.50     & 0.501   & 0.150\\   
-                                & (326.1)    & (0.167) & (0.073) & (0.020) & (1.79)    & (0.239) & (0.163)\\   
-      Metribuzin/$km^2$         & 125.8      & 0.118   & 0.083   & 0.045   & -3.78     & 0.467   & 1.14\\   
-                                & (965.2)    & (0.465) & (0.219) & (0.061) & (4.88)    & (0.453) & (0.682)\\   
-      Nicosulfuron/$km^2$       & -123,371.9 & -62.5   & 30.5    & 5.05    & -698.6    & 85.7    & 36.3\\   
-                                & (61,777.1) & (30.7)  & (16.3)  & (2.98)  & (364.0)   & (42.6)  & (32.1)\\   
-      Unempl Rate               & -31.9      & -0.005  & 0.013   & 0.004   & -0.323    & 0.002   & 0.096\\   
-                                & (63.4)     & (0.034) & (0.016) & (0.003) & (0.337)   & (0.053) & (0.029)\\   
+      GLY/$km^2$                & -1,002.2 & 0.220   & 0.052   & -6.60     & 0.685   & 0.326     & -1,376.2   & 0.330   & 0.075   & -9.46     & 0.963   & 0.474\\   
+                                & (362.3)  & (0.090) & (0.016) & (1.83)    & (0.248) & (0.217)   & (640.7)    & (0.148) & (0.033) & (3.42)    & (0.442) & (0.344)\\   
+      Alachlor/$km^2$           &          &         &         &           &         &           & -317.7     & 0.077   & 0.011   & -3.04     & 0.324   & 0.211\\   
+                                &          &         &         &           &         &           & (346.0)    & (0.090) & (0.019) & (1.87)    & (0.222) & (0.188)\\   
+      Atrazine/$km^2$           &          &         &         &           &         &           & 488.0      & -0.110  & -0.023  & 3.74      & -0.429  & -0.273\\   
+                                &          &         &         &           &         &           & (289.7)    & (0.062) & (0.016) & (1.76)    & (0.227) & (0.155)\\   
+      Cyanazine/$km^2$          &          &         &         &           &         &           & -808.9     & 0.227   & 0.060   & -4.90     & 0.469   & 0.157\\   
+                                &          &         &         &           &         &           & (568.3)    & (0.146) & (0.034) & (3.58)    & (0.416) & (0.243)\\   
+      Fluazifop/$km^2$          &          &         &         &           &         &           & -12,948.1  & 2.26    & 0.710   & -86.4     & 5.33    & 8.08\\   
+                                &          &         &         &           &         &           & (9,984.1)  & (2.11)  & (0.676) & (60.4)    & (7.23)  & (6.05)\\   
+      Metolachlor/$km^2$        &          &         &         &           &         &           & -730.7     & 0.213   & 0.044   & -4.50     & 0.501   & 0.150\\   
+                                &          &         &         &           &         &           & (326.1)    & (0.073) & (0.020) & (1.79)    & (0.239) & (0.163)\\   
+      Metribuzin/$km^2$         &          &         &         &           &         &           & 125.8      & 0.083   & 0.045   & -3.78     & 0.467   & 1.14\\   
+                                &          &         &         &           &         &           & (965.2)    & (0.219) & (0.061) & (4.88)    & (0.453) & (0.682)\\   
+      Nicosulfuron/$km^2$       &          &         &         &           &         &           & -123,371.9 & 30.5    & 5.05    & -698.6    & 85.7    & 36.3\\   
+                                &          &         &         &           &         &           & (61,777.1) & (16.3)  & (2.98)  & (364.0)   & (42.6)  & (32.1)\\   
+      Unempl Rate               &          &         &         &           &         &           & -31.9      & 0.013   & 0.004   & -0.323    & 0.002   & 0.096\\   
+                                &          &         &         &           &         &           & (63.4)     & (0.016) & (0.003) & (0.337)   & (0.053) & (0.029)\\   
       \midrule
       \emph{Fixed-effects}\\
-      Family Demog              & Yes        & Yes     & Yes     & Yes     & Yes       & Yes     & Yes\\  
-      County                    & Yes        & Yes     & Yes     & Yes     & Yes       & Yes     & Yes\\  
-      Yr x Mo                   & Yes        & Yes     & Yes     & Yes     & Yes       & Yes     & Yes\\  
+      Family Demog              & Yes      & Yes     & Yes     & Yes       & Yes     & Yes       & Yes        & Yes     & Yes     & Yes       & Yes     & Yes\\  
+      County                    & Yes      & Yes     & Yes     & Yes       & Yes     & Yes       & Yes        & Yes     & Yes     & Yes       & Yes     & Yes\\  
+      Yr x Mo                   & Yes      & Yes     & Yes     & Yes       & Yes     & Yes       & Yes        & Yes     & Yes     & Yes       & Yes     & Yes\\  
       \midrule
       \emph{Fit statistics}\\
-      N (millions)              & 10.73      & 10.73   & 10.73   & 10.73   & 10.71     & 10.71   & 9.510\\  
-      2012 mean                 & 3,271.1    &         & 0.081   & 0.014   & 38.6      & 0.207   & 0.278\\  
-      GLY/$km^2$ effect at mean & -32.0      & -0.016  & 0.008   & 0.002   & -0.220    & 0.022   & 0.011\\  
+      N (millions)              & 10.73    & 10.73   & 10.73   & 10.71     & 10.71   & 9.510     & 10.73      & 10.73   & 10.73   & 10.71     & 10.71   & 9.510\\  
+      2012 mean                 & 3,271.1  & 0.081   & 0.014   & 38.6      & 0.207   & 0.278     & 3,271.1    & 0.081   & 0.014   & 38.6      & 0.207   & 0.278\\  
+      GLY/$km^2$ effect at mean & -23.3    & 0.005   & 0.001   & -0.154    & 0.016   & 0.008     & -32.0      & 0.008   & 0.002   & -0.220    & 0.022   & 0.011\\  
       \midrule
-      \multicolumn{8}{l}{\emph{Clustered (Year \& State) standard-errors in parentheses}}\\
+      \multicolumn{13}{l}{\emph{Clustered (Year \& State) standard-errors in parentheses}}\\
    \end{tabular}
    
    \par \raggedright 
-   Sample restricted to births from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.
+   Sample restricted to births occuring in rural countries or from mothers residing in rural counties. Instruments are the attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.
 \end{table}

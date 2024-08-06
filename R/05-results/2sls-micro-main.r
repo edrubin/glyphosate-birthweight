@@ -165,7 +165,7 @@ p_load(
   main_mod = main_spec[
     fixef = 'mage', 
     rhs = 'nicosulfuron_km2 \\+ unemployment|1',
-    lhs = '^dbwt$|dbwt_pctl|i_lbw|i_vlbw|preterm|section|gest'
+    lhs = '^dbwt$|i_lbw|i_vlbw|preterm|section|gest'
   ]
   # Calculating effect at GLY mean
   effect_at_mean_dt = 
@@ -272,7 +272,7 @@ p_load(
   ols_mod = ols_spec[
     fixef = 'mage', 
     rhs = 'nicosulfuron_km2 \\+ unemployment|1',
-    lhs = '^dbwt$|dbwt_pctl|i_lbw|i_vlbw|preterm|section|gest',
+    lhs = '^dbwt$|i_lbw|i_vlbw|preterm|section|gest',
     sample = 'Full'
   ]
   etable(
@@ -471,16 +471,17 @@ make_control_robust_tables = function(mod_path){
 }
 
 
+# ES NOTE: This isn't working presently, but we don't use it in the paper
 # Running control tables for all estimations
-mod_paths = 
-  str_subset(
-    list.files(here('data/results/micro'), full.names = TRUE),
-    'est_2sls_outcome'
-  ) 
-lapply(
-  mod_paths,  
-  make_control_robust_tables
-)
+# mod_paths = 
+#   str_subset(
+#     list.files(here('data/results/micro'), full.names = TRUE),
+#     'est_2sls_outcome'
+#   ) 
+# lapply(
+#   mod_paths,  
+#   make_control_robust_tables
+# )
 
 # Table for shift-share estimation --------------------------------------------
   main_spec_ss = qread(str_subset(
@@ -490,7 +491,7 @@ lapply(
   main_mod_ss = main_spec_ss[
       fixef = 'mage', 
       rhs = 'nicosulfuron_km2 \\+ unemployment|1',
-      lhs = '^dbwt$|dbwt_pctl|i_lbw|i_vlbw|preterm|section|gest'
+      lhs = '^dbwt$|i_lbw|i_vlbw|preterm|section|gest'
     ]
   # Calculating effect at GLY mean
   effect_at_mean_dt_ss = 
