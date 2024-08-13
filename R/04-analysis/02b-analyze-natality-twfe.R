@@ -11,7 +11,7 @@
   # Load packages
   pacman::p_load(
     fastverse, qs, patchwork,
-    fixest, splines, parallel, magrittr, here, 
+    fixest, splines, parallel, magrittr, here,
     fst
   )
   fastverse_extend(topics = c('ST', 'DT', 'VI'))
@@ -37,7 +37,7 @@
   # Natality data: Predictions
   prediction_dt = here(
     'data', 'clean', 'prediction', 'output',
-    'natality-micro-rf-train80-noindicators-2-full-cvpred.fst'
+    'dbwt-natality-micro-rf-train80-noindicators-2-full-cvpred.fst'
   ) %>% read_fst(
     as.data.table = TRUE,
     columns = c('row', 'dbwt', 'dbwt_pred')
@@ -207,7 +207,7 @@
 # Add end-of-sample GM/suitability percentiles ---------------------------------
   # Find the last year of the current natality sample (will use for pctl calc)
   yr_max = natality_dt[, fmax(year)]
-  # Calculate average GLY/km2 and GMO suitability by county in last 3 years 
+  # Calculate average GLY/km2 and GMO suitability by county in last 3 years
 # NOTE Subsetting to only rural counties (i.e., ECDF will use rural counties)
   end_dt =
     comb_cnty_dt[between(year, yr_max - 2, yr_max) & rural == TRUE, .(
@@ -235,7 +235,7 @@
   )]
   # Summarize terciles
   # end_dt |> qsu(~glyph_km_end_q3)
-  # ggplot(data = end_dt, aes(x = all_yield_diff_percentile_gmo)) + 
+  # ggplot(data = end_dt, aes(x = all_yield_diff_percentile_gmo)) +
   #   geom_histogram() +
   #   theme_minimal() +
   #   facet_wrap(facets = 'glyph_km_end_q3')
@@ -276,8 +276,8 @@
   estimate_water_spec = function(
     water_type, # c('bins-simple','bins-soil','ml-pred')
     iv, est_dt,
-    controls, pest_controls, econ_controls, 
-    fml_y, fml_iv, fml_controls, fml_fes, fml_inf, 
+    controls, pest_controls, econ_controls,
+    fml_y, fml_iv, fml_controls, fml_fes, fml_inf,
     het_split,
     dir_today, base_name
   ) {
@@ -295,10 +295,10 @@
           '^high_kls_d\\d{2,3}$',
           '^high_ppt_growing_season_d\\d{2,3}$'
         )
-        # Making all of the interactions 
-        water_dt = 
+        # Making all of the interactions
+        water_dt =
           melt(
-            county_exposure_dt, 
+            county_exposure_dt,
             id.vars = c('GEOID','year'),
             measure = patterns(col_regex),
             variable.name = 'distance_bin',
@@ -323,22 +323,22 @@
           dcast(
             formula = fips_res + year ~ distance_bin,
             value.var = c(
-              'trt', 
+              'trt',
               #'high_kls','high_ppt_growing_season',
               #'high_kls_ppt','high_kls_trt','high_ppt_trt',
               'high_kls_ppt_trt'
             )
           )
-        # Turning trt back into real iv variable name 
+        # Turning trt back into real iv variable name
         setnames(
           water_dt,
           old = colnames(water_dt),
           new = str_replace(colnames(water_dt),'trt',iv)
         )
       } else if (water_type =='bins-simple') {
-        # Simple just has upstream trt 
-        col_regex = c('^all_yield_diff_percentile_gmo_d\\d{2,3}')  
-        water_dt = 
+        # Simple just has upstream trt
+        col_regex = c('^all_yield_diff_percentile_gmo_d\\d{2,3}')
+        water_dt =
           get_vars(
             county_exposure_dt,
             vars = c('GEOID','year', col_regex),
@@ -351,42 +351,42 @@
       # Make the formula
       water_fml =
         paste0(
-          'i(year, ', 
+          'i(year, ',
           colnames(water_dt)[-(1:2)],
           ', ref = 1995)'
         ) |>
         paste(collapse = ' + ')
       fml_rhs_water = paste0(water_fml,' + ',fml_controls)
-      # Merge with main table 
+      # Merge with main table
       water_dt |> setkey('fips_res','year')
       est_dt |> setkey('fips_res','year')
-      # Merge with estimating data 
+      # Merge with estimating data
       est_dt = merge(
-        est_dt, 
+        est_dt,
         water_dt,
         by = c('fips_res','year'),
         all.x = TRUE
       )
       rm(county_exposure_dt, water_dt); gc()
     } else if (water_type == 'ml-pred') {
-      # Load the water-ML predictions 
-      county_exposure_pred_dt = 
+      # Load the water-ML predictions
+      county_exposure_pred_dt =
         read.fst(
-          path = here("data/watershed/county-exposure-pred-dt.fst"), 
+          path = here("data/watershed/county-exposure-pred-dt.fst"),
           as.data.table = TRUE
         ) |>
         setnames('GEOID', 'fips_res') |>
         setkey('fips_res','year','month')
       est_dt |> setkey('fips_res','year','month')
-      # Merge with estimating data 
+      # Merge with estimating data
       est_dt = merge(
-        est_dt, 
+        est_dt,
         county_exposure_pred_dt,
         by = c('fips_res','year','month'),
         all.x = TRUE
       )
-      # Add water to formula in reduced form 
-      rhs_raw_fml = 
+      # Add water to formula in reduced form
+      rhs_raw_fml =
         CJ(
           controls = controls,
           pred = str_subset(colnames(county_exposure_pred_dt), 'pred')
@@ -400,7 +400,7 @@
               paste(c(pest_controls,econ_controls), collapse = '+')
             )
           )
-        )]$fml_string    
+        )]$fml_string
       fml_rhs_water = paste0(
         ifelse(length(rhs_raw_fml) > 1, 'sw(', ''),
         paste(rhs_raw_fml, collapse = ', '),
@@ -490,43 +490,43 @@
       'unemployment_rate'
     )
     # Collecting glyphosate variables
-    glyph_vars = 
+    glyph_vars =
       c(
         'glyph_km2',
         names(comb_cnty_dt) |>
           str_subset('high_kls_ppt_growing_glyph') |>
           str_subset('local', negate = TRUE),
         fifelse(
-          gly_nonlinear == 'median', 
-          'above_median_glyph_km2', 
+          gly_nonlinear == 'median',
+          'above_median_glyph_km2',
           NA_character_
         )
-      ) |> 
-      na.omit() |> 
+      ) |>
+      na.omit() |>
       as.vector()
     # iv_vars = comb_cnty_dt %>% names() %>% str_subset(iv)
-    iv_vars = 
+    iv_vars =
       c(
-        iv, 
+        iv,
         iv_shift,
         fifelse(
-          iv_nonlinear == TRUE & gly_nonlinear == 'median', 
-          paste0('above_median_',iv), 
+          iv_nonlinear == TRUE & gly_nonlinear == 'median',
+          paste0('above_median_',iv),
           NA_character_
         ),
         fifelse(
-          iv_nonlinear == TRUE & gly_nonlinear == 'quadratic', 
-          paste0(iv,'_sq'), 
+          iv_nonlinear == TRUE & gly_nonlinear == 'quadratic',
+          paste0(iv,'_sq'),
           NA_character_
         ),
         fifelse(
-          iv_nonlinear == TRUE & gly_nonlinear == 'median' & !is.null(iv_shift), 
-          paste0('above_median_',iv_shift), 
+          iv_nonlinear == TRUE & gly_nonlinear == 'median' & !is.null(iv_shift),
+          paste0('above_median_',iv_shift),
           NA_character_
         ),
         fifelse(
-          iv_nonlinear == TRUE & gly_nonlinear == 'quadratic' & !is.null(iv_shift), 
-          paste0(iv_shift,'_sq'), 
+          iv_nonlinear == TRUE & gly_nonlinear == 'quadratic' & !is.null(iv_shift),
+          paste0(iv_shift,'_sq'),
           NA_character_
         )
       ) |>
@@ -583,11 +583,11 @@
     }
 
     # Build the requested pieces of the formula...
-    # Glyph variable 
+    # Glyph variable
     fml_gly = fcase(
       is.null(gly_nonlinear), 'glyph_km2',
       gly_nonlinear == 'quadratic', 'glyph_km2 + I(glyph_km2^2)',
-      gly_nonlinear == 'median', 'glyph_km2 + glyph_km2:above_median_glyph_km2', 
+      gly_nonlinear == 'median', 'glyph_km2 + glyph_km2:above_median_glyph_km2',
       default = 'glyph_km2'
     )
 
@@ -709,7 +709,7 @@
       ) %>% as.formula()
     }
 
-    # Formula: OLS 
+    # Formula: OLS
     if(include_ols == TRUE){
       fml_ols = paste(
         fml_y,
@@ -728,7 +728,7 @@
     # Make folder for the results
     dir_today = here('data', 'results', 'micro')
     dir_today %>% dir.create()
-    # Base filename with all options 
+    # Base filename with all options
     base_name = paste0(
       '_outcome-', paste(str_remove_all(outcomes, '[^a-z]'), collapse = '-'),
       '_fe-', paste0(fes, collapse = ''),
@@ -829,7 +829,7 @@
         rm(est_2sls); invisible(gc())
       }
     }
-    # Estimate OLS 
+    # Estimate OLS
     if(include_ols == TRUE){
       if (!is.null(het_split)) {
         est_ols = feols(
@@ -860,8 +860,8 @@
       lapply(
         water_types,
         estimate_water_spec,
-        iv = iv, est_dt = est_dt, controls = controls, 
-        pest_controls = pest_controls, econ_controls = econ_controls, 
+        iv = iv, est_dt = est_dt, controls = controls,
+        pest_controls = pest_controls, econ_controls = econ_controls,
         fml_y = fml_y, fml_iv = fml_iv,
         fml_controls = fml_controls,
         fml_fes = fml_fes, fml_inf = fml_inf,
@@ -954,7 +954,7 @@
 #     controls = c(0, 3),
 #     clustering = c('year', 'state_fips')
 #   )
-#   # More refined heterogeneity splits: Deciles 
+#   # More refined heterogeneity splits: Deciles
 #   est_twfe(
 #     iv = 'all_yield_diff_percentile_gmo',
 #     spatial_subset = 'rural',

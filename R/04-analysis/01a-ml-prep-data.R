@@ -17,6 +17,8 @@
     tidymodels, readxl, fastverse, fst, stringr,
     fixest, parallel, here
   )
+  # Source settings
+  source(here::here('R', '04-analysis', '01-settings.R'))
 
 
 # Load data: Natality --------------------------------------------------------------------
@@ -25,7 +27,7 @@
     'data', 'clean', 'natality-micro.fst'
   ) %>% read_fst(as.data.table = TRUE)
   # Create row ID for later joins
-  natality_dt[, row := 1:.N]
+  natality_dt[, row := seq_len(.N)]
   # Drop variables: 'place_fips', 'city_res', 'no_city'
   natality_dt[, c('place_fips', 'city_res', 'no_city') := NULL]
 # ADJUST years if desired
@@ -71,9 +73,11 @@
 
 
 # Clean data -----------------------------------------------------------------------------
-  # Drop health-realted variables that could be affected by glyphosate (bad controls)
+  # Drop health-realted variables that could be affected by GLY (bad controls)
 # NOTE Dropping alcohol variable as it drops out of data starting in 2003
-  to_drop = c('apgar5', 'gestation', 'c_section', 'alcohol')
+  to_drop = c('dbwt', 'apgar5', 'gestation', 'c_section', 'alcohol')
+  # Keep the outcome variable
+  to_drop = setdiff(to_drop, outcome_var)
   natality_dt[, (to_drop) := NULL]
   # Force ages to numeric
   natality_dt[, `:=`(
@@ -91,8 +95,14 @@
   natality_dt %<>% .[!(state_res %in% c('00', '02', '15', '66', '72', '78'))]
   natality_dt %<>% .[!(state_occ %in% c('00', '02', '15', '66', '72', '78'))]
   # Now deal with missingness in the dataset...
-  # Drop observations missing the outcome variable (dry birth weight)
-  natality_dt %<>% .[!is.na(dbwt)]
+  # If birthweight is outcome variable, drop instances with missing birthweight
+  if (outcome_var == 'dbwt') {
+    natality_dt %<>% .[!is.na(dbwt)]
+  }
+  # If gestation is outcome variable, drop instances with missing gestation
+  if (outcome_var == 'gestation') {
+    natality_dt %<>% .[!is.na(gestation)]
+  }
   # Impute missing demographics with county-year modal value (and create flags)
   natality_dt[, `:=`(
     meduc_mode = fmode(meduc),
@@ -184,7 +194,7 @@
 
 
 # Merge: Natality and rural codes --------------------------------------------------------
-# NOTE: Dropping observations whose counties don't match a rural code (<0.5%) 
+# NOTE: Dropping observations whose counties don't match a rural code (<0.5%)
   # Load the rural population file
   rural_dt = here(
     'data', 'pop-area-empl', 'ruralurbancodes2003.xls'
@@ -194,7 +204,7 @@
   rural_dt %<>% .[, c(1, 4)]
   # Fix names
   setnames(rural_dt, c('fips', 'rural_code'))
-  # First: Merge on occurence county  
+  # First: Merge on occurence county
   natality_dt %<>% merge(
     y = rural_dt[, .(fips_occ = fips, rural_code_occ = rural_code)],
     by = 'fips_occ',
@@ -220,6 +230,7 @@
   # Grab the training and testing subsamples
   natality_train = natality_split %>% training()
   natality_test = natality_split %>% testing()
+# NOTE Could save datasets that are not immediately necessary to free up memory
 
 
 # Cleaning -------------------------------------------------------------------------------
