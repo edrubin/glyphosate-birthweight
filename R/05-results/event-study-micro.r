@@ -874,7 +874,7 @@ plot_results_faceted_outcomes = function(mod_dt, print = FALSE, width_in = 6, he
   rf_event_main_dt = 
     mod_dt[
       type == 'rf' & 
-      lhs != 'dbwt_pred' &
+      !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')) &
       var_of_interest == TRUE & 
       fixef_num == 'Add Family FEs' & 
       control_num == 'Pesticides and Unemployment' &
@@ -916,7 +916,7 @@ plot_results_faceted_outcomes = function(mod_dt, print = FALSE, width_in = 6, he
   rf_event_main_policy_dt = 
     mod_dt[
       type == 'rf' & 
-      lhs != 'dbwt_pred' &
+      !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')) &
       var_of_interest == TRUE & 
       fixef_num == 'Add Family FEs' & 
       control_num == 'None' &
@@ -1002,7 +1002,7 @@ plot_results_faceted_outcomes = function(mod_dt, print = FALSE, width_in = 6, he
   rf_het_white_dt = 
     mod_dt[
       type == 'rf' & 
-      lhs != 'dbwt_pred' &
+      !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')) &
       var_of_interest == TRUE & 
       fixef_num == 'Add Family FEs' & 
       control_num == 'None' & #'Pesticides and Unemployment' &

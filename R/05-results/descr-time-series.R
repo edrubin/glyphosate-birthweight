@@ -58,7 +58,7 @@ glyph_ts_p =
   scale_color_viridis_d(
     option = 'magma', 
     end = 0.9, begin = 0.2,
-    name = "Attainable Yield", 
+    name = "GM crop suitability", 
     labels = c('Low','High')
   ) + 
   scale_y_continuous('GLY (kg/km²)') +

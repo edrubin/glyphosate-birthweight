@@ -665,7 +665,7 @@ plot_predbw_results_all_outcome = function(
         sample_var != 'month' & 
         sample_var != 'pred_q14' &
         sample_var != 'pred_q5_sex' &
-        lhs != 'dbwt_pred'
+        !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly'))
       ], 
       aes(
         x = pctl, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -712,7 +712,7 @@ plot_predbw_results_all_outcome = function(
         sample_var != 'month' & 
         sample_var != 'pred_q14' &
         sample_var != 'pred_q5_sex' &
-        lhs != 'dbwt_pred'
+        !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly'))
       ], 
       aes(
         x = pctl, 
@@ -753,7 +753,7 @@ plot_predbw_results_all_outcome = function(
   month_p = 
     ggplot(
       data = pctl_est_dt[
-        lhs != 'dbwt_pred' & 
+        !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')) &
         trt == 'allyielddiffpercentilegmo' &
         sample_var == 'month' & 
         var_of_interest == TRUE & 
@@ -788,6 +788,7 @@ plot_predbw_results_all_outcome = function(
     scale_y_continuous(name = 'Maringal Effect') + 
     theme(
       panel.grid.minor = element_blank(),
+      legend.position = 'bottom',
       strip.text = element_text(size = 16)
     ) +
     facet_wrap(~lhs_name, scales = 'free_y', ncol = 2)
@@ -803,7 +804,7 @@ plot_predbw_results_all_outcome = function(
   quintile_sex_p = 
     ggplot(
       data = pctl_est_dt[
-        lhs != 'dbwt_pred' &
+        !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')) & 
         trt == 'allyielddiffpercentilegmo' &
         var_of_interest == TRUE & 
         sample_var == 'pred_q5_sex' & 
@@ -839,7 +840,8 @@ plot_predbw_results_all_outcome = function(
     ) + 
     theme(
       panel.grid.minor = element_blank(),
-      legend.position = 'bottom'
+      legend.position = 'bottom',
+      strip.text = element_text(size = 16)
     ) +
     facet_wrap(~lhs_name, scales = 'free_y', ncol = 2)
   if(print) print(quintile_sex_p)
@@ -1159,7 +1161,7 @@ pred_bw_dt[,
   spatial_subset_p =
     ggplot(
       pred_bw_dt[
-        lhs != 'dbwt_pred' & 
+        !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')) & 
         county_subset != 'Non-rural'&
         var_of_interest == TRUE & 
         trt == 'allyielddiffpercentilegmo' &
@@ -1181,7 +1183,11 @@ pred_bw_dt[,
     geom_hline(yintercept = 0, linetype = 'dashed') + 
     scale_y_continuous(name = 'GLY Effect at Mean') + 
     scale_x_discrete(name = '', guide = guide_axis(n.dodge=2))+
-    theme_minimal() + 
+    theme(
+      panel.grid.minor = element_blank(),
+      legend.position = 'bottom',
+      strip.text = element_text(size = 16)
+    ) +
     facet_wrap(~lhs_name, ncol = 2, scales = 'free_y')
   ggsave(
     spatial_subset_p, 
@@ -1198,7 +1204,7 @@ mrace_all_p =
     var_of_interest == TRUE & 
     sample_var == 'i_m_nonwhite' & 
     fixef_num == 'Mother and Father FEs' & 
-    lhs != 'dbwt_pred',.(
+    !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')),.(
       lhs_name,
       control_num, 
       effect_at_mean_l, 
@@ -1231,12 +1237,16 @@ mrace_all_p =
       end = 0.9,
       name = ''
     ) +
-    theme_minimal() + 
+    theme(
+      panel.grid.minor = element_blank(),
+      legend.position = 'bottom',
+      strip.text = element_text(size = 16)
+    ) +
     facet_wrap(~lhs_name, ncol = 2, scales = 'free_y')
   ggsave(
     mrace_all_p, 
     filename = here(paste0(
       "figures/micro/2sls/spec-chart-mrace-all-outcomes.jpeg"
     )), 
-    width = 6*1.6*0.7, height = 4*2.5*0.7, bg = 'white'
+    width = 6*1.5, height = 4*2.75, bg = 'white'
   )
