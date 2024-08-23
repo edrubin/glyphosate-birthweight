@@ -58,9 +58,9 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
     )[census_year == '201', .(GEOID, area_km2)]
   # Treatment
   trt_dt = read.fst(
-      path = here('data/clean/trt-dt.fst'),
-      as.data.table = TRUE
-    )
+    path = here('data/clean/trt-dt.fst'),
+    as.data.table = TRUE
+  )
   # Pesticide data
   pest_dt = 
     read.fst(

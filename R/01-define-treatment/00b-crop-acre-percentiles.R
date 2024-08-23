@@ -70,14 +70,14 @@ crop_instr_dt[,':='(
 )]
 # Cleaning up column names 
 setnames(
-    crop_instr_dt, 
-    old = colnames(crop_instr_dt),
-    new = str_remove(colnames(crop_instr_dt),'value_')
+  crop_instr_dt, 
+  old = colnames(crop_instr_dt),
+  new = str_remove(colnames(crop_instr_dt),'value_')
 )
 # Saving the results 
 write.fst(
-    x = crop_instr_dt, 
-    path = here('data/clean/crop-acre-percentile-90-95.fst')
+  x = crop_instr_dt, 
+  path = here('data/clean/crop-acre-percentile-90-95.fst')
 )
 
 
