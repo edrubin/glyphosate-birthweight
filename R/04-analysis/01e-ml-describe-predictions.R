@@ -6,6 +6,8 @@
 # Setup ----------------------------------------------------------------------------------
   # Load packages
   pacman::p_load(data.table, collapse, stringr, fst, magrittr, here)
+  # Source settings
+  source(here('R', '04-analysis', '01-settings.R'))
 
 
 # Load data ----------------------------------------------------------------------------

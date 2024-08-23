@@ -19,9 +19,9 @@
   # Define CV assignment
   set.seed(123)
   cv_def = vfold_cv(natality_train, v = 5)
-  # Tune on the grid 
+  # Tune on the grid
   rf_cv =
-    rf_wf %>% 
+    rf_wf %>%
     tune_grid(
       cv_def,
       grid = rf_grid,
@@ -35,7 +35,7 @@
     x = rf_cv,
     file = here(
       'data', 'clean', 'prediction', 'tuning',
-      'rf-cv-grid-train80-noindicators-2.qs'
+      paste0(outcome_var, '-rf-cv-grid-train80-noindicators-2.qs')
     ),
     preset = 'fast'
   )

@@ -15,6 +15,8 @@
 
 
 # Run scripts: Prep data; set up and tune models -----------------------------------------
+  # Source settings
+  source(here::here('R', '04-analysis', '01-settings.R'))
   # Run the preceding scripts
   # source(here::here('R', '04-analysis', '01c-ml-tune-params.R'))
   source(here::here('R', '04-analysis', '01b-ml-setup-models.R'))
@@ -24,20 +26,19 @@
   # RF: Load CV hyperparameter grid
   rf_cv = here(
     'data', 'clean', 'prediction', 'tuning',
-    'rf-cv-grid-train80-noindicators-2.qs'
+    paste0(outcome_var, '-', 'rf-cv-grid-train80-noindicators-2.qs')
   ) %>% qs::qread()
-# NOTE Increasing trees to 200 did not improve performance (see *-noindicators-1.qs)
 
 
 # # RF: Train selected model on all pre-period data ----------------------------------------
 #   # Define the RF recipe for all the pre-period data
-#   rf_recipe_final = 
-#     recipe( 
+#   rf_recipe_final =
+#     recipe(
 #       dbwt ~ .,
 #       data = natality_pre
 #     ) %>% # Update role of year and county (both types) to ID
 #     update_role(
-#       year, 
+#       year,
 #       fips_occ, fips_res, row,
 #       new_role = 'id variable'
 #     ) %>% # Drop imputation indicators
@@ -72,53 +73,59 @@
   # Define custom CV assignment: 5 folds for pre data; post data is always validation
   set.seed(456)
   # First sample pre-period observations into 5 folds
-  sampled_folds = sample(
-    x = rep(1:5, length.out = natality_pre[,.N]),
-    size = natality_pre[,.N],
-    replace = FALSE
-  ) |> as.integer()
+  sampled_folds =
+    sample(
+      x = rep(1:5, length.out = natality_pre[, .N]),
+      size = natality_pre[, .N],
+      replace = FALSE
+    ) |>
+    as.integer()
   # Combine the two datasets
-  natality_full = rbindlist(list(natality_pre, natality_post), use.names = TRUE, fill = TRUE)
+  natality_full = rbindlist(
+    list(natality_pre, natality_post),
+    use.names = TRUE,
+    fill = TRUE
+  )
   rm(natality_pre, natality_post, natality_split, natality_test, natality_train)
   rm(natality_dt)
   invisible(gc())
   # Add a new row ID to merge with predictions
-  natality_full[, .row := 1:.N]
+  natality_full[, .row := seq_len(.N)]
   # Find indices of post years (1996 and beyond)
   indices_post = natality_full[year >= 1996, which = TRUE]
   # Build the rsample object
   indices = list(
     list(
       analysis = setdiff(
-        x = 1:natality_full[,.N],
+        x = 1:natality_full[, .N],
         y = c(which(sampled_folds == 1), indices_post)
       ),
       assessment = c(which(sampled_folds == 1), indices_post)
     ),
     list(
       analysis = setdiff(
-        x = 1:natality_full[,.N],
+        x = 1:natality_full[, .N],
         y = c(which(sampled_folds == 2), indices_post)
       ),
       assessment = c(which(sampled_folds == 2), indices_post)
     ),
     list(
       analysis = setdiff(
-        x = 1:natality_full[,.N],
+        x = 1:natality_full[, .N],
         y = c(which(sampled_folds == 3), indices_post)
       ),
       assessment = c(which(sampled_folds == 3), indices_post)
     ),
     list(
       analysis = setdiff(
-        x = 1:natality_full[,.N],
+        x = 1:natality_full[, .N],
         y = c(which(sampled_folds == 4), indices_post)
       ),
       assessment = c(which(sampled_folds == 4), indices_post)
     ),
     list(
       analysis = setdiff(
-        x = 1:natality_full[,.N],
+        x = 1:natality_full[, .N],
         y = c(which(sampled_folds == 5), indices_post)
       ),
       assessment = c(which(sampled_folds == 5), indices_post)
@@ -127,13 +134,13 @@
   # Make the splits
   splits = lapply(indices, make_splits, data = natality_full)
   # Define the RF recipe for all the pre-period data
-  rf_recipe_final = 
-    recipe( 
-      dbwt ~ .,
+  rf_recipe_final =
+    recipe(
+      paste0(outcome_var, ' ~ .') |> as.formula(),
       data = natality_full
     ) %>% # Update role of year and county (both types) to ID
     update_role(
-      year, 
+      year,
       fips_occ, fips_res, row,
       new_role = 'id variable'
     ) %>% # Drop imputation indicators
@@ -172,7 +179,8 @@
         path = here(
           'data', 'clean', 'prediction', 'output',
           paste0(
-            'natality-micro-rf-train80-noindicators-2-full-cvpred-split',
+            outcome_var,
+            '-natality-micro-rf-train80-noindicators-2-full-cvpred-split',
             i,
             '.fst'
           )
@@ -188,17 +196,19 @@
   )
 
   # Load the splits' predictions
-  rf_pred = mclapply(
-    X = here(
-      'data', 'clean', 'prediction', 'output'
-    ) |> dir(
-      pattern = 'noindicators-2.*split[0-9]\\.fst',
-      full.names = TRUE
-    ),
-    FUN = read_fst,
-    as.data.table = TRUE,
-    mc.cores = 5
-  ) |> rbindlist(use.names = TRUE, fill = TRUE)
+  rf_pred =
+    mclapply(
+      X = here(
+        'data', 'clean', 'prediction', 'output'
+      ) |> dir(
+        pattern = paste0(outcome_var, '.*noindicators-2.*split[0-9]\\.fst'),
+        full.names = TRUE
+      ),
+      FUN = read_fst,
+      as.data.table = TRUE,
+      mc.cores = 5
+    ) |>
+    rbindlist(use.names = TRUE, fill = TRUE)
   # Clean up
   invisible(gc())
   # Collapse to row (we have 5 predictions per post-period row)
@@ -206,25 +216,41 @@
     X = rf_pred,
     by = ~ .row,
     FUN = fmean,
-    cols = c('dbwt', '.pred'),
+    cols = c(outcome_var, '.pred'),
     sort = TRUE
   )
   # Key both datasets using row
   setkey(natality_full, .row)
+  setkey(rf_final, .row)
   # Add predictions to natality dataset (ordering should match; row "id" will not)
-  natality_full[, dbwt_pred := rf_final$.pred]
-  natality_full[, dbwt_check := rf_final$dbwt]
-  natality_full[, .row_check := rf_final$.row]
+  set(
+    x = natality_full,
+    j = paste0(outcome_var, '_pred'),
+    value = rf_final$.pred
+  )
+  # Add the 'true' value to check the match
+  set(
+    x = natality_full,
+    j = paste0(outcome_var, '_check'),
+    value = rf_final[[outcome_var]]
+  )
+  set(
+    x = natality_full,
+    j = paste0('.row_check_', outcome_var),
+    value = rf_final$.row
+  )
   # Checks
-  natality_full[dbwt_check != dbwt, .N]
-  natality_full[.row_check != .row, .N]
+  qtab(natality_full[[outcome_var]] == natality_full[[paste0(outcome_var, '_check')]])
+  qtab(natality_full[['.row']] == natality_full[[paste0('.row_check_', outcome_var)]])
   # Save
   write_fst(
     x = natality_full,
     path = here(
       'data', 'clean', 'prediction', 'output',
-      'natality-micro-rf-train80-noindicators-2-full-cvpred.fst'
+      paste0(
+        outcome_var,
+        '-natality-micro-rf-train80-noindicators-2-full-cvpred.fst'
+      )
     ),
     compress = 100
   )
-

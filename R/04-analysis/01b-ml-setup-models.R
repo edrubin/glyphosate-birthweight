@@ -17,13 +17,13 @@
 
 # RF: Set up recipe ----------------------------------------------------------------------
   # Define the recipe
-  rf_recipe = 
-    recipe( 
-      dbwt ~ .,
+  rf_recipe =
+    recipe(
+      paste0(outcome_var, ' ~ .') |> as.formula(),
       data = natality_train
     ) %>% # Update role of year and county (both types) to ID
     update_role(
-      year, 
+      year,
       fips_occ, fips_res, row,
       new_role = 'id variable'
     ) %>% # Drop imputation indicators
@@ -36,26 +36,31 @@
 
 # RF: Set up model and workflow ----------------------------------------------------------
   # Define the model
-  rf_model = rand_forest(
-    mtry = tune(),
-    trees = tune(),
-    min_n = tune()
-  ) %>% set_mode(
-    'regression'
-  ) %>% set_engine(
-    'ranger',
-    # importance = 'impurity',
-    num.threads = parallel::detectCores()
-  )
+  rf_model =
+    rand_forest(
+      mtry = tune(),
+      trees = tune(),
+      min_n = tune()
+    ) %>%
+    set_mode(
+      'regression'
+    ) %>%
+    set_engine(
+      'ranger',
+      # importance = 'impurity',
+      num.threads = parallel::detectCores()
+    )
   # Define the workflow
-  rf_wf = workflow() %>% 
-    add_model(rf_model) %>% 
+  rf_wf =
+    workflow() %>%
+    add_model(rf_model) %>%
     add_recipe(rf_recipe)
   # Find the number of predictor variables
-  n_pred = rf_recipe %>%
+  n_pred =
+    rf_recipe %>%
     prep() %$%
     var_info %>%
-    filter(role == 'predictor') %>% 
+    filter(role == 'predictor') %>%
     nrow()
 
 
