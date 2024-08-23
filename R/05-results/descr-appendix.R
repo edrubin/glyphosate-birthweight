@@ -145,19 +145,19 @@ gaez_crop_acreage_correlation = function(crop_in, pre_acre_pctl_dt){
     ggplot(
       data = pre_acre_pctl_dt, 
       aes(
-        x = .data[[paste0(crop_in, '_acres_pctl')]], 
-        y = .data[[paste0(crop_in, '_yield_low_pctl')]]
+        y = .data[[paste0(crop_in, '_acres_pctl')]], 
+        x = .data[[paste0(crop_in, '_yield_low_pctl')]]
       )
     ) + 
     geom_point() + 
     geom_smooth() + 
     theme_minimal(base_size = 16) +
     geom_abline(slope = 1, intercept = 0, linetype = 'dashed') + 
-    scale_x_continuous(
+    scale_y_continuous(
       name = 'Pre-period Acreage Percentile', 
       label = scales::label_percent()  
     )+ 
-    scale_y_continuous(
+    scale_x_continuous(
       name = 'GAEZ Yield Percentile (Low)', 
       label = scales::label_percent()  
     )
@@ -173,19 +173,19 @@ gaez_crop_acreage_correlation = function(crop_in, pre_acre_pctl_dt){
     ggplot(
       data = pre_acre_pctl_dt, 
       aes(
-        x = .data[[paste0(crop_in, '_acres_pctl')]], 
-        y = .data[[paste0(crop_in, '_yield_high_pctl')]]
+        y = .data[[paste0(crop_in, '_acres_pctl')]], 
+        x = .data[[paste0(crop_in, '_yield_high_pctl')]]
       )
     ) + 
     geom_point() + 
     geom_smooth() + 
     theme_minimal(base_size = 16) +
     geom_abline(slope = 1, intercept = 0, linetype = 'dashed') + 
-    scale_x_continuous(
+    scale_y_continuous(
       name = 'Pre-period Acreage Percentile', 
       label = scales::label_percent()  
     )+ 
-    scale_y_continuous(
+    scale_x_continuous(
       name = 'GAEZ Yield Percentile (High)', 
       label = scales::label_percent()  
     )
@@ -208,6 +208,36 @@ map(
   pre_acre_pctl_dt = pre_acre_pctl_dt
 )
 
+# Regressions of GAEZ on acreage 
+p_load(fixest)
+feols(
+  data = pre_acre_pctl_dt, 
+  fml = csc_acres_pctl ~ csc_yield_high_pctl
+)
+feols(
+  data = pre_acre_pctl_dt, 
+  fml = corn_acres_pctl ~ corn_yield_high_pctl
+)
+feols(
+  data = pre_acre_pctl_dt, 
+  fml = soy_acres_pctl ~ soy_yield_high_pctl
+)
+feols(
+  data = pre_acre_pctl_dt, 
+  fml = cotton_acres_pctl ~ cotton_yield_high_pctl
+)
+feols(
+  data = pre_acre_pctl_dt, 
+  fml = log(corn_acres) ~ log(yield_high_mze)
+)
+feols(
+  data = pre_acre_pctl_dt, 
+  fml = log(soy_acres) ~ log(yield_high_soy)
+)
+feols(
+  data = pre_acre_pctl_dt, 
+  fml = log(cotton_acres) ~ log(yield_high_cot)
+)
 
 # Now the balance table 
 library(pacman)
