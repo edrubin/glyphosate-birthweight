@@ -38,7 +38,7 @@ p_load(
 # x = gaez, y = acre share each crop
 #         , y = yield each crop 
 # Making the plots 
-gaez_crop_acreage_correlation = function(crop_in, crop_instr_dt){
+gaez_crop_acreage_correlation = function(crop_in, crop_instr_dt, pink = '#e64173'){
   if(crop_in != 'gm_max'){
     acres_p =   
       ggplot(
@@ -48,10 +48,10 @@ gaez_crop_acreage_correlation = function(crop_in, crop_instr_dt){
           y = .data[[paste0('percentile_', crop_in, '_acres_pct_cnty')]]
         )
       ) + 
-      geom_point(alpha = 0.05) + 
-      geom_smooth() + 
-      theme_minimal(base_size = 16) +
       geom_abline(slope = 1, intercept = 0, linetype = 'dashed') + 
+      geom_point(alpha = 0.05) + 
+      geom_smooth(method = 'loess', se = FALSE, color = pink) + 
+      theme_minimal(base_size = 16) +
       scale_x_continuous(
         name = 'GAEZ Attainable Yield Percentile', 
         label = scales::label_percent()  
@@ -77,10 +77,10 @@ gaez_crop_acreage_correlation = function(crop_in, crop_instr_dt){
           y = .data[[paste0('percentile_', crop_in, '_acres_pct_cnty')]]
         )
       ) + 
-      geom_point(alpha = 0.05) + 
-      geom_smooth() + 
-      theme_minimal(base_size = 16) +
       geom_abline(slope = 1, intercept = 0, linetype = 'dashed') + 
+      geom_point(alpha = 0.05) + 
+      geom_smooth(method = 'loess', se = FALSE, color = pink) + 
+      theme_minimal(base_size = 16) +
       scale_x_continuous(
         name = 'Pre-period Yield Percentile', 
         label = scales::label_percent()  
@@ -106,10 +106,10 @@ gaez_crop_acreage_correlation = function(crop_in, crop_instr_dt){
         y = .data[[paste0('percentile_', crop_in, '_yield')]]
       )
     ) + 
-    geom_point(alpha = 0.05) + 
-    geom_smooth() + 
-    theme_minimal(base_size = 16) +
     geom_abline(slope = 1, intercept = 0, linetype = 'dashed') + 
+    geom_point(alpha = 0.05) + 
+    geom_smooth(method = 'loess', se = FALSE, color = pink) + 
+    theme_minimal(base_size = 16) +
     scale_x_continuous(
       name = 'GAEZ Attainable Yield Percentile', 
       label = scales::label_percent()  
@@ -138,34 +138,55 @@ map(
 
 # Regressions of GAEZ on acreage 
 p_load(fixest)
-feols(
-  data = crop_instr_dt, 
-  fml = csc_acres_pctl ~ csc_yield_high_pctl
-)
-feols(
-  data = crop_instr_dt, 
-  fml = corn_acres_pctl ~ corn_yield_high_pctl
-)
-feols(
-  data = crop_instr_dt, 
-  fml = soy_acres_pctl ~ soy_yield_high_pctl
-)
-feols(
-  data = crop_instr_dt, 
-  fml = cotton_acres_pctl ~ cotton_yield_high_pctl
-)
-feols(
-  data = crop_instr_dt, 
-  fml = log(corn_acres) ~ log(yield_high_mze)
-)
-feols(
-  data = crop_instr_dt, 
-  fml = log(soy_acres) ~ log(yield_high_soy)
-)
-feols(
-  data = crop_instr_dt, 
-  fml = log(cotton_acres) ~ log(yield_high_cot)
-)
+
+list(
+  feols(
+    data = crop_instr_dt, 
+    fml = percentile_gm_acres_pct_cnty ~ all_yield_diff_percentile_gm
+  ),
+  feols(
+    data = crop_instr_dt, 
+    fml = percentile_corn_acres_pct_cnty ~ all_yield_diff_percentile_corn
+  ),
+  feols(
+    data = crop_instr_dt, 
+    fml = percentile_soy_acres_pct_cnty ~ all_yield_diff_percentile_soy
+  ),
+  feols(
+    data = crop_instr_dt, 
+    fml = percentile_cotton_acres_pct_cnty ~ all_yield_diff_percentile_cotton
+  )
+) |> etable(
+    tex = TRUE,
+    style.tex = style.tex(
+      depvar.title = 'Dep Var:',
+      model.format = "", 
+      line.top = 'simple',
+      line.bottom = 'simple',
+      var.title = '\\midrule'
+    ),
+    dict = c(
+      percentile_gm_acres_pct_cnty = 'GM Acreage Percentile',
+      percentile_soy_acres_pct_cnty = 'Soy Acreage Percentile',
+      percentile_corn_acres_pct_cnty = 'Corn Acreage Percentile',
+      percentile_cotton_acres_pct_cnty = 'Cotton Acreage Percentile',
+      all_yield_diff_percentile_gm = 'GM GAEZ Yield Percentile',
+      all_yield_diff_percentile_soy = 'Soy GAEZ Yield Percentile',
+      all_yield_diff_percentile_corn = 'Corn GAEZ Yield Percentile',
+      all_yield_diff_percentile_cotton = 'Cotton GAEZ Yield Percentile'
+    ),
+    se.below = TRUE,
+    digits = 3,
+    signif.code = NA,
+    se.row = FALSE,
+    #fitstat = ~n_millions,
+    digits.stats = 2,
+    tpt = TRUE,
+    notes = "We first calculate the 1990 to 1995 average planted acreage for each of corn, soy, cotton, and the sum of all three as a share of a county's total area. This average acreage share is then converted into a percentile relative to all counties in the continental US. The GAEZ yield percentiles are calculated as described in \ref{sec:data}.",
+    label = 'tab:gaez-acre-corr',
+    title = '\\textbf{Correlation between GAEZ suitability measures and pre-period acerage for GM crops.}'
+  ) |> write(here('tables/gaez-acre-corr.tex'))
+
 
 # Now the balance table 
 library(pacman)
