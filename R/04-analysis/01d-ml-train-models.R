@@ -147,6 +147,7 @@
       assessment = c(which(sampled_folds == 5), indices_post)
     )
   )
+  rm(indices_post)
   # Make the splits
   splits = lapply(indices, make_splits, data = natality_full)
   # Define the RF recipe for all the pre-period data
@@ -169,9 +170,11 @@
     x = workflow() %>% add_model(rf_model) %>% add_recipe(rf_recipe_final),
     parameters = select_best(rf_cv, metric = primary_metric)
   )
+
   # Iterating over splits: Generate out-of-sample predictions
   blah = lapply(
-    X = seq_along(indices),
+    # X = seq_along(indices),
+    X = 2:5,
     FUN = function(i) {
       # Announce the fold
       cat('Fold ', i, ': ', Sys.time() |> as.character(), '\n')
@@ -179,22 +182,38 @@
       invisible(gc())
       # Set up CV: Train on 4/5 of 'pre'; predict onto 1/5 of 'pre' and all 'post'
       cv_i = manual_rset(splits[i], paste0('Split ', 1))
-
-      # Fit the model on the training folds
-      tictoc::tic()
-      fit_i = rf_wf_final |> fit(data = natality_full[splits[[i]]$in_id])
-      tictoc::toc()
-
-      # Fit and predict
-      rf_i = rf_wf_final %>% fit_resamples(
-        natality_full,
-        resamples = cv_i,
-        control = control_resamples(save_pred = TRUE)
+      # Fit the model on the training folds (2604 seconds)
+      rf_i = rf_wf_final |> fit(data = natality_full[splits[[i]]$in_id])
+      invisible(gc())
+# NOTE Commented-out lines are hit memory issues.
+      # # Fit and predict
+      # rf_i = rf_wf_final %>% fit_resamples(
+      #   natality_full,
+      #   resamples = cv_i,
+      #   control = control_resamples(save_pred = TRUE)
+      # )
+      # # Collect the predictions
+      # pred_i = rf_i |> collect_predictions()
+      # # Convert to data table
+      # setDT(pred_i)
+      # Predict
+      pred_i = predict(
+        object = rf,
+        new_data = natality_full[splits[[i]]$out_id],
+        type = 'prob'
       )
-      # Collect the predictions
-      pred_i = rf_i |> collect_predictions()
+      rm(rf_i)
       # Convert to data table
       setDT(pred_i)
+      # Add desired features
+      pred_i[, `:=`(
+        split = i,
+        .pred_prob = .pred_1,
+        .pred = as.integer(.pred_1 > .5),
+        .row = splits[[i]]$out_id
+      )]
+      # Drop class probabilities
+      pred_i[, c('.pred_0', '.pred_1') := NULL]
       # Save
       write_fst(
         x = pred_i,
