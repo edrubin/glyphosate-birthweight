@@ -990,17 +990,30 @@
 #     controls = c(0, 3),
 #     clustering = c('year', 'state_fips')
 #   )
-#   # Instrument: 1990-1995 acreage percentiles
-#   est_twfe(
-#     iv = 'percentile_gm_acres',
-#     iv_shift = NULL,
-#     spatial_subset = 'rural',
-#     het_split = NULL,
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = c(0, 3),
-#     clustering = c('year', 'state_fips')
-#   )
+  
+  # Emmett note 8/23/24: Starting to collect models we need to re-run here 
+  # Instrument: 1990-1995 acreage percentiles (normalized by total cnty size)
+  est_twfe(
+    iv = 'percentile_gm_acres_pct_cnty',
+    iv_shift = NULL,
+    spatial_subset = 'rural',
+    het_split = NULL,
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    fes = c(0, 3),
+    controls = c(0, 3),
+    clustering = c('year', 'state_fips')
+  )
+  # Instrument: 1990-1995 max yield percentile 
+  est_twfe(
+    iv = 'percentile_gm_yield_max',
+    iv_shift = NULL,
+    spatial_subset = 'rural',
+    het_split = NULL,
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    fes = c(0, 3),
+    controls = c(0, 3),
+    clustering = c('year', 'state_fips')
+  )
 
 
 # # Estimates: Heterogeneity by predicted quintile and month --------------------
