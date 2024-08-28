@@ -35,6 +35,12 @@
 
 
 # RF: Set up model and workflow ----------------------------------------------------------
+  # Figure out the mode
+  if (outcome_var %in% c('i_lbw', 'i_vlbw', 'i_preterm')) {
+    mode = 'classification'
+  } else {
+    mode = 'regression'
+  }
   # Define the model
   rf_model =
     rand_forest(
@@ -43,7 +49,7 @@
       min_n = tune()
     ) %>%
     set_mode(
-      'regression'
+      mode
     ) %>%
     set_engine(
       'ranger',
