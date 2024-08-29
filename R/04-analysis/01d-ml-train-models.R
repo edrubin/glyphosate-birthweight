@@ -185,20 +185,9 @@
       # Fit the model on the training folds (2604 seconds)
       rf_i = rf_wf_final |> fit(data = natality_full[splits[[i]]$in_id])
       invisible(gc())
-# NOTE Commented-out lines are hit memory issues.
-      # # Fit and predict
-      # rf_i = rf_wf_final %>% fit_resamples(
-      #   natality_full,
-      #   resamples = cv_i,
-      #   control = control_resamples(save_pred = TRUE)
-      # )
-      # # Collect the predictions
-      # pred_i = rf_i |> collect_predictions()
-      # # Convert to data table
-      # setDT(pred_i)
       # Predict
       pred_i = predict(
-        object = rf,
+        object = rf_i,
         new_data = natality_full[splits[[i]]$out_id],
         type = 'prob'
       )
@@ -214,6 +203,17 @@
       )]
       # Drop class probabilities
       pred_i[, c('.pred_0', '.pred_1') := NULL]
+# NOTE Commented-out lines are hit memory issues.
+      # # Fit and predict
+      # rf_i = rf_wf_final %>% fit_resamples(
+      #   natality_full,
+      #   resamples = cv_i,
+      #   control = control_resamples(save_pred = TRUE)
+      # )
+      # # Collect the predictions
+      # pred_i = rf_i |> collect_predictions()
+      # # Convert to data table
+      # setDT(pred_i)
       # Save
       write_fst(
         x = pred_i,
