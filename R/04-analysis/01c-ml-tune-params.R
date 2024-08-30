@@ -16,6 +16,16 @@
 
 
 # RF: Tune with CV -----------------------------------------------------------------------
+  # Determine metric set based on outcome
+  if (outcome_var %in% c('i_lbw', 'i_vlbw', 'i_preterm')) {
+    the_metrics = metric_set(
+      accuracy, f_meas
+    )
+  } else {
+    the_metrics = metric_set(
+      rmse, rsq
+    )
+  }
   # Define CV assignment
   set.seed(123)
   cv_def = vfold_cv(natality_train, v = 5)
@@ -25,9 +35,7 @@
     tune_grid(
       cv_def,
       grid = rf_grid,
-      metrics = metric_set(
-        rmse, rsq
-      )
+      metrics = the_metrics
       # control = control_grid(save_pred = TRUE)
     )
   # Save result

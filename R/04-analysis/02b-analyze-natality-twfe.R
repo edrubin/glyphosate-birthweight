@@ -34,16 +34,24 @@
   natality_dt = here(
     'data', 'clean', 'natality-micro.fst'
   ) %>% read_fst(as.data.table = TRUE)
-  # Natality data: Predictions
-  prediction_dt = here(
+  # Natality data: Predicted birthweight and gestation
+  pred_dbwt_dt = here(
     'data', 'clean', 'prediction', 'output',
     'dbwt-natality-micro-rf-train80-noindicators-2-full-cvpred.fst'
   ) %>% read_fst(
     as.data.table = TRUE,
     columns = c('row', 'dbwt', 'dbwt_pred')
   )
+  pred_gest_dt = here(
+    'data', 'clean', 'prediction', 'output',
+    'gestation-natality-micro-rf-train80-noindicators-2-full-cvpred.fst'
+  ) %>% read_fst(
+    as.data.table = TRUE,
+    columns = c('row', 'gestation', 'gestation_pred')
+  )
   # Change name of DBWT (for checking merge later)
-  setnames(prediction_dt, old = 'dbwt', new = 'dbwt_check')
+  setnames(pred_dbwt_dt, old = 'dbwt', new = 'dbwt_check')
+  setnames(pred_gest_dt, old = 'gestation', new = 'gestation_check')
 
 
 # Merge datasets -------------------------------------------------------------------------
@@ -52,7 +60,12 @@
   # Merge predictions onto the full natality dataset (using row ID)
 # NOTE: Also adding true birth weight to check the merge
   natality_dt %<>% merge(
-    y = prediction_dt,
+    y = pred_dbwt_dt,
+    by = 'row',
+    all = FALSE
+  )
+  natality_dt %<>% merge(
+    y = pred_gest_dt,
     by = 'row',
     all = FALSE
   )
@@ -62,11 +75,16 @@
   } else {
     natality_dt[, dbwt_check := NULL]
   }
+  if (natality_dt[, fmean(gestation == gestation_check)] < 1) {
+    stop('Bad merge between true natality and predicted gestation.')
+  } else {
+    natality_dt[, gestation_check := NULL]
+  }
   # Drop years prior (if desired)
 # ADJUST years if desired
   # natality_dt %<>% .[year >= 1992]
   # Drop prediction dataset
-  rm(prediction_dt)
+  rm(pred_dbwt_dt, pred_gest_dt)
   invisible(gc())
   # Convert ages to numeric (harmonizes; can still use as factors later)
   natality_dt[, `:=`(
@@ -201,6 +219,57 @@
     pred_q10_sex = finteraction(pred_q10, sex),
     pred_q14_sex = finteraction(pred_q14, sex),
     pred_q20_sex = finteraction(pred_q20, sex)
+  )]
+
+
+# Add gestation percentiles ----------------------------------------------------
+  # Add percentiles for birthweight (based upon pre-1996 births)
+  ecdf_pre = natality_dt[year < 1996, gestation %>% ecdf()]
+  natality_dt[, gestation_pctl_pre := ecdf_pre(gestation)]
+  # Repeat using predicted birthweights
+  ecdf_pred_pre = natality_dt[year < 1996, gestation_pred %>% ecdf()]
+  natality_dt[, gestation_pred_pctl_pre := ecdf_pred_pre(gestation_pred)]
+  # Add quintiles, quartiles, terciles, deciles
+  natality_dt[, `:=`(
+    pred_gestation_q5 = cut(
+      x = gestation_pred_pctl_pre,
+      breaks = 5,
+      labels = 1:5, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
+    ),
+    pred_gestation_q4 = cut(
+      x = gestation_pred_pctl_pre,
+      breaks = 4,
+      labels = 1:4, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
+    ),
+    pred_gestation_q3 = cut(
+      x = gestation_pred_pctl_pre,
+      breaks = 3,
+      labels = 1:3, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
+    ),
+    pred_gestation_q10 = cut(
+      x = gestation_pred_pctl_pre,
+      breaks = 10,
+      labels = 1:10, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
+    ),
+    pred_gestation_q14 = cut(
+      x = gestation_pred_pctl_pre,
+      breaks = c(0, 0.01, 0.05, seq(0.1, 0.9, 0.1), 0.95, 0.99, 1),
+      labels = 1:14, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
+    ),
+    pred_gestation_q20 = cut(
+      x = gestation_pred_pctl_pre,
+      breaks = 20,
+      labels = 1:20, right = FALSE, include.lowest = TRUE, ordered_result = TRUE
+    )
+  )]
+  # Add interaction between percentiles and sex
+  natality_dt[, `:=`(
+    pred_gestation_q5_sex = finteraction(pred_gestation_q5, sex),
+    pred_gestation_q4_sex = finteraction(pred_gestation_q4, sex),
+    pred_gestation_q3_sex = finteraction(pred_gestation_q3, sex),
+    pred_gestation_q10_sex = finteraction(pred_gestation_q10, sex),
+    pred_gestation_q14_sex = finteraction(pred_gestation_q14, sex),
+    pred_gestation_q20_sex = finteraction(pred_gestation_q20, sex)
   )]
 
 

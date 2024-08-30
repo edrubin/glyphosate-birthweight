@@ -26,6 +26,12 @@
   natality_dt = here(
     'data', 'clean', 'natality-micro.fst'
   ) %>% read_fst(as.data.table = TRUE)
+  # Add indicators for low birthweight (<2500) and very low birthweight (<1500)
+  natality_dt[, `:=`(
+    i_lbw = as.factor(1 * (dbwt < 2500)),
+    i_vlbw = as.factor(1 * (dbwt < 1500)),
+    i_preterm = as.factor(1 * (gestation <= 37))
+  )]
   # Create row ID for later joins
   natality_dt[, row := seq_len(.N)]
   # Drop variables: 'place_fips', 'city_res', 'no_city'
@@ -73,12 +79,6 @@
 
 
 # Clean data -----------------------------------------------------------------------------
-  # Drop health-realted variables that could be affected by GLY (bad controls)
-# NOTE Dropping alcohol variable as it drops out of data starting in 2003
-  to_drop = c('dbwt', 'apgar5', 'gestation', 'c_section', 'alcohol')
-  # Keep the outcome variable
-  to_drop = setdiff(to_drop, outcome_var)
-  natality_dt[, (to_drop) := NULL]
   # Force ages to numeric
   natality_dt[, `:=`(
     mage = as.numeric(mage),
@@ -95,14 +95,23 @@
   natality_dt %<>% .[!(state_res %in% c('00', '02', '15', '66', '72', '78'))]
   natality_dt %<>% .[!(state_occ %in% c('00', '02', '15', '66', '72', '78'))]
   # Now deal with missingness in the dataset...
-  # If birthweight is outcome variable, drop instances with missing birthweight
-  if (outcome_var == 'dbwt') {
+  # If outcome variable depends on birthweight, drop observations missing `dbwt`
+  if (outcome_var %in% c('dbwt', 'i_lbw', 'i_vlbw')) {
     natality_dt %<>% .[!is.na(dbwt)]
   }
-  # If gestation is outcome variable, drop instances with missing gestation
-  if (outcome_var == 'gestation') {
+  # If outcome variable depends on gestation, drop instances missing gestation
+  if (outcome_var %in% c('gestation', 'i_preterm')) {
     natality_dt %<>% .[!is.na(gestation)]
   }
+  # Drop health-realted variables that could be affected by GLY (bad controls)
+# NOTE Dropping alcohol variable as it drops out of data starting in 2003
+  to_drop = c(
+    'dbwt', 'apgar5', 'gestation', 'c_section', 'alcohol',
+    'i_lbw', 'i_vlbw', 'i_preterm'
+  )
+  # Keep the outcome variable
+  to_drop = setdiff(to_drop, outcome_var)
+  natality_dt[, (to_drop) := NULL]
   # Impute missing demographics with county-year modal value (and create flags)
   natality_dt[, `:=`(
     meduc_mode = fmode(meduc),
