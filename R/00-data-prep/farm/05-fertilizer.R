@@ -97,10 +97,89 @@ write.fst(
   here('data/raw/fertilizer-dt.fst')
 )
 
+# Function to interpolate data for a single county
+interpolate_county = function(GEOID_in, variable_in, fert_dt_long){
+  print(paste('starting', GEOID_in, variable_in))
+  # Filter to just county and variable
+  county_fert_dt = fert_dt_long[
+    GEOID == GEOID_in & 
+    variable == variable_in & 
+    !is.na(value)
+  ]
+  # Fit and make predictions
+  spline_fit = smooth.spline(county_fert_dt$year, county_fert_dt$value)
+  pred_value = predict(
+    spline_fit, 
+    seq(min(county_fert_dt$year), max(county_fert_dt$year), by = 1)
+  )
+  return(data.table(
+    GEOID = GEOID_in, 
+    variable = variable_in,
+    year = pred_value$x, 
+    value = pred_value$y
+  ))
+}
+# Running the interpolation 
+p_load(purrr)
+fert_dt_long = melt(fert_dt, id.vars = c('GEOID','year'))[!is.na(value)]
+to_fit = fert_dt_long[,.N,keyby = .(GEOID, variable)][N >= 4] 
+annual_fert_dt_long = 
+  pmap_dfr(
+    to_fit[,.(GEOID, variable)], 
+    interpolate_county, 
+    fert_dt_long = fert_dt_long
+  )
+annual_fert_dt = dcast(
+  annual_fert_dt_long, 
+  formula = GEOID + year ~ variable, 
+  value.var = 'value'
+)
+# Saving the results 
+write.fst(
+  annual_fert_dt, 
+  here('data/raw/fertilizer-dt-interpolated.fst')
+)
 
-# Trying out some regressions 
+# Plotting interpolation for select counties ----------------------------------
 p_load(ggplot2, fixest, collapse)
+dir.create('figures/descriptive/fertilizer', showWarnings = FALSE)
+tmp = merge(
+  annual_fert_dt, 
+  fert_dt_long, 
+  by = c('GEOID','variable','year'), 
+  all.x = TRUE
+)
+var_dt = 
+  fert_dt_long[,
+    .(variance = var(value)), 
+    keyby = .(GEOID, variable)
+  ][,rank := rank(-variance), by = variable]
+interp_p = 
+  merge(
+    tmp, 
+    var_dt[str_detect(variable, 'commercial|manure') & rank <= 3], 
+    by = c('GEOID','variable')
+  ) |>
+  ggplot(aes(x = year, color = GEOID)) + 
+  geom_line(aes(y = value.x)) + 
+  geom_point(aes(y = value.y)) + 
+  facet_wrap(~str_replace(variable, '_',' ') |> str_to_title(), scales = 'free') + 
+  scale_y_continuous(
+    name = "Nutrient Mass (kg e-7)", 
+    label = scales::label_number(scale = 1e-7)
+  ) + 
+  scale_x_continuous(name = '', breaks = seq(1950,2020, by = 20)) + 
+  scale_color_brewer(name = 'County FIPS', palette = 'Dark2') +
+  theme_minimal(base_size = 12)
+ggsave(
+  interp_p, 
+  filename = here('figures/descriptive/fertilizer/interpolation.pdf'), 
+  device = cairo_pdf(), 
+  dpi = 600, 
+  width = 6, height = 4 
+)
 
+# Trying out some regressions -------------------------------------------------
 trt_dt = read.fst(here('data/clean/trt-dt.fst'), as.data.table = TRUE)
 comb_cnty_health_dt = 
   read.fst(here('data/clean/comb-cnty-health-dt.fst'), as.data.table = TRUE)[
@@ -108,10 +187,9 @@ comb_cnty_health_dt =
     .(tot_inf_births = fsum(tot_inf_births)),
     keyby = .(GEOID, rural, area_km2)
   ]
-
 est_dt = 
   merge(
-    fert_dt, 
+    annual_fert_dt, 
     trt_dt, 
     by = 'GEOID'
   ) |>
@@ -120,13 +198,12 @@ est_dt =
     by = 'GEOID'
   )
 est_dt[,state_fips := str_sub(GEOID,1,2)]
-
 # First a simple plot to show what is going on 
 ggplot(
   melt(
     est_dt, 
     id.vars = c('GEOID','year','all_yield_diff_gmo_50_0','area_km2'), 
-    measure.vars = colnames(fert_dt)[-(1:2)]
+    measure.vars = colnames(annual_fert_dt)[-(1:2)]
   )[,
     .(avg = fmean(value)), 
     by = .(variable, year, all_yield_diff_gmo_50_0)
@@ -135,7 +212,7 @@ ggplot(
 ) + 
 geom_vline(xintercept = 1995, linetype = 'dashed') +
 geom_line() +
-geom_point() +
+#geom_point() +
 scale_color_viridis_d(
   name = 'Suitability', 
   option = 'magma', 
@@ -156,21 +233,21 @@ facet_wrap(
 
 
 fert_mod_logs = feols(
-  data = est_dt, 
+  data = est_dt[year >= 1980], 
   split = ~rural, 
   weight = ~tot_inf_births,
-  fml = c(log(n_commercial/area_km2), log(p_commercial/area_km2), log(n_total/area_km2), log(p_total/area_km2), log(n_manure/area_km2), log(p_manure/area_km2)) ~ i(year, all_yield_diff_percentile_gmo, ref = '1992') | year + GEOID, 
+  fml = c(log(n_commercial/area_km2), log(p_commercial/area_km2), log(n_total/area_km2), log(p_total/area_km2), log(n_manure/area_km2), log(p_manure/area_km2)) ~ i(year, all_yield_diff_percentile_gmo, ref = '1995') | year + GEOID, 
   cluster = ~state_fips + year
 )
 fert_mod_levels = feols(
-  data = est_dt, 
+  data = est_dt[year >= 1980], 
   split = ~rural, 
   weight = ~tot_inf_births,
-  fml = c(n_commercial/area_km2, p_commercial/area_km2, n_total/area_km2, p_total/area_km2, n_manure/area_km2, p_manure/area_km2) ~ i(year, all_yield_diff_percentile_gmo, ref = '1992') | year + GEOID, 
+  fml = c(n_commercial/area_km2, p_commercial/area_km2, n_total/area_km2, p_total/area_km2, n_manure/area_km2, p_manure/area_km2) ~ i(year, all_yield_diff_percentile_gmo, ref = '1995') | year + GEOID, 
   cluster = ~state_fips + year
 )
 
-# For rural places
+# Getting results into a table
 fert_result_dt = data.table(coeftable(fert_mod_logs))[,.(
   id, 
   rural = sample, 
@@ -189,10 +266,10 @@ fert_result_dt = data.table(coeftable(fert_mod_logs))[,.(
 # Add the reference bin 
 fert_result_dt =
   rbind(
-    fert_result_dt[year != 1992],
+    fert_result_dt[year != 1995],
     fert_result_dt[,.(
       id, rural, lhs, nutrient, type, lhs_name,
-      year = 1992, 
+      year = 1995, 
       estimate = 0, ci_l = 0, ci_h = 0
     )] |> unique()
   )
@@ -201,7 +278,7 @@ ggplot(fert_result_dt[rural == TRUE], aes(x = year, y = estimate, color = nutrie
   geom_hline(yintercept = 0) + 
   geom_vline(xintercept = 1995, linetype = 'dashed') + 
   geom_line() + 
-  geom_point() + 
+#  geom_point() + 
   geom_ribbon(aes(ymin = ci_l, ymax = ci_h), alpha = 0.3, color = NA) + 
   theme_minimal() + 
   scale_y_continuous(
@@ -209,14 +286,14 @@ ggplot(fert_result_dt[rural == TRUE], aes(x = year, y = estimate, color = nutrie
     label = scales::label_percent()
   ) +
   scale_x_continuous(
-    name = '', breaks = seq(1950,2020, by = 10)
+    name = '', breaks = seq(1980,2020, by = 10)
   ) +
   scale_color_brewer(
     name = 'Nutrient',
     palette = 'Dark2',
     aesthetics = c('color','fill')
   ) +
-  facet_wrap(~type, scales = 'free') + 
+  facet_wrap(~nutrient + type, scales = 'free') + 
   theme(legend.position = 'bottom')
 
 
@@ -239,19 +316,22 @@ fert_result_dt_levels = data.table(coeftable(fert_mod_levels))[,.(
 # Add the reference bin 
 fert_result_dt_levels =
   rbind(
-    fert_result_dt_levels[year != 1992],
+    fert_result_dt_levels[year != 1995],
     fert_result_dt_levels[,.(
       id, rural, lhs, nutrient, type, lhs_name,
-      year = 1992, 
+      year = 1995, 
       estimate = 0, ci_l = 0, ci_h = 0
     )] |> unique()
   )
 
-ggplot(fert_result_dt_levels[rural == TRUE], aes(x = year, y = estimate, color = nutrient, fill = nutrient)) + 
+ggplot(
+  fert_result_dt_levels[rural == TRUE], 
+  aes(x = year, y = estimate, color = nutrient, fill = nutrient)
+) + 
   geom_hline(yintercept = 0) + 
   geom_vline(xintercept = 1995, linetype = 'dashed') + 
   geom_line() + 
-  geom_point() + 
+  #geom_point() + 
   geom_ribbon(aes(ymin = ci_l, ymax = ci_h), alpha = 0.3, color = NA) + 
   theme_minimal() + 
   scale_y_continuous(
