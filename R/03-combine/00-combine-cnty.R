@@ -114,6 +114,11 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
     old = c('tot_acres_corn','tot_acres_cotton','tot_acres_soy'),
     new = c('corn_acres_irrigated','cotton_acres_irrigated','soy_acres_irrigated')
   )
+  # Fertilizer data 
+  annual_fert_dt = read.fst(
+    here('data/raw/fertilizer-dt-interpolated.fst'), 
+    as.data.table = TRUE
+  )
   # Rest of data --------------------------------------------------------------------
   # County population
   cnty_pop_dt = read.fst(
@@ -245,6 +250,11 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
       all_crop_irrigated_dt,
       by = c("GEOID","year"),
       all.x = T
+    ) |>
+    merge(
+      annual_fert_dt,
+      by = c("GEOID","year"),
+      all.x = T
     )
 
   # For data in these tables, missing values are considered zero's
@@ -252,7 +262,8 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
     colnames(fs_dt)[-(1:2)],
     colnames(pest_dt)[-(1:2)],
     colnames(all_crop_acre_dt)[-(1:4)],
-    colnames(all_crop_yield_dt)[-(1:4)]
+    colnames(all_crop_yield_dt)[-(1:4)],
+    colnames(annual_fert_dt)[-(1:2)]
   )
   # Filling in NA's with zeros
   for (j in zero_vars) {
