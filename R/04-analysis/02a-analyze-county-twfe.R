@@ -133,7 +133,8 @@ alt_outcomes = c(
   'other_yield',
   # Other economic vars
   'farm_income', 'nonfarm_income', 
-  'farm_empl', 'tot_empl', 'unemployment_rate'
+  'farm_empl', 'tot_empl', 'unemployment_rate', 
+  'pct_farm_empl', 'inc_per_cap_farm', 'inc_per_cap_nonfarm'
 )
 trt = c(
   #"e100m_yield_diff_percentile_bck",

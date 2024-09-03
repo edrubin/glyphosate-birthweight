@@ -256,14 +256,15 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
       by = c("GEOID","year"),
       all.x = T
     )
-
+  # Fertilizer colnames
+  fert_cols = colnames(annual_fert_dt)[-(1:2)]
   # For data in these tables, missing values are considered zero's
   zero_vars = c(
     colnames(fs_dt)[-(1:2)],
     colnames(pest_dt)[-(1:2)],
     colnames(all_crop_acre_dt)[-(1:4)],
     colnames(all_crop_yield_dt)[-(1:4)],
-    colnames(annual_fert_dt)[-(1:2)]
+    fert_cols
   )
   # Filling in NA's with zeros
   for (j in zero_vars) {
@@ -274,7 +275,11 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
       value = 0
     )
   }
-  
+  # Adding fertilizer km2 normalizations 
+  comb_dt[,
+    (paste0(fert_cols,'_km2')) := lapply(.SD, \(x) x/area_km2), 
+    .SDcols = fert_cols
+  ]
   # Creating pct variables 
   comb_dt[,':='(
     pct_soy_tot = calc_percent(soy_acres, soy_acres + corn_acres + other_acres, scale = 100),
