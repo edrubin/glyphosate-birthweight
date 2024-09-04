@@ -10,7 +10,7 @@
 # Setup ------------------------------------------------------------------------
   # Load packages
   pacman::p_load(
-    fastverse, qs, patchwork,
+    readr, readxl, stringr, fastverse, qs, patchwork,
     fixest, splines, parallel, magrittr, here,
     fst
   )
@@ -323,7 +323,7 @@
   invisible(gc())
 
 
-# Add additional variables -----------------------------------------------------
+# Add additional variables to natality -----------------------------------------
   # Add indicators for low birthweight (<2500) and very low birthweight (<1500)
   natality_dt[, `:=`(
     i_lbw = 1 * (dbwt < 2500),
@@ -340,6 +340,103 @@
     i_m_hispanic = 1 * (mhisp > 0),
     i_m_married = 1 * (mar == 1)
   )]
+
+
+# Additional county-year variables -------------------------------------------------------
+  # Calculate additional variables
+  comb_cnty_dt[, `:=`(
+    empl_rate = tot_empl / tot_pop,
+    farm_empl_per_cap = farm_empl / tot_pop
+  )]
+  # Change name of unemployment rate
+  setnames(comb_cnty_dt, old = 'unemployment_rate', new = 'unempl_rate')
+  # Load ag district-code crosswalk (variable: `asd_code`)
+  asd_xwalk =
+    data.table(read_fwf(
+      here('data/download-manual/county_list.txt'),
+      col_positions = fwf_positions(
+        start = c(1, 6, 11, 17),
+        end = c(2, 7, 13, 100)
+      ),
+      show_col_type = FALSE,
+      skip = 12
+    ))[!is.na(X1), .(
+      state_fips = X1,
+      asd_code = X2,
+      county_fips = X3,
+      GEOID = paste0(X1, X3),
+      name = str_split_i(X4, '\\\t{3,6}', i = 1),
+      historical = str_split_i(X4, '\\\t{3,6}', i = 2)
+    )]
+  asd_xwalk[,
+    GEOID := fcase(
+      GEOID == '46102', '46113',
+      GEOID != '46102', GEOID
+    )
+  ]
+  # Drop historical codes
+  asd_xwalk %<>% .[historical != 2]
+  # Drop the full states (only want counties)
+  asd_xwalk %<>% .[county_fips != '000']
+  # Drop "combined" counties
+  asd_xwalk %<>% .[!(county_fips %in% c(888, 999))]
+  # Combine ASD code with state to make unique
+  asd_xwalk[, asd_code := paste0(state_fips, '-', asd_code)]
+  # Drop unwanted columns
+  asd_xwalk %<>% .[, .(GEOID, asd_code)]
+  # Merge onto the estimation dataset
+  comb_cnty_dt %<>% merge(
+    y = asd_xwalk,
+    by.x = 'fips',
+    by.y = 'GEOID',
+    all.x = TRUE,
+    all.y = FALSE
+  )
+  # Fix DC's missing ASD code (assign one code for DC)
+  comb_cnty_dt[fips == '11001' & is.na(asd_code), asd_code := '11-01']
+  # Clean up
+  rm(asd_xwalk)
+  # Load ARMS farm resource region cross walk (variable: `farm_region`)
+  frr_xwalk =
+    here('data', 'download-manual', 'farm-resource-regions.xls') |>
+    read_xls(skip = 2)
+  # To data table
+  setDT(frr_xwalk)
+  # Grab region names
+  frr_names = frr_xwalk[1:9, 7]
+  setnames(frr_names, 'var')
+  frr_names %<>% .[, tstrsplit(var, '=')]
+  setnames(frr_names, c('num', 'label'))
+  # Grab desired columns
+  frr_xwalk %<>% .[, 1:2]
+  # Rename columns
+  setnames(frr_xwalk, c('fips', 'farm_region'))
+  # Pad FIPS codes
+  frr_xwalk[, fips := str_pad(fips, 5, 'left', '0')]
+  # Recode regions
+  frr_xwalk[, `:=`(
+    farm_region = factor(
+      farm_region,
+      levels = frr_names$num,
+      labels = frr_names$label
+    )
+  )]
+  comb_cnty_dt %<>% merge(
+    y = frr_xwalk,
+    by = 'fips',
+    all.x = TRUE,
+    all.y = FALSE
+  )
+  # Copy Boulder County's region to Broomfield County
+  set(
+    x = comb_cnty_dt,
+    i = comb_cnty_dt[fips == '08014', which = TRUE],
+    j = 'farm_region',
+    value = comb_cnty_dt[fips == "08013", ffirst(farm_region)]
+  )
+  # Clean up
+  rm(frr_xwalk, frr_names)
+  invisible(gc())
 
 
 # Function: Water analysis -----------------------------------------------------
@@ -482,14 +579,16 @@
       stop("water_type not recognized, use 'bins-simple','bins-soil', or 'ml-pred'.")
     }
     # Add water to reduced form formula
-    fml_rf_water = paste(
-      fml_y,
-      '~',
-      fml_iv, ' + ',
-      fml_rhs_water,
-      ' | ',
-      fml_fes
-    ) %>% as.formula()
+    fml_rf_water =
+      paste(
+        fml_y,
+        '~',
+        fml_iv, ' + ',
+        fml_rhs_water,
+        ' | ',
+        fml_fes
+      ) %>%
+      as.formula()
     # Estimating the reduced form
     if (!is.null(het_split)) {
       est_rf_water = feols(
@@ -526,7 +625,7 @@
       'gestation', 'i_preterm',
       'c_section', 'any_anomaly'
     ),
-    iv = 'all_yield_diff_percentile_gmo',
+    iv = 'all_yield_diff_percentile_gmo_max',
     iv_shift = NULL,
     spatial_subset = 'rural',
     county_subset = NULL,
@@ -535,8 +634,6 @@
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
     dem_fe = TRUE,
     dad_fe = TRUE,
-    # fes = c(0, 3),
-    # controls = c(0, 3),
     control_sets = list(
       'none',
       'pest',
@@ -551,6 +648,7 @@
       'fert',
       NULL
     ),
+    name_suffix = NULL,
     clustering = c('year', 'state_fips'),
     gly_nonlinear = NULL,
     iv_nonlinear = FALSE,
@@ -579,15 +677,17 @@
       'alachlor_km2', 'atrazine_km2', 'cyanazine_km2', 'fluazifop_km2',
       'metolachlor_km2', 'metribuzin_km2', 'nicosulfuron_km2'
     )
+    pest_fml = paste(pest_controls, collapse = ' + ')
     # Economic controls
-# NOTE Calculate 'empl_rate' and 'farm_empl_per_cap' later in script
     econ_controls = c(
-      'unemployment_rate',
+      'unempl_rate',
       'pct_farm_empl',
       'farm_empl_per_cap',
       'tot_pop',
       'inc_per_cap_farm',
       'inc_per_cap_nonfarm',
+      'empl_rate',
+      'farm_empl_per_cap',
       NULL
     )
     # Fertilizer controls
@@ -598,9 +698,11 @@
       'p_manure_km2', 'n_manure_km2',
       NULL
     )
+    fert_fml = paste(fert_controls, collapse = ' + ')
     # Age-share controls
 # NOTE Omitting the 70+ share (colinear)
     age_controls = paste0('shr_age_', seq(0, 60, 10), '_all')
+    age_fml = paste(age_controls, collapse = ' + ')
     # Race-share controls
     race_controls = c(
       'shr_raceblack_all',
@@ -608,6 +710,7 @@
       'shr_hispanic_all',
       NULL
     )
+    race_fml = paste(race_controls, collapse = ' + ')
 
     # Collecting glyphosate variables
     glyph_vars =
@@ -664,6 +767,9 @@
         NULL
       )
     )
+    # Define variables that might be used for fixed effects (in comb_cnty_dt)
+    fe_vars = c('state_fips', 'census_region', 'census_division')
+
     # Enforce spatial subsets (essentially rural, urban, or all)
     if (is.null(spatial_subset)) {
       est_dt = natality_dt
@@ -674,9 +780,9 @@
     # Merge the datasets with the requested variables
     est_dt = merge(
       x = est_dt[, unique(c(
-        'fips_occ', 'fips_res', 'year', 'month',
+        'fips_occ', 'fips_res', 'year', 'month', 'year_month',
         'rural_grp', 'rural_occ', 'rural_res',
-        outcome_vars, het_vars, base_fe, dem_fes, dad_fes
+        outcome_vars, het_vars, dem_fes, dad_fes
       )), with = FALSE],
       y = comb_cnty_dt[, unique(c(
         'fips', 'year',
@@ -687,6 +793,7 @@
         ),
         glyph_vars,
         iv_vars,
+        fe_vars,
         pest_controls,
         econ_controls,
         fert_controls,
@@ -696,22 +803,13 @@
       by.y = c('fips', 'year'),
       all = FALSE
     )
-    # Calculate additional variables
-    est_dt[, `:=`(
-      empl_rate = tot_empl / tot_pop,
-      farm_empl_per_cap = farm_empl / tot_pop
-    )]
-    # Change name of unemployment rate
-    setnames(est_dt, old = 'unemployment_rate', new = 'unempl_rate')
-    econ_controls[which(econ_controls == 'unemployment_rate')] = 'unempl_rate'
 
     # Load and add additional datasets (if controls require them)
     if (any(c('age_share', 'race_share') %in% unlist(control_sets))) {
       # Load the age-share dataset
-# TODO Confirm location of dataset is correct
 # NOTE The 1969-2022 version has a longer time series but lacks "origin" data
       seer_dt =
-        here('data', 'clean', 'seer', 'seer-shares-allpop-1990-2022.fst') |>
+        here('data', 'seer', 'seer-shares-allpop-1990-2022.fst') |>
         read.fst(as.data.table = TRUE)
       # Merge
       est_dt %<>% merge(
@@ -721,10 +819,9 @@
         all.x = TRUE,
         all.y = FALSE
       )
-# TODO Confirm merge is correct
     }
 
-    # Enforce regional subsets (Census regions)
+    # Enforce regional subsets (e.g., Census regions)
     if (!is.null(county_subset)) {
       # Take the implied subset
       est_dt %<>% .[fips_res %in% county_subset]
@@ -745,6 +842,7 @@
       paste(outcome_vars, collapse = ', '),
       ')'
     )
+
     # Instruments: Without shift-share (event study)
     fml_iv = fcase(
       iv_nonlinear == FALSE | is.null(gly_nonlinear),
@@ -760,6 +858,7 @@
           '+ i(year, ', iv, '*above_median_', iv, ', ref = 1995)'
         )
     )
+
     # Instruments: Shift-share approach (if iv_shift is defined)
     if (!is.null(iv_shift)) {
       fml_iv_ss = paste0(iv_shift, ' + ', iv_shift, ':', iv)
@@ -808,7 +907,14 @@
       ((cs_class == 'character') && (control_sets != 'none'))
     ) {
       # One set of controls: Collapse
-      fml_controls = control_sets |> unlist() |> paste(collapse = ' + ')
+      fml_controls =
+        control_sets |>
+        unlist() |>
+        paste(collapse = ' + ') |>
+        str_replace(pattern = 'fert', replacement = fert_fml) |>
+        str_replace(pattern = 'age_share', replacement = age_fml) |>
+        str_replace(pattern = 'pest', replacement = pest_fml) |>
+        str_replace(pattern = 'race_share', replacement = race_fml)
     } else if (
       # Case 3: Multiple sets of controls (iterate over list elements)
       (cs_len > 1) && (cs_class == 'list')
@@ -824,7 +930,13 @@
             if (is.null(cs_i) || all(cs_i == 'none')) {
               '1'
             } else {
-              cs_i |> unlist() |> paste(collapse = ' + ')
+              cs_i |>
+                unlist() |>
+                paste(collapse = ' + ') |>
+                str_replace(pattern = 'fert', replacement = fert_fml) |>
+                str_replace(pattern = 'age_share', replacement = age_fml) |>
+                str_replace(pattern = 'pest', replacement = pest_fml) |>
+                str_replace(pattern = 'race_share', replacement = race_fml)
             }
           }
         ) |>
@@ -843,39 +955,24 @@
       as.formula()
 
     # Formula: Reduced form
-    fml_rf = paste(
-      fml_y,
-      '~',
-      fml_iv,
-      ifelse(
-        !is.null(fml_controls),
-        paste0(' + ', fml_controls),
-        ''
-      ),
-      ' | ',
-      fml_fes
-    ) %>% as.formula()
+    fml_rf =
+      paste(
+        fml_y,
+        '~',
+        fml_iv,
+        ifelse(
+          !is.null(fml_controls),
+          paste0(' + ', fml_controls),
+          ''
+        ),
+        ' | ',
+        fml_fes
+      ) |>
+      as.formula()
 
     # Formula: 2SLS via event study
-    fml_2sls = paste(
-      fml_y,
-      '~ 1',
-      ifelse(
-        !is.null(fml_controls),
-        paste0(' + ', fml_controls),
-        ''
-      ),
-      ' | ',
-      fml_fes,
-      ' | ',
-      fml_gly,
-      ' ~ ',
-      fml_iv
-    ) %>% as.formula()
-
-    # Formula: 2SLS via shift-share (if iv_shift is defind)
-    if (!is.null(iv_shift)) {
-      fml_2sls_ss = paste(
+    fml_2sls =
+      paste(
         fml_y,
         '~ 1',
         ifelse(
@@ -886,36 +983,77 @@
         ' | ',
         fml_fes,
         ' | ',
-        'glyph_km2 ~ ',
-        fml_iv_ss
-      ) %>% as.formula()
+        fml_gly,
+        ' ~ ',
+        fml_iv
+      ) |>
+      as.formula()
+
+    # Formula: 2SLS via shift-share (if iv_shift is defind)
+    if (!is.null(iv_shift)) {
+      fml_2sls_ss =
+        paste(
+          fml_y,
+          '~ 1',
+          ifelse(
+            !is.null(fml_controls),
+            paste0(' + ', fml_controls),
+            ''
+          ),
+          ' | ',
+          fml_fes,
+          ' | ',
+          'glyph_km2 ~ ',
+          fml_iv_ss
+        ) |>
+        as.formula()
     }
 
     # Formula: OLS
-    if(include_ols == TRUE){
-      fml_ols = paste(
-        fml_y,
-        ' ~ ',
-        fml_gly,
-        ifelse(
-          !is.null(fml_controls),
-          paste0(' + ', fml_controls),
-          ''
-        ),
-        ' | ',
-        fml_fes
-      ) %>% as.formula()
+    if (include_ols == TRUE){
+      fml_ols =
+        paste(
+          fml_y,
+          ' ~ ',
+          fml_gly,
+          ifelse(
+            !is.null(fml_controls),
+            paste0(' + ', fml_controls),
+            ''
+          ),
+          ' | ',
+          fml_fes
+        ) |>
+        as.formula()
     }
 
     # Make folder for the results
-    dir_today = here('data', 'results', 'micro')
-    dir_today %>% dir.create()
+    dir_today = here('data', 'results', 'micro-new')
+    dir_today |> dir.create(showWarnings = FALSE, recursive = TRUE)
     # Base filename with all options
     base_name = paste0(
-      '_outcome-', paste(str_remove_all(outcomes, '[^a-z]'), collapse = '-'),
-      '_fe-', paste0(fes, collapse = ''),
-      '_controls-', paste0(controls, collapse = ''),
-      '_spatial-', spatial_subset,
+      # Outcomes
+      '_outcome-',
+      paste(str_remove_all(outcomes, '[^a-z]'), collapse = '-'),
+      # Fixed effects (including demographic FEs)
+      '_fe-',
+      ifelse(
+        is.null(base_fe) && dem_fe == FALSE && dad_fe == FALSE,
+        'none',
+        paste0(
+          c(base_fe, ifelse(dem_fe, 'dem', ''), ifelse(dad_fe, 'dad', '')),
+          collapse = '-'
+        ) |>
+          str_replace_all('\\^', 'X') |>
+          str_remove_all('_')
+      ),
+      # Demographic (mother and child demographics) FEs
+      ifelse(dem_fe, '_dem-fe', ''),
+      # Father demographic FEs
+      ifelse(dad_fe, '_dad-fe', ''),
+      # Spatial subset
+      ifelse(is.null(spatial_subset), '', paste0('_spatial-', spatial_subset)),
+      # County subset
       ifelse(
         is.null(county_subset),
         '',
@@ -925,11 +1063,25 @@
           paste0('_county-', county_subset_name)
         )
       ),
-      '_het-', het_split %>% str_remove_all('[^0-9a-z]'),
-      '_iv-', iv %>% str_remove_all('[^0-9a-z]'),
-      '_cl-', clustering %>% str_remove_all('[^a-z]') %>% paste0(collapse = ''),
-      '_glynl-', ifelse(is.null(gly_nonlinear), 'linear', gly_nonlinear),
-      '_ivnl-', iv_nonlinear,
+      # Heterogeneity split
+      ifelse(
+        is.null(het_split),
+        '',
+        paste0('_het-', het_split %>% str_remove_all('[^0-9a-z]'))
+      ),
+      # Instrument
+      '_iv-',
+      iv %>% str_remove_all('[^0-9a-z]'),
+      # Clustering
+      '_cl-',
+      clustering %>% str_remove_all('[^a-z]') %>% paste0(collapse = '-'),
+      # Nonlinearity in GLY
+      ifelse(is.null(gly_nonlinear), '', paste0('_glynl-', gly_nonlinear)),
+      # Nonlinearity in IV
+      ifelse(iv_nonlinear, '_ivnl', ''),
+      # Add name suffix if defined
+      ifelse(is.null(name_suffix), '', paste0('_', name_suffix)),
+      # File suffix
       '.qs'
     )
     if (skip_iv == FALSE) {
@@ -1015,7 +1167,7 @@
       }
     }
     # Estimate OLS
-    if(include_ols == TRUE){
+    if (include_ols == TRUE){
       if (!is.null(het_split)) {
         est_ols = feols(
           fml = fml_ols,
