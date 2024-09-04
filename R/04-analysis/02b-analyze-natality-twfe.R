@@ -161,7 +161,8 @@
     )
   )]
   # Clean up
-  rm(lbls, lvls); invisible(gc())
+  rm(lbls, lvls)
+  invisible(gc())
 
 
 # If testing without real data ------------------------------------------------
@@ -312,13 +313,14 @@
 #      is some variation in suitability. Not sure it's good variation...
   # Add new variable into county-level dataset
   comb_cnty_dt %<>% join(
-    y = end_dt[,.(fips, glyph_km_end_q3)],
+    y = end_dt[, .(fips, glyph_km_end_q3)],
     on = 'fips',
     how = 'left',
     validate = 'm:1'
   )
   # Clean up
-  rm(yr_max, end_dt, ecdf_gly_end, ecdf_gaez_end); invisible(gc())
+  rm(yr_max, end_dt, ecdf_gly_end, ecdf_gaez_end)
+  invisible(gc())
 
 
 # Add additional variables -----------------------------------------------------
@@ -368,11 +370,11 @@
         water_dt =
           melt(
             county_exposure_dt,
-            id.vars = c('GEOID','year'),
+            id.vars = c('GEOID', 'year'),
             measure = patterns(col_regex),
             variable.name = 'distance_bin',
-            value.name = c('trt', 'high_kls','high_ppt_growing_season')
-          )[,.(
+            value.name = c('trt', 'high_kls', 'high_ppt_growing_season')
+          )[, .(
             fips_res = GEOID,
             year,
             distance_bin = fcase(
@@ -384,10 +386,10 @@
               distance_bin == '6', 'd300'
             ),
             trt, high_kls, high_ppt_growing_season,
-            high_kls_ppt = high_kls*high_ppt_growing_season,
-            high_kls_trt = high_kls*trt,
-            high_ppt_trt = high_ppt_growing_season*trt,
-            high_kls_ppt_trt = high_kls*high_ppt_growing_season*trt
+            high_kls_ppt = high_kls * high_ppt_growing_season,
+            high_kls_trt = high_kls * trt,
+            high_ppt_trt = high_ppt_growing_season * trt,
+            high_kls_ppt_trt = high_kls * high_ppt_growing_season * trt
           )] |>
           dcast(
             formula = fips_res + year ~ distance_bin,
@@ -402,18 +404,18 @@
         setnames(
           water_dt,
           old = colnames(water_dt),
-          new = str_replace(colnames(water_dt),'trt',iv)
+          new = str_replace(colnames(water_dt), 'trt', iv)
         )
-      } else if (water_type =='bins-simple') {
+      } else if (water_type == 'bins-simple') {
         # Simple just has upstream trt
         col_regex = c('^all_yield_diff_percentile_gmo_d\\d{2,3}')
         water_dt =
           get_vars(
             county_exposure_dt,
-            vars = c('GEOID','year', col_regex),
+            vars = c('GEOID', 'year', col_regex),
             regex = TRUE
           ) |>
-          setnames('GEOID','fips_res')
+          setnames('GEOID', 'fips_res')
       } else {
         stop("water_type not recognized, use 'bins-simple','bins-soil', or 'ml-pred'.")
       }
@@ -425,18 +427,19 @@
           ', ref = 1995)'
         ) |>
         paste(collapse = ' + ')
-      fml_rhs_water = paste0(water_fml,' + ',fml_controls)
+      fml_rhs_water = paste0(water_fml, ' + ', fml_controls)
       # Merge with main table
-      water_dt |> setkey('fips_res','year')
-      est_dt |> setkey('fips_res','year')
+      water_dt |> setkey('fips_res', 'year')
+      est_dt |> setkey('fips_res', 'year')
       # Merge with estimating data
       est_dt = merge(
         est_dt,
         water_dt,
-        by = c('fips_res','year'),
+        by = c('fips_res', 'year'),
         all.x = TRUE
       )
-      rm(county_exposure_dt, water_dt); gc()
+      rm(county_exposure_dt, water_dt)
+      gc()
     } else if (water_type == 'ml-pred') {
       # Load the water-ML predictions
       county_exposure_pred_dt =
@@ -445,13 +448,13 @@
           as.data.table = TRUE
         ) |>
         setnames('GEOID', 'fips_res') |>
-        setkey('fips_res','year','month')
-      est_dt |> setkey('fips_res','year','month')
+        setkey('fips_res', 'year', 'month')
+      est_dt |> setkey('fips_res', 'year', 'month')
       # Merge with estimating data
       est_dt = merge(
         est_dt,
         county_exposure_pred_dt,
-        by = c('fips_res','year','month'),
+        by = c('fips_res', 'year', 'month'),
         all.x = TRUE
       )
       # Add water to formula in reduced form
@@ -465,8 +468,8 @@
             controls == 1, paste0(pred, ' + ', paste(pest_controls, collapse = '+')),
             controls == 2, paste0(pred, ' + ', paste(econ_controls, collapse = '+')),
             controls == 3, paste0(
-              pred,' + ',
-              paste(c(pest_controls,econ_controls), collapse = '+')
+              pred, ' + ',
+              paste(c(pest_controls, econ_controls), collapse = '+')
             )
           )
         )]$fml_string
@@ -507,10 +510,11 @@
     # Save
     qsave(
       est_rf_water,
-      file.path(dir_today, paste0('est_water_rf-', water_type,'_',base_name)),
+      file.path(dir_today, paste0('est_water_rf-', water_type, '_', base_name)),
       preset = 'fast'
     )
-    rm(est_rf_water); invisible(gc())
+    rm(est_rf_water)
+    invisible(gc())
   }
 
 # Function: Run TFWE analysis --------------------------------------------------
@@ -529,8 +533,24 @@
     county_subset_name = NULL,
     het_split = NULL,
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    fes = c(0, 3),
-    controls = c(0, 3),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    # fes = c(0, 3),
+    # controls = c(0, 3),
+    control_sets = list(
+      'none',
+      'pest',
+      'unempl_rate',
+      'empl_rate',
+      c('unempl_rate', 'empl_rate'),
+      c('unempl_rate', 'empl_rate', 'pct_farm_empl'),
+      c('unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap'),
+      c('age_share'),
+      c('race_share'),
+      c('pest', 'unempl_rate', 'empl_rate', 'age_share', 'race_share'),
+      'fert',
+      NULL
+    ),
     clustering = c('year', 'state_fips'),
     gly_nonlinear = NULL,
     iv_nonlinear = FALSE,
@@ -542,6 +562,11 @@
 
     # Define outcome variables
     outcome_vars = outcomes
+
+    # Drop NULL elements from the control sets
+    control_sets = Filter(Negate(is.null), control_sets)
+
+    # Define sets of control variables (helps when loading data)
     # Child and mother demographic controls (fixed effects)
     dem_fes = c(
       'sex', 'mage', 'mrace', 'mhisp', 'meduc', 'mar',
@@ -554,10 +579,36 @@
       'alachlor_km2', 'atrazine_km2', 'cyanazine_km2', 'fluazifop_km2',
       'metolachlor_km2', 'metribuzin_km2', 'nicosulfuron_km2'
     )
-    # Economic controls (currently just unemployment rate)
+    # Economic controls
+# NOTE Calculate 'empl_rate' and 'farm_empl_per_cap' later in script
     econ_controls = c(
-      'unemployment_rate'
+      'unemployment_rate',
+      'pct_farm_empl',
+      'farm_empl_per_cap',
+      'tot_pop',
+      'inc_per_cap_farm',
+      'inc_per_cap_nonfarm',
+      NULL
     )
+    # Fertilizer controls
+    fert_controls = c(
+      'p_commercial_km2', 'n_commercial_km2',
+      'p_farm_km2', 'n_farm_km2',
+      'p_nonfarm_km2', 'n_nonfarm_km2',
+      'p_manure_km2', 'n_manure_km2',
+      NULL
+    )
+    # Age-share controls
+# NOTE Omitting the 70+ share (colinear)
+    age_controls = paste0('shr_age_', seq(0, 60, 10), '_all')
+    # Race-share controls
+    race_controls = c(
+      'shr_raceblack_all',
+      'shr_racewhite_all',
+      'shr_hispanic_all',
+      NULL
+    )
+
     # Collecting glyphosate variables
     glyph_vars =
       c(
@@ -585,17 +636,17 @@
         ),
         fifelse(
           iv_nonlinear == TRUE & gly_nonlinear == 'quadratic',
-          paste0(iv,'_sq'),
+          paste0(iv, '_sq'),
           NA_character_
         ),
         fifelse(
           iv_nonlinear == TRUE & gly_nonlinear == 'median' & !is.null(iv_shift),
-          paste0('above_median_',iv_shift),
+          paste0('above_median_', iv_shift),
           NA_character_
         ),
         fifelse(
           iv_nonlinear == TRUE & gly_nonlinear == 'quadratic' & !is.null(iv_shift),
-          paste0(iv_shift,'_sq'),
+          paste0(iv_shift, '_sq'),
           NA_character_
         )
       ) |>
@@ -638,12 +689,40 @@
         iv_vars,
         pest_controls,
         econ_controls,
+        fert_controls,
         clustering
       )), with = FALSE],
       by.x = c('fips_res', 'year'),
       by.y = c('fips', 'year'),
       all = FALSE
     )
+    # Calculate additional variables
+    est_dt[, `:=`(
+      empl_rate = tot_empl / tot_pop,
+      farm_empl_per_cap = farm_empl / tot_pop
+    )]
+    # Change name of unemployment rate
+    setnames(est_dt, old = 'unemployment_rate', new = 'unempl_rate')
+    econ_controls[which(econ_controls == 'unemployment_rate')] = 'unempl_rate'
+
+    # Load and add additional datasets (if controls require them)
+    if (any(c('age_share', 'race_share') %in% unlist(control_sets))) {
+      # Load the age-share dataset
+# TODO Confirm location of dataset is correct
+# NOTE The 1969-2022 version has a longer time series but lacks "origin" data
+      seer_dt =
+        here('data', 'clean', 'seer', 'seer-shares-allpop-1990-2022.fst') |>
+        read.fst(as.data.table = TRUE)
+      # Merge
+      est_dt %<>% merge(
+        y = seer_dt,
+        by.x = c('fips_res', 'year'),
+        by.y = c('fips', 'yr'),
+        all.x = TRUE,
+        all.y = FALSE
+      )
+# TODO Confirm merge is correct
+    }
 
     # Enforce regional subsets (Census regions)
     if (!is.null(county_subset)) {
@@ -672,13 +751,13 @@
         paste0('1 + i(year, ', iv, ', ref = 1995)'),
       iv_nonlinear == TRUE & gly_nonlinear == 'quadratic',
         paste0(
-          '1 + i(year, ', iv,', ref = 1995)',
-          '+ i(year, ', iv,'_sq, ref = 1995)'
+          '1 + i(year, ', iv, ', ref = 1995)',
+          '+ i(year, ', iv, '_sq, ref = 1995)'
         ),
       iv_nonlinear == TRUE & gly_nonlinear == 'median',
         paste0(
-          '1 + i(year, ', iv,', ref = 1995)',
-          '+ i(year, ', iv,'*above_median_', iv, ', ref = 1995)'
+          '1 + i(year, ', iv, ', ref = 1995)',
+          '+ i(year, ', iv, '*above_median_', iv, ', ref = 1995)'
         )
     )
     # Instruments: Shift-share approach (if iv_shift is defined)
@@ -695,39 +774,73 @@
           iv_nonlinear == TRUE & gly_nonlinear == 'median',
             paste0(
               iv_shift, ' + ', iv_shift, ':', iv, ' + ',
-              iv_shift,':above_median_', iv_shift, ' + ',
-              iv_shift,':above_median_', iv_shift, ':', iv
+              iv_shift, ':above_median_', iv_shift, ' + ',
+              iv_shift, ':above_median_', iv_shift, ':', iv
             )
         )
     }
-    # Controls
-    fml_controls = paste0(
-      ifelse(length(controls) > 1, 'sw(', ''),
-      paste(c(
-        ('1')[0 %in% controls],
-        paste(pest_controls, collapse = '+')[1 %in% controls],
-        paste(econ_controls, collapse = '+')[2 %in% controls],
-        paste(c(pest_controls, econ_controls), collapse = '+')[3 %in% controls]
-      ), collapse = ', '),
-      ifelse(length(controls) > 1, ')', '')
-    )
+
     # Fixed effects
-    fml_fes = paste0(
-      ifelse(length(fes) > 1, 'sw(', ''),
-      paste(c(
-        paste(base_fe, collapse = '+')[0 %in% fes],
-        paste(c(base_fe, dem_fes), collapse = '+')[1 %in% fes],
-        paste(c(base_fe, dad_fes), collapse = '+')[2 %in% fes],
-        paste(c(base_fe, dem_fes, dad_fes), collapse = '+')[3 %in% fes]
-      ), collapse = ', '),
-      ifelse(length(fes) > 1, ')', '')
-    )
+    fml_fes =
+      c(
+        if (dem_fe == TRUE) dem_fes else NULL,
+        if (dad_fe == TRUE) dad_fes else NULL,
+        base_fe,
+        NULL
+      ) |>
+      paste(collapse = ' + ')
+    if (fml_fes == '') fml_fes = '1'
+
+    # Controls
+    # Start by recording the length and class (for subcases)
+    cs_len = control_sets |> length()
+    cs_class = control_sets |> class()
+    # Check cases (based on length and class)
+    if (
+      # Case 1: No controls (length 0 or 'none')
+      (cs_len == 0) || all(control_sets == 'none')
+    ) {
+      # No controls: Set to NULL
+      fml_controls = NULL
+    } else if (
+      # Case 2: One set of controls
+      ((cs_len == 1) && (cs_class == 'list')) ||
+      ((cs_class == 'character') && (control_sets != 'none'))
+    ) {
+      # One set of controls: Collapse
+      fml_controls = control_sets |> unlist() |> paste(collapse = ' + ')
+    } else if (
+      # Case 3: Multiple sets of controls (iterate over list elements)
+      (cs_len > 1) && (cs_class == 'list')
+    ) {
+      # Multiple sets of controls: Iterate over list elements
+      fml_controls =
+        lapply(
+          X = seq_along(control_sets),
+          FUN = function(i) {
+            # Grab the set of controls
+            cs_i = control_sets[[i]]
+            # If NULL or 'none', then return '1'; else collapse
+            if (is.null(cs_i) || all(cs_i == 'none')) {
+              '1'
+            } else {
+              cs_i |> unlist() |> paste(collapse = ' + ')
+            }
+          }
+        ) |>
+        paste(collapse = ', ')
+      # Wrap with fixest `sw` function
+      fml_controls = paste0('sw(', fml_controls, ')')
+    }
+
     # Clusters
-    fml_inf = ifelse(
-      length(clustering) == 1,
-      clustering %>% paste0('~ ', .),
-      clustering %>% paste(collapse = ' + ') %>% paste0('~ ', .)
-    ) %>% as.formula()
+    fml_inf =
+      ifelse(
+        length(clustering) == 1,
+        clustering %>% paste0('~ ', .),
+        clustering %>% paste(collapse = ' + ') %>% paste0('~ ', .)
+      ) %>%
+      as.formula()
 
     # Formula: Reduced form
     fml_rf = paste(
@@ -819,7 +932,7 @@
       '_ivnl-', iv_nonlinear,
       '.qs'
     )
-    if(skip_iv == FALSE){
+    if (skip_iv == FALSE) {
       # Estimate with or without heterogeneity splits
       if (!is.null(het_split)) {
         est_rf = feols(
@@ -843,7 +956,8 @@
         file.path(dir_today, paste0('est_rf', base_name)),
         preset = 'fast'
       )
-      rm(est_rf); invisible(gc())
+      rm(est_rf)
+      invisible(gc())
 
       # Estimate: 2SLS with event study
       if (!is.null(het_split)) {
@@ -869,7 +983,8 @@
         file.path(dir_today, paste0('est_2sls', base_name)),
         preset = 'fast'
       )
-      rm(est_2sls); invisible(gc())
+      rm(est_2sls)
+      invisible(gc())
 
       # Estimate: 2SLS with shift share (if iv_shift is defined)
       if (!is.null(iv_shift)) {
@@ -895,7 +1010,8 @@
           file.path(dir_today, paste0('est_2sls_ss', base_name)),
           preset = 'fast'
         )
-        rm(est_2sls); invisible(gc())
+        rm(est_2sls)
+        invisible(gc())
       }
     }
     # Estimate OLS
@@ -922,10 +1038,11 @@
         file.path(dir_today, paste0('est_ols', base_name)),
         preset = 'fast'
       )
-      rm(est_ols); invisible(gc())
+      rm(est_ols)
+      invisible(gc())
     }
     # Estimating water results
-    if(!is.null(water_types)){
+    if (!is.null(water_types)) {
       lapply(
         water_types,
         estimate_water_spec,
@@ -990,8 +1107,8 @@
 #     controls = c(0, 3),
 #     clustering = c('year', 'state_fips')
 #   )
-  
-  # Emmett note 8/23/24: Starting to collect models we need to re-run here 
+
+  # Emmett note 8/23/24: Starting to collect models we need to re-run here
   # Instrument: 1990-1995 acreage percentiles (normalized by total cnty size)
   est_twfe(
     iv = 'percentile_gm_acres_pct_cnty',
@@ -1003,7 +1120,7 @@
     controls = c(0, 3),
     clustering = c('year', 'state_fips')
   )
-  # Instrument: 1990-1995 max yield percentile 
+  # Instrument: 1990-1995 max yield percentile
   est_twfe(
     iv = 'percentile_gm_yield_max',
     iv_shift = NULL,
