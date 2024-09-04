@@ -172,10 +172,12 @@
   )
 
   # Iterating over splits: Generate out-of-sample predictions
-  blah = lapply(
-    # X = seq_along(indices),
-    X = 2:5,
-    FUN = function(i) {
+  # blah = lapply(
+  #   # X = seq_along(indices),
+  #   X = 2:5,
+  #   FUN = function(i) {
+  i = 2
+
       # Announce the fold
       cat('Fold ', i, ': ', Sys.time() |> as.character(), '\n')
       # Clean up
@@ -183,9 +185,11 @@
       # Set up CV: Train on 4/5 of 'pre'; predict onto 1/5 of 'pre' and all 'post'
       cv_i = manual_rset(splits[i], paste0('Split ', 1))
       # Fit the model on the training folds (2604 seconds)
+      cat('Fitting model on training data...\n')
       rf_i = rf_wf_final |> fit(data = natality_full[splits[[i]]$in_id])
       invisible(gc())
       # Predict
+      cat('Predicting on test data...\n')
       pred_i = predict(
         object = rf_i,
         new_data = natality_full[splits[[i]]$out_id],
@@ -231,67 +235,68 @@
       # Clean up
       rm(pred_i)
       invisible(gc())
-      # Return 'success'
-      return('success')
-    }
-  )
 
-  # Load the splits' predictions
-  rf_pred =
-    mclapply(
-      X = here(
-        'data', 'clean', 'prediction', 'output'
-      ) |> dir(
-        pattern = paste0(outcome_var, '.*noindicators-2.*split[0-9]\\.fst'),
-        full.names = TRUE
-      ),
-      FUN = read_fst,
-      as.data.table = TRUE,
-      mc.cores = 5
-    ) |>
-    rbindlist(use.names = TRUE, fill = TRUE)
-  # Clean up
-  invisible(gc())
-  # Collapse to row (we have 5 predictions per post-period row)
-  rf_final = collap(
-    X = rf_pred,
-    by = ~ .row,
-    FUN = fmean,
-    cols = c(outcome_var, '.pred'),
-    sort = TRUE
-  )
-  # Key both datasets using row
-  setkey(natality_full, .row)
-  setkey(rf_final, .row)
-  # Add predictions to natality dataset (ordering should match; row "id" will not)
-  set(
-    x = natality_full,
-    j = paste0(outcome_var, '_pred'),
-    value = rf_final$.pred
-  )
-  # Add the 'true' value to check the match
-  set(
-    x = natality_full,
-    j = paste0(outcome_var, '_check'),
-    value = rf_final[[outcome_var]]
-  )
-  set(
-    x = natality_full,
-    j = paste0('.row_check_', outcome_var),
-    value = rf_final$.row
-  )
-  # Checks
-  qtab(natality_full[[outcome_var]] == natality_full[[paste0(outcome_var, '_check')]])
-  qtab(natality_full[['.row']] == natality_full[[paste0('.row_check_', outcome_var)]])
-  # Save
-  write_fst(
-    x = natality_full,
-    path = here(
-      'data', 'clean', 'prediction', 'output',
-      paste0(
-        outcome_var,
-        '-natality-micro-rf-train80-noindicators-2-full-cvpred.fst'
-      )
-    ),
-    compress = 100
-  )
+  #     # Return 'success'
+  #     return('success')
+  #   }
+  # )
+
+  # # Load the splits' predictions
+  # rf_pred =
+  #   mclapply(
+  #     X = here(
+  #       'data', 'clean', 'prediction', 'output'
+  #     ) |> dir(
+  #       pattern = paste0(outcome_var, '.*noindicators-2.*split[0-9]\\.fst'),
+  #       full.names = TRUE
+  #     ),
+  #     FUN = read_fst,
+  #     as.data.table = TRUE,
+  #     mc.cores = 5
+  #   ) |>
+  #   rbindlist(use.names = TRUE, fill = TRUE)
+  # # Clean up
+  # invisible(gc())
+  # # Collapse to row (we have 5 predictions per post-period row)
+  # rf_final = collap(
+  #   X = rf_pred,
+  #   by = ~ .row,
+  #   FUN = fmean,
+  #   cols = c(outcome_var, '.pred'),
+  #   sort = TRUE
+  # )
+  # # Key both datasets using row
+  # setkey(natality_full, .row)
+  # setkey(rf_final, .row)
+  # # Add predictions to natality dataset (ordering should match; row "id" will not)
+  # set(
+  #   x = natality_full,
+  #   j = paste0(outcome_var, '_pred'),
+  #   value = rf_final$.pred
+  # )
+  # # Add the 'true' value to check the match
+  # set(
+  #   x = natality_full,
+  #   j = paste0(outcome_var, '_check'),
+  #   value = rf_final[[outcome_var]]
+  # )
+  # set(
+  #   x = natality_full,
+  #   j = paste0('.row_check_', outcome_var),
+  #   value = rf_final$.row
+  # )
+  # # Checks
+  # qtab(natality_full[[outcome_var]] == natality_full[[paste0(outcome_var, '_check')]])
+  # qtab(natality_full[['.row']] == natality_full[[paste0('.row_check_', outcome_var)]])
+  # # Save
+  # write_fst(
+  #   x = natality_full,
+  #   path = here(
+  #     'data', 'clean', 'prediction', 'output',
+  #     paste0(
+  #       outcome_var,
+  #       '-natality-micro-rf-train80-noindicators-2-full-cvpred.fst'
+  #     )
+  #   ),
+  #   compress = 100
+  # )
