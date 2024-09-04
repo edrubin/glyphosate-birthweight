@@ -41,7 +41,8 @@ data-raw: \
  $(raw-dir)labor-dt.fst \
  $(raw-dir)census_crop_acre_county.fst \
  $(raw-dir)y_diff_dt.fst \
- $(crop-dt)
+ $(crop-dt) \
+ $(raw-dir)fertilizer-dt-interpolated.fst
 # Intermediate files that may get updated often
 data-clean: \
  $(clean-dir)health-dt.fst \
@@ -278,6 +279,11 @@ $(crop-dt) &: R/00-data-prep/farm/03-crop-county-cleaning.R
 	@echo "Made crop data"
 # Other dependencies: $(wildcard $(dscr-dir)nass-*/*/*.fst) # Recursive?
 
+# Fertilizer data
+$(raw-dir)fertilizer-dt-interpolated.fst &: R/00-data-prep/farm/05-fertilizer.R
+	Rscript $<
+	@echo "Made fertilizer data"
+	
 # -----------------------------------------------------------------------------
 # Targets for data-download
 
