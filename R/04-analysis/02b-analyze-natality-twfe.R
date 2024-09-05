@@ -1030,6 +1030,9 @@
     # Make folder for the results
     dir_today = here('data', 'results', 'micro-new')
     dir_today |> dir.create(showWarnings = FALSE, recursive = TRUE)
+    # Calculate time suffix
+    time_suffix = now() |> as.integer() |> as.character()
+
     # Base filename with all options
     base_name = paste0(
       # Outcomes
@@ -1079,11 +1082,17 @@
       ifelse(is.null(gly_nonlinear), '', paste0('_glynl-', gly_nonlinear)),
       # Nonlinearity in IV
       ifelse(iv_nonlinear, '_ivnl', ''),
-      # Add name suffix if defined
-      ifelse(is.null(name_suffix), '', paste0('_', name_suffix)),
+      # Add name suffix if defined; otherwise generate a random code from epoch
+      ifelse(
+        is.null(name_suffix),
+        '',
+        paste0('_', name_suffix)
+      ),
+      paste0('_', time_suffix),
       # File suffix
       '.qs'
     )
+
     if (skip_iv == FALSE) {
       # Estimate with or without heterogeneity splits
       if (!is.null(het_split)) {
@@ -1106,6 +1115,26 @@
       qsave(
         est_rf,
         file.path(dir_today, paste0('est_rf', base_name)),
+        preset = 'fast'
+      )
+      # Save some information about the model
+      qsave(
+        list(
+          outcomes = outcomes,
+          control_sets = control_sets,
+          base_fe = base_fe,
+          dem_fe = dem_fe,
+          dad_fe = dad_fe,
+          iv = iv,
+          fml_controls = fml_controls,
+          fml_fes = fml_fes,
+          fml_iv = fml_iv,
+          fml_inf = fml_inf |> as.character() |> paste(collapse = ''),
+          spatial_subset = spatial_subset,
+          county_subset = county_subset,
+          het_split = het_split
+        ),
+        file.path(dir_today, paste0('info_', time_suffix, '.qs')),
         preset = 'fast'
       )
       rm(est_rf)
