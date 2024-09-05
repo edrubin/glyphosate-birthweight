@@ -559,7 +559,7 @@
         CJ(
           controls = controls,
           pred = str_subset(colnames(county_exposure_pred_dt), 'pred')
-        )[,.(
+        )[, .(
           fml_string = fcase(
             controls == 0, pred,
             controls == 1, paste0(pred, ' + ', paste(pest_controls, collapse = '+')),
@@ -734,7 +734,7 @@
         iv_shift,
         fifelse(
           iv_nonlinear == TRUE & gly_nonlinear == 'median',
-          paste0('above_median_',iv),
+          paste0('above_median_', iv),
           NA_character_
         ),
         fifelse(
