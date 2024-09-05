@@ -1010,7 +1010,7 @@
     }
 
     # Formula: OLS
-    if (include_ols == TRUE){
+    if (include_ols == TRUE) {
       fml_ols =
         paste(
           fml_y,
@@ -1094,6 +1094,28 @@
       '.qs'
     )
 
+    # Save information about the model
+    qsave(
+      list(
+        outcomes = outcomes,
+        control_sets = control_sets,
+        base_fe = base_fe,
+        dem_fe = dem_fe,
+        dad_fe = dad_fe,
+        iv = iv,
+        fml_controls = fml_controls,
+        fml_fes = fml_fes,
+        fml_iv = fml_iv,
+        fml_inf = fml_inf |> as.character() |> paste(collapse = ''),
+        spatial_subset = spatial_subset,
+        county_subset = county_subset,
+        het_split = het_split
+      ),
+      file.path(dir_today, paste0('info_', time_suffix, '.qs')),
+      preset = 'fast'
+    )
+
+    # Estimate reduced form and 2SLS
     if (skip_iv == FALSE) {
       # Estimate with or without heterogeneity splits
       if (!is.null(het_split)) {
@@ -1118,26 +1140,6 @@
         file.path(dir_today, paste0('est_rf', base_name)),
         preset = 'fast'
       )
-      # Save some information about the model
-      qsave(
-        list(
-          outcomes = outcomes,
-          control_sets = control_sets,
-          base_fe = base_fe,
-          dem_fe = dem_fe,
-          dad_fe = dad_fe,
-          iv = iv,
-          fml_controls = fml_controls,
-          fml_fes = fml_fes,
-          fml_iv = fml_iv,
-          fml_inf = fml_inf |> as.character() |> paste(collapse = ''),
-          spatial_subset = spatial_subset,
-          county_subset = county_subset,
-          het_split = het_split
-        ),
-        file.path(dir_today, paste0('info_', time_suffix, '.qs')),
-        preset = 'fast'
-      )
       rm(est_rf)
       invisible(gc())
 
@@ -1158,7 +1160,6 @@
           lean = TRUE
         )
       }
-
       # Save
       qsave(
         est_2sls,
@@ -1196,8 +1197,9 @@
         invisible(gc())
       }
     }
+
     # Estimate OLS
-    if (include_ols == TRUE){
+    if (include_ols == TRUE) {
       if (!is.null(het_split)) {
         est_ols = feols(
           fml = fml_ols,
@@ -1223,6 +1225,7 @@
       rm(est_ols)
       invisible(gc())
     }
+
     # Estimating water results
     if (!is.null(water_types)) {
       lapply(
@@ -1290,9 +1293,10 @@
 #     clustering = c('year', 'state_fips')
 #   )
 
+
+# TODO Update FE and control specifications; run.
   # Emmett note 8/23/24: Starting to collect models we need to re-run here
   # Instrument: 1990-1995 acreage percentiles (normalized by total cnty size)
-# TODO Update FE and control specifications; run.
   est_twfe(
     iv = 'percentile_gm_acres_pct_cnty',
     iv_shift = NULL,
