@@ -1328,7 +1328,7 @@
         'inc_per_cap_farm',
         'inc_per_cap_nonfarm',
         'empl_rate',
-        'farm_empl_per_cap',
+        'farm_empl_per_cap'
       ),
       'age_share',
       c('age_share', 'race_share'),
@@ -1346,7 +1346,7 @@
     iv_nonlinear = FALSE,
     include_ols = FALSE,
     skip_iv = FALSE,
-    water_types = NULL,
+    water_types = NULL
   )
 
 
