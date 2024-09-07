@@ -11,7 +11,7 @@
   # Load packages
   pacman::p_load(
     readr, readxl, stringr, fastverse, qs, patchwork,
-    fixest, splines, parallel, magrittr, here,
+    rlang, fixest, splines, parallel, magrittr, here,
     fst
   )
   fastverse_extend(topics = c('ST', 'DT', 'VI'))
@@ -91,6 +91,60 @@
     mage = mage %>% as.integer(),
     fage = fage %>% as.integer()
   )]
+
+
+# Create birth-outcome indexes -------------------------------------------------
+  # First index will match Currie, Greenstone, and Meckel
+# NOTE Using the bith anomalies that are regularly recorded
+  index1_dt = natality_dt[, .(
+    dbwt,
+    i_lbw = 1 * (dbwt < 2500),
+    i_preterm = 1 * (gestation <= 37),
+    i_congential = 1 * ((
+      (anencephaly == 1) +
+      (spina_bifida == 1) +
+      (omphalocele == 1) +
+      (cleft_lip == 1) +
+      (baby_hernia == 1) +
+      (downs_syndr == 1)
+    ) > 0),
+    i_abnormal = 1 * ((
+      (meconium == 1) +
+      (labor_under_3h == 1) +
+      (breech == 1)
+    ) > 0)
+  )]
+  # Second index uses our main outcomes
+  index2_dt = natality_dt[, .(
+    dbwt,
+    gestation,
+    i_lbw = 1 * (dbwt < 2500),
+    i_vlbw = 1 * (dbwt < 1500),
+    i_preterm = 1 * (gestation <= 37)
+  )]
+  # Standardize
+  index1_dt %<>% fscale()
+  index2_dt %<>% fscale()
+  # Calculate the covariance matrix
+  cov1 = index1_dt |> pwcov()
+  cov2 = index2_dt |> pwcov()
+  # Create vector of 1s
+  v1 = rep(1, nrow(cov1))
+  v2 = rep(1, nrow(cov2))
+  # Calculate the weights
+  wts1 = solve(t(v1) %*% solve(cov1) %*% v1) %*% t(v1) %*% solve(cov1)
+  wts2 = solve(t(v2) %*% solve(cov2) %*% v2) %*% t(v2) %*% solve(cov2)
+  # Calculate the index
+  index1 = as.matrix(index1_dt) %*% t(wts1)
+  index2 = as.matrix(index2_dt) %*% t(wts2)
+  # Add indexes to the natality dataset
+  natality_dt[, `:=`(
+    index1 = index1,
+    index2 = index2
+  )]
+  # Clean up
+  rm(index1_dt, index2_dt, cov1, cov2, v1, v2)
+  invisible(gc())
 
 
 # Collapse birth anomalies -----------------------------------------------------
@@ -623,7 +677,8 @@
       'dbwt_pctl_pre',
       'i_lbw', 'i_vlbw',
       'gestation', 'i_preterm',
-      'c_section', 'any_anomaly'
+      'c_section', 'any_anomaly',
+      'index1', 'index2'
     ),
     iv = 'all_yield_diff_percentile_gmo_max',
     iv_shift = NULL,
@@ -634,7 +689,7 @@
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
     dem_fe = TRUE,
     dad_fe = TRUE,
-    control_sets = list(
+    control_sets = list2(
       'none',
       'pest',
       'unempl_rate',
@@ -1096,7 +1151,7 @@
 
     # Save information about the model
     qsave(
-      list(
+      list2(
         outcomes = outcomes,
         iv = iv,
         iv_shift = iv_shift,
@@ -1302,10 +1357,10 @@
 # NOTE Always using county, year-month, and demographic FEs
   est_twfe(
     outcomes = c(
-      'dbwt', 'dbwt_pred',
-      'i_lbw', 'i_vlbw',
-      'gestation', 'i_preterm',
-      NULL
+      'dbwt',
+      'gestation',
+      'index1',
+      'index2'
     ),
     iv = 'all_yield_diff_percentile_gmo_max',
     iv_shift = NULL,
@@ -1316,7 +1371,7 @@
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
     dem_fe = TRUE,
     dad_fe = TRUE,
-    control_sets = list(
+    control_sets = list2(
       'none',
       c('pest', 'unempl_rate'),
       c('unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap'),
@@ -1338,7 +1393,7 @@
         'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
         'age_share', 'race_share',
         'fert'
-       ),
+       )
     ),
     name_suffix = NULL,
     clustering = c('year', 'state_fips'),
@@ -1419,7 +1474,7 @@
 #       dem_fe = TRUE,
 #       dad_fe = TRUE,
 # # TODO Decide "final" set of controls
-#       control_set = list(
+#       control_set = list2(
 #         'none',
 #         c('pest', 'unempl_rate', 'empl_rate', 'age_share')
 #       ),
