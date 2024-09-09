@@ -66,22 +66,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
     read.fst(
       here("data/raw/est_pest_use.fst"),
       as.data.table = TRUE
-    )[,census_year := str_sub(year, 1,3)] |>
-    merge(
-      cnty_area_dt,
-      by = 'GEOID'
-    )  
-  # Adding some variables 
-  pest_dt[,':='(
-    glyph_km2 = glyphosate/area_km2,
-    alachlor_km2 = alachlor/area_km2, 
-    atrazine_km2 =  atrazine/area_km2,
-    cyanazine_km2 = cyanazine/area_km2,
-    fluazifop_km2 = fluazifop/area_km2, 
-    metolachlor_km2 = metolachlor/area_km2, 
-    metribuzin_km2 =  metribuzin/area_km2,
-    nicosulfuron_km2 = nicosulfuron/area_km2
-  )]
+    )[,census_year := str_sub(year, 1,3)] 
   # First stage 
   fs_dt = read.fst(
     path = here("data/clean/fs-dt.fst"),
@@ -255,7 +240,22 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
       annual_fert_dt,
       by = c("GEOID","year"),
       all.x = T
-    )
+    ) |>
+    merge(
+      cnty_area_dt,
+      by = 'GEOID'
+    )  
+  # Adding some variables 
+  comb_dt[,':='(
+    glyph_km2 = glyphosate/area_km2,
+    alachlor_km2 = alachlor/area_km2, 
+    atrazine_km2 =  atrazine/area_km2,
+    cyanazine_km2 = cyanazine/area_km2,
+    fluazifop_km2 = fluazifop/area_km2, 
+    metolachlor_km2 = metolachlor/area_km2, 
+    metribuzin_km2 =  metribuzin/area_km2,
+    nicosulfuron_km2 = nicosulfuron/area_km2
+  )]
   # Fertilizer colnames
   fert_cols = colnames(annual_fert_dt)[-(1:2)]
   # For data in these tables, missing values are considered zero's
