@@ -54,7 +54,7 @@
   setnames(pred_gest_dt, old = 'gestation', new = 'gestation_check')
 
 
-# Merge datasets -----------------------------------------------------------------------------------
+# Merge datasets -------------------------------------------------------------------------
   # Add row to natality data for merging with predictions
   natality_dt[, row := seq_len(.N)]
   # Merge predictions onto the full natality dataset (using row ID)
