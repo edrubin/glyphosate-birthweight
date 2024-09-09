@@ -1,13 +1,13 @@
-# Notes ------------------------------------------------------------------------
+# Notes ----------------------------------------------------------------------------------
 #   Goal:   Run main TWFE analysis with various specifications.
 #   Time:   ~100 hours for 11 runs (varies a lot with specification).
 
 
-# Todo list --------------------------------------------------------------------
+# Todo list ------------------------------------------------------------------------------
 #   TODO Add a way to keep sample constant (due to missing demog controls)
 
 
-# Setup ------------------------------------------------------------------------
+# Setup ----------------------------------------------------------------------------------
   # Load packages
   pacman::p_load(
     readr, readxl, stringr, fastverse, qs, patchwork,
@@ -17,7 +17,7 @@
   fastverse_extend(topics = c('ST', 'DT', 'VI'))
 
 
-# Load data --------------------------------------------------------------------
+# Load data ------------------------------------------------------------------------------
   # Yield-potential treatment definitions
   comb_cnty_dt = here(
     'data', 'clean', 'comb-cnty-dt.fst'
@@ -54,7 +54,7 @@
   setnames(pred_gest_dt, old = 'gestation', new = 'gestation_check')
 
 
-# Merge datasets -------------------------------------------------------------------------
+# Merge datasets -----------------------------------------------------------------------------------
   # Add row to natality data for merging with predictions
   natality_dt[, row := seq_len(.N)]
   # Merge predictions onto the full natality dataset (using row ID)
@@ -93,7 +93,7 @@
   )]
 
 
-# Create birth-outcome indexes -------------------------------------------------
+# Create birth-outcome indexes -----------------------------------------------------------
   # Create index from 5 outcomes of interest
   # Similar to Currie, Greenstone, and Meckel (doi.org/10.1126/sciadv.1603021)
   index_dt = natality_dt[, .(
@@ -122,7 +122,7 @@
   invisible(gc())
 
 
-# Collapse birth anomalies -----------------------------------------------------
+# Collapse birth anomalies ---------------------------------------------------------------
   # Create an indicator for any birth anomalies (without and with na.rm = TRUE)
   natality_dt[, `:=`(
     any_anomaly = 1 * (do.call(pmin, .SD) == 1),
@@ -133,7 +133,7 @@
   natality_dt[, (anomalies) := NULL]
 
 
-# Merge crop datasets ----------------------------------------------------------
+# Merge crop datasets --------------------------------------------------------------------
   # Add 90-95 percentiles to the county crop panel; then shift-share variables
   comb_cnty_dt %<>%
     merge(
@@ -148,7 +148,7 @@
     )
 
 
-# Define 'rural' counties ------------------------------------------------------
+# Define 'rural' counties ----------------------------------------------------------------
 # NOTE: Within county, rural is constant across years (defined in a Census year)
 # NOTE: Because births have two counties (occurence and residence), we define
 #       two measures of 'rural births'
@@ -194,14 +194,14 @@
   invisible(gc())
 
 
-# If testing without real data ------------------------------------------------
+# If testing without real data -----------------------------------------------------------
   # natality_dt = read.fst(
   #   here('data/clean/mini-data.fst'),
   #   as.data.table = TRUE
   # )
 
 
-# Add birthweight percentiles --------------------------------------------------
+# Add birthweight percentiles ------------------------------------------------------------
   # Add percentiles for birthweight (based upon pre-1996 births)
   ecdf_pre = natality_dt[year < 1996, dbwt %>% ecdf()]
   natality_dt[, dbwt_pctl_pre := ecdf_pre(dbwt)]
@@ -252,7 +252,7 @@
   )]
 
 
-# Add gestation percentiles ----------------------------------------------------
+# Add gestation percentiles --------------------------------------------------------------
   # Add percentiles for birthweight (based upon pre-1996 births)
   ecdf_pre = natality_dt[year < 1996, gestation %>% ecdf()]
   natality_dt[, gestation_pctl_pre := ecdf_pre(gestation)]
@@ -303,7 +303,7 @@
   )]
 
 
-# Add end-of-sample GM/suitability percentiles ---------------------------------
+# Add end-of-sample GM/suitability percentiles -------------------------------------------
   # Find the last year of the current natality sample (will use for pctl calc)
   yr_max = natality_dt[, fmax(year)]
   # Calculate average GLY/km2 and GMO suitability by county in last 3 years
@@ -352,7 +352,7 @@
   invisible(gc())
 
 
-# Add additional variables to natality -----------------------------------------
+# Add additional variables to natality ---------------------------------------------------
   # Add indicators for low birthweight (<2500) and very low birthweight (<1500)
   natality_dt[, `:=`(
     i_lbw = 1 * (dbwt < 2500),
@@ -468,7 +468,7 @@
   invisible(gc())
 
 
-# Function: Water analysis -----------------------------------------------------
+# Function: Water analysis ---------------------------------------------------------------
   # This function is called within the analysis script to estimate water spec
   estimate_water_spec = function(
     water_type, # c('bins-simple','bins-soil','ml-pred')
@@ -645,7 +645,7 @@
     invisible(gc())
   }
 
-# Function: Run TFWE analysis --------------------------------------------------
+# Function: Run TFWE analysis ------------------------------------------------------------
   est_twfe = function(
     outcomes = c(
       'dbwt', 'dbwt_pred',
@@ -1281,7 +1281,7 @@
   }
 
 
-# # Estimates: Main, pooled results ----------------------------------------------
+# # Estimates: Main, pooled results --------------------------------------------------------
 #   # Instrument: Yield diff percentile GMO
 #   est_twfe(
 #     iv = 'all_yield_diff_percentile_gmo',
@@ -1332,35 +1332,35 @@
 # Estimate various FE specifications -----------------------------------------------------
   # Define fixed effects for robustness check
   # Standard: county, year-month
-  .fe0 = c('fips_res', 'fips_occ', 'year_month')
+  fe0 = c('fips_res', 'fips_occ', 'year_month')
   # R2, Part 1: county, year, month
-  .fe1 = c('fips_res', 'fips_occ', 'year', 'month')
+  fe1 = c('fips_res', 'fips_occ', 'year', 'month')
   # R2, Part 2: county, sample year-by-census region, calendar month-by-census region;
-  .fe2a = c('fips_res', 'fips_occ', 'year^census_region', 'month^census_region')
+  fe2a = c('fips_res', 'fips_occ', 'year^census_region', 'month^census_region')
   # Switching to year-month-census region
-  .fe2b = c('fips_res', 'fips_occ', 'year_month^census_region')
+  fe2b = c('fips_res', 'fips_occ', 'year_month^census_region')
   # Repeating with census division
-  .fe2c = c('fips_res', 'fips_occ', 'year^census_division', 'month^census_division')
-  .fe2d = c('fips_res', 'fips_occ', 'year_month^census_division')
+  fe2c = c('fips_res', 'fips_occ', 'year^census_division', 'month^census_division')
+  fe2d = c('fips_res', 'fips_occ', 'year_month^census_division')
   # Adding the same but for farm resource region
   # R2, Part 2: county, sample year-by-farm region, calendar month-by-farm region;
-  .fe3a = c('fips_res', 'fips_occ', 'year^farm_region', 'month^farm_region')
-  .fe3b = c('fips_res', 'fips_occ', 'year_month^farm_region')
+  fe3a = c('fips_res', 'fips_occ', 'year^farm_region', 'month^farm_region')
+  fe3b = c('fips_res', 'fips_occ', 'year_month^farm_region')
   # R2, Part 3: county, sample year-by-state, calendar month-by-state
-  .fe4a = c('fips_res', 'fips_occ', 'year^state_fips', 'month^state_fips')
+  fe4a = c('fips_res', 'fips_occ', 'year^state_fips', 'month^state_fips')
   # Switching to year-month-state
-  .fe4b = c('fips_res', 'fips_occ', 'year_month^state_fips')
+  fe4b = c('fips_res', 'fips_occ', 'year_month^state_fips')
   # R2, Part 4: county, sample year-month-by-census region, calendar month-by-ag district
-  .fe5a = c('fips_res', 'fips_occ', 'year_month^census_region', 'month^asd_code')
-  .fe5b = c('fips_res', 'fips_occ', 'year_month^farm_region', 'month^asd_code')
+  fe5a = c('fips_res', 'fips_occ', 'year_month^census_region', 'month^asd_code')
+  fe5b = c('fips_res', 'fips_occ', 'year_month^farm_region', 'month^asd_code')
   # Add ag. district interactions
-  .fe6a = c('fips_res', 'fips_occ', 'year^asd_code', 'month^asd_code')
-  .fe6b = c('fips_res', 'fips_occ', 'year_month^asd_code')
+  fe6a = c('fips_res', 'fips_occ', 'year^asd_code', 'month^asd_code')
+  fe6b = c('fips_res', 'fips_occ', 'year_month^asd_code')
   # Create a vector of the FE specifications
-  fe_v = ls(pattern = '^\\.fe[0-9][a-z]?', all.names = TRUE)
+  fe_v = ls(pattern = '^fe[0-9][a-z]?')
   # Iterate over the fixed effects
   blah = lapply(X = fe_v, FUN = function(fe_i) {
-    # Estimate the desired set of FEs  
+    # Estimate the desired set of FEs
     est_twfe(
       outcomes = c(
         'dbwt',
@@ -1488,7 +1488,7 @@
 #   )
 
 
-# # Estimates: Heterogeneity by predicted quintile and month --------------------
+# # Estimates: Heterogeneity by predicted quintile and month ------------------------------
 #   # Yield diff percentile GMO
 #   est_twfe(
 #     iv = 'all_yield_diff_percentile_gmo',
@@ -1560,7 +1560,7 @@
 #   )
 
 
-# Test changing demographics ---------------------------------------------------
+# Test changing demographics -------------------------------------------------------------
 #   # Instrument: Yield diff percentile GMO
 #   est_twfe(
 #     outcomes = c(
@@ -1587,7 +1587,7 @@
 #   )
 
 
-# # Separate estimates by region -------------------------------------------------
+# # Separate estimates by region -----------------------------------------------------------
 #   # Estimate only for midwest and northeast
 #   est_twfe(
 #     iv = 'all_yield_diff_percentile_gmo',
@@ -1629,7 +1629,7 @@
 #   )
 
 
-# # Just the OLS model ----------------------------------------------------------
+# # Just the OLS model --------------------------------------------------------------------
 #   # This should only estimate OLS results (not rf or 2sls or water)
 #   est_twfe(
 #     iv = 'all_yield_diff_percentile_gmo',
@@ -1645,7 +1645,7 @@
 #   )
 
 
-# # Water results ---------------------------------------------------------------
+# # Water results -------------------------------------------------------------------------
 #   # This should only estimate water results (not rf or 2sls or ols)
 # # NOTE Takes ~ 5 hours to run
 #   est_twfe(
@@ -1663,7 +1663,7 @@
 #   )
 
 
-# # Estimate by counties' rural status -------------------------------------------
+# # Estimate by counties' rural status -----------------------------------------------------
 # # NOTE Crashed during second-stage estimation
 #   est_twfe(
 #     outcomes = 'dbwt',
@@ -1693,7 +1693,7 @@
 #   )
 
 
-# # Estimate on purely urban births ----------------------------------------------
+# # Estimate on purely urban births --------------------------------------------------------
 #   est_twfe(
 #     outcomes = 'dbwt',
 #     iv = 'all_yield_diff_percentile_gmo',
@@ -1709,7 +1709,7 @@
 #   )
 
 
-# # Estimate on purely rural births ----------------------------------------------
+# # Estimate on purely rural births --------------------------------------------------------
 #   est_twfe(
 #     outcomes = c('dbwt', 'gestation'),
 #     iv = 'all_yield_diff_percentile_gmo',
