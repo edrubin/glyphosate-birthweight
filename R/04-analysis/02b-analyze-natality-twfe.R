@@ -798,7 +798,10 @@
       )
     )
     # Define variables that might be used for fixed effects (in comb_cnty_dt)
-    fe_vars = c('state_fips', 'census_region', 'census_division')
+    fe_vars = c(
+      'state_fips', 'census_region', 'census_division',
+      'asd_code', 'farm_region'
+    )
 
     # Enforce spatial subsets (essentially rural, urban, or all)
     if (is.null(spatial_subset)) {
@@ -1359,7 +1362,8 @@
   # Create a vector of the FE specifications
   fe_v = ls(pattern = '^fe[0-9][a-z]?')
   # Iterate over the fixed effects
-  blah = lapply(X = fe_v, FUN = function(fe_i) {
+# TODO Remove `tail` after running (error happened after 6th item)
+  blah = lapply(X = fe_v |> tail(-6), FUN = function(fe_i) {
     # Estimate the desired set of FEs
     est_twfe(
       outcomes = c(
