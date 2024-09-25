@@ -9,13 +9,13 @@ p_load(
 
 # Loading HydroBASINS data limiting to those in the continental US
 hydrobasin_sf = 
-  read_sf(here("data/spatial/hydrobasins/hybas_lake_na_lev08_v1c.shp")) |>
+  read_sf(here("data/watershed/hydrobasins/hybas_lake_na_lev08_v1c.shp")) |>
   st_transform(crs = 2163) |>
   clean_names()
 
 # DT with distances 
 hybas_dist_dt = read.fst(
-  path = here("data-clean/watershed/hybas-dist-dt.fst"),
+  path = here("data/watershed/hybas-dist-dt.fst"),
   as.data.table = TRUE
 )
 
@@ -43,7 +43,7 @@ hydrobasin_dt[,
 # Loading weights to limit to watersheds in continental US
 area_weight_dt = 
   read_fst(
-    here("data-clean/watershed/weights/hydrobasin-area-weights.fst"),
+    here("data/watershed/weights/hydrobasin-area-weights.fst"),
     as.data.table = TRUE
   ) |>
   setnames(old = "watershed_weight",new = "area_weight") |>
