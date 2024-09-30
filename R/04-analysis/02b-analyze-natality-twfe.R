@@ -1332,97 +1332,152 @@
 #   )
 
 
-# Estimate various FE specifications -----------------------------------------------------
-  # Define fixed effects for robustness check
-  # Standard: county, year-month
-  fe0 = c('fips_res', 'fips_occ', 'year_month')
-  # R2, Part 1: county, year, month
-  fe1 = c('fips_res', 'fips_occ', 'year', 'month')
-  # R2, Part 2: county, sample year-by-census region, calendar month-by-census region;
-  fe2a = c('fips_res', 'fips_occ', 'year^census_region', 'month^census_region')
-  # Switching to year-month-census region
-  fe2b = c('fips_res', 'fips_occ', 'year_month^census_region')
-  # Repeating with census division
-  fe2c = c('fips_res', 'fips_occ', 'year^census_division', 'month^census_division')
-  fe2d = c('fips_res', 'fips_occ', 'year_month^census_division')
-  # Adding the same but for farm resource region
-  # R2, Part 2: county, sample year-by-farm region, calendar month-by-farm region;
-  fe3a = c('fips_res', 'fips_occ', 'year^farm_region', 'month^farm_region')
-  fe3b = c('fips_res', 'fips_occ', 'year_month^farm_region')
-  # R2, Part 3: county, sample year-by-state, calendar month-by-state
-  fe4a = c('fips_res', 'fips_occ', 'year^state_fips', 'month^state_fips')
-  # Switching to year-month-state
-  fe4b = c('fips_res', 'fips_occ', 'year_month^state_fips')
-  # R2, Part 4: county, sample year-month-by-census region, calendar month-by-ag district
-  fe5a = c('fips_res', 'fips_occ', 'year_month^census_region', 'month^asd_code')
-  fe5b = c('fips_res', 'fips_occ', 'year_month^farm_region', 'month^asd_code')
-  # Add ag. district interactions
-  fe6a = c('fips_res', 'fips_occ', 'year^asd_code', 'month^asd_code')
-  fe6b = c('fips_res', 'fips_occ', 'year_month^asd_code')
-  # Create a vector of the FE specifications
-  fe_v = ls(pattern = '^fe[0-9][a-z]?')
-  # Iterate over the fixed effects
-# TODO Remove `tail` after running (error happened after 6th item)
-  blah = lapply(X = fe_v |> tail(-6), FUN = function(fe_i) {
-    # Estimate the desired set of FEs
-    est_twfe(
-      outcomes = c(
-        'dbwt',
-        'gestation',
-        'index'
-      ),
-      iv = 'all_yield_diff_percentile_gmo_max',
-      iv_shift = NULL,
-      spatial_subset = 'rural',
-      county_subset = NULL,
-      county_subset_name = NULL,
-      het_split = NULL,
-      base_fe = get(fe_i),
-      dem_fe = TRUE,
-      dad_fe = TRUE,
-      control_set = list2(
-        'none',
-        c(
-          'pest',
-          'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-          'inc_per_cap_farm', 'inc_per_cap_nonfarm',
-          'pop_all',
-          'age_share', 'race_share',
-          'fert'
-         )
-      ),
-      clustering = c('year', 'state_fips'),
-      gly_nonlinear = NULL,
-      iv_nonlinear = FALSE,
-      include_ols = FALSE,
-      skip_iv = FALSE,
-      water_types = NULL,
-      name_suffix = fe_i
-    )
-    # Let us know we are done
-    cat(
-      'Finished with FE spec',
-      which(fe_v == fe_i), '/', length(fe_v), '\n',
-      get(fe_i) |> paste(collapse = ' + '), '\n',
-      lubridate::now() |> as.character(), '\n\n'
-    )
-    # Return something
-    return('Done!')
-  })
-  rm(blah)
-  invisible(gc())
+# # Estimate various FE specifications -----------------------------------------------------
+#   # Define fixed effects for robustness check
+#   # Standard: county, year-month
+#   fe0 = c('fips_res', 'fips_occ', 'year_month')
+#   # R2, Part 1: county, year, month
+#   fe1 = c('fips_res', 'fips_occ', 'year', 'month')
+#   # R2, Part 2: county, sample year-by-census region, calendar month-by-census region;
+#   fe2a = c('fips_res', 'fips_occ', 'year^census_region', 'month^census_region')
+#   # Switching to year-month-census region
+#   fe2b = c('fips_res', 'fips_occ', 'year_month^census_region')
+#   # Repeating with census division
+#   fe2c = c('fips_res', 'fips_occ', 'year^census_division', 'month^census_division')
+#   fe2d = c('fips_res', 'fips_occ', 'year_month^census_division')
+#   # Adding the same but for farm resource region
+#   # R2, Part 2: county, sample year-by-farm region, calendar month-by-farm region;
+#   fe3a = c('fips_res', 'fips_occ', 'year^farm_region', 'month^farm_region')
+#   fe3b = c('fips_res', 'fips_occ', 'year_month^farm_region')
+#   # R2, Part 3: county, sample year-by-state, calendar month-by-state
+#   fe4a = c('fips_res', 'fips_occ', 'year^state_fips', 'month^state_fips')
+#   # Switching to year-month-state
+#   fe4b = c('fips_res', 'fips_occ', 'year_month^state_fips')
+#   # R2, Part 4: county, sample year-month-by-census region, calendar month-by-ag district
+#   fe5a = c('fips_res', 'fips_occ', 'year_month^census_region', 'month^asd_code')
+#   fe5b = c('fips_res', 'fips_occ', 'year_month^farm_region', 'month^asd_code')
+#   # Add ag. district interactions
+#   fe6a = c('fips_res', 'fips_occ', 'year^asd_code', 'month^asd_code')
+#   fe6b = c('fips_res', 'fips_occ', 'year_month^asd_code')
+#   # Create a vector of the FE specifications
+#   fe_v = ls(pattern = '^fe[0-9][a-z]?')
+#   # Iterate over the fixed effects
+# # TODO Remove `tail` after running (error happened after 6th item)
+#   blah = lapply(X = fe_v |> tail(-6), FUN = function(fe_i) {
+#     # Estimate the desired set of FEs
+#     est_twfe(
+#       outcomes = c(
+#         'dbwt',
+#         'gestation',
+#         'index'
+#       ),
+#       iv = 'all_yield_diff_percentile_gmo_max',
+#       iv_shift = NULL,
+#       spatial_subset = 'rural',
+#       county_subset = NULL,
+#       county_subset_name = NULL,
+#       het_split = NULL,
+#       base_fe = get(fe_i),
+#       dem_fe = TRUE,
+#       dad_fe = TRUE,
+#       control_set = list2(
+#         'none',
+#         c(
+#           'pest',
+#           'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+#           'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+#           'pop_all',
+#           'age_share', 'race_share',
+#           'fert'
+#          )
+#       ),
+#       clustering = c('year', 'state_fips'),
+#       gly_nonlinear = NULL,
+#       iv_nonlinear = FALSE,
+#       include_ols = FALSE,
+#       skip_iv = FALSE,
+#       water_types = NULL,
+#       name_suffix = fe_i
+#     )
+#     # Let us know we are done
+#     cat(
+#       'Finished with FE spec',
+#       which(fe_v == fe_i), '/', length(fe_v), '\n',
+#       get(fe_i) |> paste(collapse = ' + '), '\n',
+#       lubridate::now() |> as.character(), '\n\n'
+#     )
+#     # Return something
+#     return('Done!')
+#   })
+#   rm(blah)
+#   invisible(gc())
 
 
-# Standard FEs with various controls -----------------------------------------------------
-# NOTE Always using county, year-month, and demographic FEs
-# NOTE Run time: ~12 hours
+# # Standard FEs with various controls -----------------------------------------------------
+# # NOTE Always using county, year-month, and demographic FEs
+# # NOTE Run time: ~12 hours
+#   est_twfe(
+#     outcomes = c(
+#       'dbwt',
+#       'gestation',
+#       'index'
+#     ),
+#     iv = 'all_yield_diff_percentile_gmo_max',
+#     iv_shift = NULL,
+#     spatial_subset = 'rural',
+#     county_subset = NULL,
+#     county_subset_name = NULL,
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     dem_fe = TRUE,
+#     dad_fe = TRUE,
+#     control_sets = list2(
+#       'none',
+#       c('pest', 'unempl_rate'),
+#       c('unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap'),
+#       c(
+#         'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+#         'inc_per_cap_farm', 'inc_per_cap_nonfarm'
+#       ),
+#       c(
+#         'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+#         'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+#         'pop_all'
+#       ),
+#       'age_share',
+#       c('age_share', 'race_share'),
+#       'fert',
+#       c(
+#         'pest',
+#         'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+#         'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+#         'pop_all',
+#         'age_share', 'race_share',
+#         'fert'
+#        )
+#     ),
+#     name_suffix = NULL,
+#     clustering = c('year', 'state_fips'),
+#     gly_nonlinear = NULL,
+#     iv_nonlinear = FALSE,
+#     include_ols = FALSE,
+#     skip_iv = FALSE,
+#     water_types = NULL
+#   )
+
+
+# Alternative instruments using historic acreages/yields ---------------------------------
+  # Instrument: 1990-1995 acreage percentiles (normalized by total cnty size)
   est_twfe(
     outcomes = c(
       'dbwt',
-      'gestation',
+      'dbwt_pctl_pre',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
       'index'
     ),
-    iv = 'all_yield_diff_percentile_gmo_max',
+    iv = 'percentile_gm_acres_pct_cnty',
     iv_shift = NULL,
     spatial_subset = 'rural',
     county_subset = NULL,
@@ -1431,22 +1486,8 @@
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
     dem_fe = TRUE,
     dad_fe = TRUE,
-    control_sets = list2(
+    control_set = list2(
       'none',
-      c('pest', 'unempl_rate'),
-      c('unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap'),
-      c(
-        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-        'inc_per_cap_farm', 'inc_per_cap_nonfarm'
-      ),
-      c(
-        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
-        'pop_all'
-      ),
-      'age_share',
-      c('age_share', 'race_share'),
-      'fert',
       c(
         'pest',
         'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
@@ -1464,32 +1505,44 @@
     skip_iv = FALSE,
     water_types = NULL
   )
-
-
-# # TODO Update FE and control specifications; run.
-#   # Emmett note 8/23/24: Starting to collect models we need to re-run here
-#   # Instrument: 1990-1995 acreage percentiles (normalized by total cnty size)
-#   est_twfe(
-#     iv = 'percentile_gm_acres_pct_cnty',
-#     iv_shift = NULL,
-#     spatial_subset = 'rural',
-#     het_split = NULL,
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = c(0, 3),
-#     clustering = c('year', 'state_fips')
-#   )
-#   # Instrument: 1990-1995 max yield percentile
-#   est_twfe(
-#     iv = 'percentile_gm_yield_max',
-#     iv_shift = NULL,
-#     spatial_subset = 'rural',
-#     het_split = NULL,
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = c(0, 3),
-#     clustering = c('year', 'state_fips')
-#   )
+  # Instrument: 1990-1995 max yield percentile
+  est_twfe(
+    outcomes = c(
+      'dbwt',
+      'dbwt_pctl_pre',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
+    iv = 'percentile_gm_yield_max',
+    iv_shift = NULL,
+    spatial_subset = 'rural',
+    county_subset = NULL,
+    county_subset_name = NULL,
+    het_split = NULL,
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    name_suffix = NULL,
+    clustering = c('year', 'state_fips'),
+    gly_nonlinear = NULL,
+    iv_nonlinear = FALSE,
+    include_ols = FALSE,
+    skip_iv = FALSE,
+    water_types = NULL
+  )
 
 
 # # Estimates: Heterogeneity by predicted quintile and month ------------------------------
