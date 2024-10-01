@@ -1546,7 +1546,7 @@
   )
 
 
-# Alternative instruments for Eastern US -------------------------------------------------
+# Alternative instruments with only Eastern US -------------------------------------------
 # NOTE Run time: ?
   # Instrument: 1990-1995 acreage percentiles (normalized by total cnty size)
   est_twfe(
@@ -1555,7 +1555,7 @@
       'gestation',
       'index'
     ),
-    iv = 'percentile_gm_acres_pct_cnty',
+    iv = 'e100m_percentile_gm_acres_pct_cnty',
     iv_shift = NULL,
     spatial_subset = 'rural',
     county_subset = NULL,
@@ -1590,7 +1590,7 @@
       'gestation',
       'index'
     ),
-    iv = 'percentile_gm_yield_max',
+    iv = 'e100m_percentile_gm_yield_max',
     iv_shift = NULL,
     spatial_subset = 'rural',
     county_subset = NULL,
