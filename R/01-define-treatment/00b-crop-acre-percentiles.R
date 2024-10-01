@@ -74,7 +74,53 @@ setnames(
   old = colnames(crop_instr_dt),
   new = str_remove(colnames(crop_instr_dt),'value_')
 )
+# Doing it again for eastern US 
+trt_dt = read_fst(
+  here('data/clean/trt-dt.fst'), 
+  as.data.table = TRUE
+)[,.(GEOID, e100m)]
+# Turning into long table and taking percentiles 
+crop_instr_dt_e100m = 
+    melt(
+      merge(pre_gm_crop_dt, trt_dt, by = 'GEOID')[e100m == TRUE,-'e100m'], 
+      id.vars = 'GEOID'
+    )[, percentile := frank(value)/.N,
+      by = variable
+    ] |>
+    dcast(
+      GEOID ~ variable,
+      value.var = c('value','percentile')
+    )
+# Calculating GM avg and max percentiles 
+crop_instr_dt_e100m[,':='(
+  percentile_gm_yield_avg = (percentile_corn_yield + percentile_soy_yield + percentile_cotton_yield)/3,
+  percentile_gm_yield_max = max(percentile_corn_yield, percentile_soy_yield, percentile_cotton_yield)), 
+  by = 1:nrow(crop_instr_dt_e100m)
+]
+crop_instr_dt_e100m[,':='(
+  percentile_gm_yield_avg = frank(percentile_gm_yield_avg)/.N, 
+  percentile_gm_yield_max = frank(percentile_gm_yield_max)/.N 
+)]
+# Cleaning up column names 
+setnames(
+  crop_instr_dt_e100m, 
+  old = colnames(crop_instr_dt_e100m),
+  new = str_remove(colnames(crop_instr_dt_e100m),'value_')
+)
+# Append e100m to variable name 
+setnames(
+  crop_instr_dt_e100m, 
+  old = str_subset(colnames(crop_instr_dt_e100m),'percentile'),
+  new = paste0(str_subset(colnames(crop_instr_dt_e100m),'percentile'),"_e100m")
+)
 # Saving the results 
+crop_instr_dt =
+  merge(
+    crop_instr_dt, 
+    crop_instr_dt_e100m |> get_vars('GEOID|e100m', regex = TRUE), 
+    by = 'GEOID', 
+    all.x = TRUE
+  )
 write.fst(
   x = crop_instr_dt, 
   path = here('data/clean/crop-acre-percentile-90-95.fst')
