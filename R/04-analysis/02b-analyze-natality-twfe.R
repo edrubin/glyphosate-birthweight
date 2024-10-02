@@ -1466,84 +1466,84 @@
 #   )
 
 
-# Alternative instruments using historic acreages/yields ---------------------------------
-# NOTE Run time: ~11 hours
-  # Instrument: 1990-1995 acreage percentiles (normalized by total cnty size)
-  est_twfe(
-    outcomes = c(
-      'dbwt',
-      'dbwt_pctl_pre',
-      'i_lbw', 'i_vlbw',
-      'gestation', 'i_preterm',
-      'c_section',
-      'index'
-    ),
-    iv = 'percentile_gm_acres_pct_cnty',
-    iv_shift = NULL,
-    spatial_subset = 'rural',
-    county_subset = NULL,
-    county_subset_name = NULL,
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    dem_fe = TRUE,
-    dad_fe = TRUE,
-    control_set = list2(
-      'none',
-      c(
-        'pest',
-        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
-        'pop_all',
-        'age_share', 'race_share',
-        'fert'
-       )
-    ),
-    name_suffix = NULL,
-    clustering = c('year', 'state_fips'),
-    gly_nonlinear = NULL,
-    iv_nonlinear = FALSE,
-    include_ols = FALSE,
-    skip_iv = FALSE,
-    water_types = NULL
-  )
-  # Instrument: 1990-1995 max yield percentile
-  est_twfe(
-    outcomes = c(
-      'dbwt',
-      'dbwt_pctl_pre',
-      'i_lbw', 'i_vlbw',
-      'gestation', 'i_preterm',
-      'c_section',
-      'index'
-    ),
-    iv = 'percentile_gm_yield_max',
-    iv_shift = NULL,
-    spatial_subset = 'rural',
-    county_subset = NULL,
-    county_subset_name = NULL,
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    dem_fe = TRUE,
-    dad_fe = TRUE,
-    control_set = list2(
-      'none',
-      c(
-        'pest',
-        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
-        'pop_all',
-        'age_share', 'race_share',
-        'fert'
-       )
-    ),
-    name_suffix = NULL,
-    clustering = c('year', 'state_fips'),
-    gly_nonlinear = NULL,
-    iv_nonlinear = FALSE,
-    include_ols = FALSE,
-    skip_iv = FALSE,
-    water_types = NULL
-  )
+# # Alternative instruments using historic acreages/yields ---------------------------------
+# # NOTE Run time: ~11 hours
+#   # Instrument: 1990-1995 acreage percentiles (normalized by total cnty size)
+#   est_twfe(
+#     outcomes = c(
+#       'dbwt',
+#       'dbwt_pctl_pre',
+#       'i_lbw', 'i_vlbw',
+#       'gestation', 'i_preterm',
+#       'c_section',
+#       'index'
+#     ),
+#     iv = 'percentile_gm_acres_pct_cnty',
+#     iv_shift = NULL,
+#     spatial_subset = 'rural',
+#     county_subset = NULL,
+#     county_subset_name = NULL,
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     dem_fe = TRUE,
+#     dad_fe = TRUE,
+#     control_set = list2(
+#       'none',
+#       c(
+#         'pest',
+#         'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+#         'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+#         'pop_all',
+#         'age_share', 'race_share',
+#         'fert'
+#        )
+#     ),
+#     name_suffix = NULL,
+#     clustering = c('year', 'state_fips'),
+#     gly_nonlinear = NULL,
+#     iv_nonlinear = FALSE,
+#     include_ols = FALSE,
+#     skip_iv = FALSE,
+#     water_types = NULL
+#   )
+#   # Instrument: 1990-1995 max yield percentile
+#   est_twfe(
+#     outcomes = c(
+#       'dbwt',
+#       'dbwt_pctl_pre',
+#       'i_lbw', 'i_vlbw',
+#       'gestation', 'i_preterm',
+#       'c_section',
+#       'index'
+#     ),
+#     iv = 'percentile_gm_yield_max',
+#     iv_shift = NULL,
+#     spatial_subset = 'rural',
+#     county_subset = NULL,
+#     county_subset_name = NULL,
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     dem_fe = TRUE,
+#     dad_fe = TRUE,
+#     control_set = list2(
+#       'none',
+#       c(
+#         'pest',
+#         'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+#         'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+#         'pop_all',
+#         'age_share', 'race_share',
+#         'fert'
+#        )
+#     ),
+#     name_suffix = NULL,
+#     clustering = c('year', 'state_fips'),
+#     gly_nonlinear = NULL,
+#     iv_nonlinear = FALSE,
+#     include_ols = FALSE,
+#     skip_iv = FALSE,
+#     water_types = NULL
+#   )
 
 
 # Alternative instruments with only Eastern US -------------------------------------------
@@ -1555,7 +1555,7 @@
       'gestation',
       'index'
     ),
-    iv = 'e100m_percentile_gm_acres_pct_cnty',
+    iv = 'percentile_gm_acres_pct_cnty_e100m',
     iv_shift = NULL,
     spatial_subset = 'rural',
     county_subset = NULL,
@@ -1590,7 +1590,7 @@
       'gestation',
       'index'
     ),
-    iv = 'e100m_percentile_gm_yield_max',
+    iv = 'percentile_gm_yield_max_e100m',
     iv_shift = NULL,
     spatial_subset = 'rural',
     county_subset = NULL,
