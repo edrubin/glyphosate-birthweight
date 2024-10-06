@@ -72,7 +72,8 @@ options(tigris_use_cache = TRUE)
         direction = 1,
         aesthetics = c('fill','color'),
         labels = scales::label_percent(), 
-        breaks = seq(0,1, by = 0.25)
+        breaks = seq(0,1, by = 0.25),
+        na.value = 'grey70'
       ) 
     # Saving the plot
     ggsave(
@@ -81,6 +82,16 @@ options(tigris_use_cache = TRUE)
         "figures/descriptive/yield-diff-percentile",
         paste0(str_replace(var_in, "_yield_diff_percentile_",'-'),".jpeg")
       ),
+      width = 8, height = 8/1.4,
+      bg = 'white'
+    )
+    ggsave(
+      percentile_cnty_yr_p,
+      filename = here(
+        "figures/descriptive/yield-diff-percentile",
+        paste0(str_replace(var_in, "_yield_diff_percentile_",'-'),".eps")
+      ),
+      device = cairo_ps,
       width = 8, height = 8/1.4,
       bg = 'white'
     )
@@ -125,6 +136,16 @@ options(tigris_use_cache = TRUE)
         "figures/descriptive/yield-diff-percentile",
         paste0(str_replace(var_in, "_yield_diff_percentile_",'-'),"-rural.jpeg")
       ),
+      width = 8, height = 8/1.4,
+      bg = 'white'
+    )
+    ggsave(
+      percentile_cnty_yr_rural_p,
+      filename = here(
+        "figures/descriptive/yield-diff-percentile",
+        paste0(str_replace(var_in, "_yield_diff_percentile_",'-'),"-rural.eps")
+      ),
+      device = cairo_ps,
       width = 8, height = 8/1.4,
       bg = 'white'
     )
@@ -209,6 +230,13 @@ change_glyph_rural_p =
 ggsave(
   change_glyph_rural_p,
   filename = here("figures/descriptive/glyph-km2-diff-9512-rural.jpeg"),
+  width = 8, height = 8/1.4,
+  bg = 'white'
+)
+ggsave(
+  change_glyph_rural_p,
+  filename = here("figures/descriptive/glyph-km2-diff-9512-rural.eps"),
+  device = cairo_ps,
   width = 8, height = 8/1.4,
   bg = 'white'
 )
