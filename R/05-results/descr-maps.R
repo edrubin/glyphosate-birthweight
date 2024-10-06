@@ -86,6 +86,48 @@ options(tigris_use_cache = TRUE)
     )
     # Printing if specified
     if(plot_out == TRUE) print(percentile_cnty_yr_p)
+    # Also making one with rural counties only 
+    # Creating the plot 
+    percentile_cnty_yr_rural_p = 
+      left_join(
+        county_sf, 
+        melt(
+          comb_cnty_dt[year == 1995],
+          id.vars = c('GEOID','rural'),
+          measure = patterns('percentile')
+        )[variable == var_in],
+        by = 'GEOID'
+      ) |>
+      ggplot() + 
+      geom_sf(aes(
+        fill = fifelse(rural == TRUE, value, NA), 
+        color = fifelse(rural == TRUE, value, NA)
+      )) + 
+      geom_sf(
+        data = states_sf, 
+        color = "grey80", 
+        fill = NA, 
+        linewidth = 0.05
+      ) +
+      scale_color_viridis_c(
+        name = "", 
+        option = 'magma',
+        direction = 1,
+        aesthetics = c('fill','color'),
+        labels = scales::label_percent(), 
+        breaks = seq(0,1, by = 0.25), 
+        na.value = 'grey70'
+      ) 
+    # Saving the plot
+    ggsave(
+      percentile_cnty_yr_rural_p,
+      filename = here(
+        "figures/descriptive/yield-diff-percentile",
+        paste0(str_replace(var_in, "_yield_diff_percentile_",'-'),"-rural.jpeg")
+      ),
+      width = 8, height = 8/1.4,
+      bg = 'white'
+    )
   }
   # Making the maps 
   map(
@@ -97,9 +139,9 @@ options(tigris_use_cache = TRUE)
 gly_change_dt = 
   comb_cnty_dt[
     year %in% c(1995, 2012), 
-    .(GEOID, year = as.factor(year), glyph_km2)
+    .(GEOID, rural, year = as.factor(year), glyph_km2)
   ] |>
-  gby(GEOID) |>
+  gby(GEOID, rural) |>
   fdiff(t = year) %>% 
   .[!is.na(glyph_km2)]
 # Censoring 
@@ -135,6 +177,38 @@ change_glyph_p =
 ggsave(
   change_glyph_p,
   filename = here("figures/descriptive/glyph-km2-diff-9512.jpeg"),
+  width = 8, height = 8/1.4,
+  bg = 'white'
+)
+
+# Make the map
+change_glyph_rural_p = 
+  left_join(
+    county_sf, 
+    gly_change_dt,
+    by = 'GEOID'
+  )|>
+  ggplot() + 
+  geom_sf(aes(
+    fill = fifelse(rural == TRUE, glyph_km2, NA), 
+    color = fifelse(rural == TRUE, glyph_km2, NA)
+  )) + 
+  geom_sf(
+    data = states_sf, 
+    color = "grey80", 
+    fill = NA, 
+    linewidth = 0.05
+  ) +
+  scale_color_viridis_c(
+    name = "", 
+    option = 'magma',
+    direction = 1,
+    aesthetics = c('fill','color'),
+    na.value = 'grey70'
+  ) 
+ggsave(
+  change_glyph_rural_p,
+  filename = here("figures/descriptive/glyph-km2-diff-9512-rural.jpeg"),
   width = 8, height = 8/1.4,
   bg = 'white'
 )
