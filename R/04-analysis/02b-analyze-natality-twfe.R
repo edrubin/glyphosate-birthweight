@@ -644,6 +644,7 @@
     invisible(gc())
   }
 
+
 # Function: Run TFWE analysis ------------------------------------------------------------
   est_twfe = function(
     outcomes = c(
@@ -1283,7 +1284,7 @@
   }
 
 
-# TODO Update specifications and run
+# TODO Run
 # Estimates: Main, pooled results --------------------------------------------------------
   # Instrument: Yield diff percentile GMO max
   est_twfe(
@@ -1317,6 +1318,14 @@
   )
   # Instrument: Yield diff percentile GMO, east of 100th meridian
   est_twfe(
+    outcomes = c(
+      'dbwt',
+      'dbwt_pctl_pre',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
     iv = 'e100m_yield_diff_percentile_gmo_max',
     iv_shift = NULL,
     spatial_subset = 'rural',
@@ -1347,6 +1356,14 @@
   )
   # Instrument: Yield diff percentile GMO
   est_twfe(
+    outcomes = c(
+      'dbwt',
+      'dbwt_pctl_pre',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
     iv = 'all_yield_diff_percentile_gmo',
     iv_shift = NULL,
     spatial_subset = 'rural',
@@ -1377,6 +1394,14 @@
   )
   # Instrument: Yield diff GMO, 50-0
   est_twfe(
+    outcomes = c(
+      'dbwt',
+      'dbwt_pctl_pre',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
     iv = 'all_yield_diff_gmo_max_50_0',
     iv_shift = NULL,
     spatial_subset = 'rural',
@@ -1769,6 +1794,64 @@
 #     controls = 3,
 #     clustering = c('year', 'state_fips')
 #   )
+
+
+# TODO Run
+# Estimates: Dropping top ag-employment counties -----------------------------------------
+# NOTE Request from Reviewer 2: Drop top ag-employment-share counties
+  # Build ag-employment-share dataset, taking 1990-1995 average
+  agshr_dt =
+    comb_cnty_dt %>%
+      .[(year %in% 1990:1995) & !is.na(all_yield_diff_percentile_gmo_max)] %>%
+      .[, .(farm_empl_per_cap = fmean(farm_empl_per_cap)), by = fips] %>%
+      na.omit()
+  # Add percentile
+  agshr_dt[, pctl := frank(farm_empl_per_cap) / .N]
+  setorder(agshr_dt, pctl)
+  # Define thresholds
+  cutoffs = c(.95, .90, .75)
+  # Estimate standard model for counties with ag employment share below each cutoff
+  blah = lapply(
+    X = cutoffs,
+    FUN = function(cutoff) {
+      est_twfe(
+        outcomes = c(
+          'dbwt',
+          'gestation',
+          'index'
+        ),
+        iv = 'all_yield_diff_percentile_gmo_max',
+        iv_shift = NULL,
+        spatial_subset = 'rural',
+        county_subset = agshr_dt[pctl < cutoff, funique(fips)],
+        county_subset_name = paste0('agshr', 100 * cutoff),
+        het_split = NULL,
+        base_fe = c('year_month', 'fips_res', 'fips_occ'),
+        dem_fe = TRUE,
+        dad_fe = TRUE,
+        control_set = list2(
+          'none',
+          c(
+            'pest',
+            'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+            'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+            'pop_all',
+            'age_share', 'race_share',
+            'fert'
+           )
+        ),
+        name_suffix = NULL,
+        clustering = c('year', 'state_fips'),
+        gly_nonlinear = NULL,
+        iv_nonlinear = FALSE,
+        include_ols = TRUE,
+        skip_iv = FALSE,
+        water_types = NULL
+      )
+      # Done
+      return('done')
+    }
+  )
 
 
 # TODO Update specifications, add additional demographics, and run
