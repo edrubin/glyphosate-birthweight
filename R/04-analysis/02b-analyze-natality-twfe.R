@@ -1,10 +1,9 @@
 # Notes ----------------------------------------------------------------------------------
 #   Goal:   Run main TWFE analysis with various specifications.
-#   Time:   ~100 hours for 11 runs (varies a lot with specification).
+#   Time:   Varies considerably by specification.
 
 
 # Todo list ------------------------------------------------------------------------------
-#   TODO Add a way to keep sample constant (due to missing demog controls)
 
 
 # Setup ----------------------------------------------------------------------------------
@@ -1284,54 +1283,130 @@
   }
 
 
-# # Estimates: Main, pooled results --------------------------------------------------------
-#   # Instrument: Yield diff percentile GMO
-#   est_twfe(
-#     iv = 'all_yield_diff_percentile_gmo',
-#     iv_shift = 'glyphosate_nat_100km',
-#     spatial_subset = 'rural',
-#     het_split = NULL,
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = 0:3,
-#     clustering = c('year', 'state_fips'),
-#     include_ols = TRUE
-#   )
-#   # Instrument: Yield diff percentile GMO, east of 100th meridian
-#   est_twfe(
-#     iv = 'e100m_yield_diff_percentile_gmo',
-#     iv_shift = NULL,
-#     spatial_subset = 'rural',
-#     het_split = NULL,
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = c(0, 3),
-#     clustering = c('year', 'state_fips')
-#   )
-#   # Instrument: Yield diff percentile GMO max
-#   est_twfe(
-#     iv = 'all_yield_diff_percentile_gmo_max',
-#     iv_shift = NULL,
-#     spatial_subset = 'rural',
-#     het_split = NULL,
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = c(0, 3),
-#     clustering = c('year', 'state_fips')
-#   )
-#   # Instrument: Yield diff GMO, 50-0
-#   est_twfe(
-#     iv = 'all_yield_diff_gmo_50_0',
-#     iv_shift = NULL,
-#     spatial_subset = 'rural',
-#     het_split = NULL,
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = c(0, 3),
-#     clustering = c('year', 'state_fips')
-#   )
+# Estimates: Main, pooled results --------------------------------------------------------
+  # Instrument: Yield diff percentile GMO max
+  est_twfe(
+    iv = 'all_yield_diff_percentile_gmo_max',
+    iv_shift = 'glyphosate_nat_100km',
+    spatial_subset = 'rural',
+    county_subset = NULL,
+    county_subset_name = NULL,
+    het_split = NULL,
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    name_suffix = NULL,
+    clustering = c('year', 'state_fips'),
+    gly_nonlinear = NULL,
+    iv_nonlinear = FALSE,
+    include_ols = TRUE,
+    skip_iv = FALSE,
+    water_types = NULL
+  )
+  # Instrument: Yield diff percentile GMO, east of 100th meridian
+  est_twfe(
+    iv = 'e100m_yield_diff_percentile_gmo_max',
+    iv_shift = NULL,
+    spatial_subset = 'rural',
+    county_subset = NULL,
+    county_subset_name = NULL,
+    het_split = NULL,
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    name_suffix = NULL,
+    clustering = c('year', 'state_fips'),
+    gly_nonlinear = NULL,
+    iv_nonlinear = FALSE,
+    include_ols = TRUE,
+    skip_iv = FALSE,
+    water_types = NULL
+  )
+  # Instrument: Yield diff percentile GMO
+  est_twfe(
+    iv = 'all_yield_diff_percentile_gmo',
+    iv_shift = NULL,
+    spatial_subset = 'rural',
+    county_subset = NULL,
+    county_subset_name = NULL,
+    het_split = NULL,
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    name_suffix = NULL,
+    clustering = c('year', 'state_fips'),
+    gly_nonlinear = NULL,
+    iv_nonlinear = FALSE,
+    include_ols = TRUE,
+    skip_iv = FALSE,
+    water_types = NULL
+  )
+  # Instrument: Yield diff GMO, 50-0
+  est_twfe(
+    iv = 'all_yield_diff_gmo_max_50_0',
+    iv_shift = NULL,
+    spatial_subset = 'rural',
+    county_subset = NULL,
+    county_subset_name = NULL,
+    het_split = NULL,
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    name_suffix = NULL,
+    clustering = c('year', 'state_fips'),
+    gly_nonlinear = NULL,
+    iv_nonlinear = FALSE,
+    include_ols = TRUE,
+    skip_iv = FALSE,
+    water_types = NULL
+  )
 
 
+# Done
 # # Estimate various FE specifications -----------------------------------------------------
 #   # Define fixed effects for robustness check
 #   # Standard: county, year-month
@@ -1362,8 +1437,7 @@
 #   # Create a vector of the FE specifications
 #   fe_v = ls(pattern = '^fe[0-9][a-z]?')
 #   # Iterate over the fixed effects
-# # TODO Remove `tail` after running (error happened after 6th item)
-#   blah = lapply(X = fe_v |> tail(-6), FUN = function(fe_i) {
+#   blah = lapply(X = fe_v, FUN = function(fe_i) {
 #     # Estimate the desired set of FEs
 #     est_twfe(
 #       outcomes = c(
@@ -1413,6 +1487,7 @@
 #   invisible(gc())
 
 
+# Done
 # # Standard FEs with various controls -----------------------------------------------------
 # # NOTE Always using county, year-month, and demographic FEs
 # # NOTE Run time: ~12 hours
@@ -1466,6 +1541,7 @@
 #   )
 
 
+# Done
 # # Alternative instruments using historic acreages/yields ---------------------------------
 # # NOTE Run time: ~11 hours
 #   # Instrument: 1990-1995 acreage percentiles (normalized by total cnty size)
@@ -1546,78 +1622,79 @@
 #   )
 
 
-# Alternative instruments with only Eastern US -------------------------------------------
-# NOTE Run time: ?
-  # Instrument: 1990-1995 acreage percentiles (normalized by total cnty size)
-  est_twfe(
-    outcomes = c(
-      'dbwt',
-      'gestation',
-      'index'
-    ),
-    iv = 'percentile_gm_acres_pct_cnty_e100m',
-    iv_shift = NULL,
-    spatial_subset = 'rural',
-    county_subset = NULL,
-    county_subset_name = NULL,
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    dem_fe = TRUE,
-    dad_fe = TRUE,
-    control_set = list2(
-      'none',
-      c(
-        'pest',
-        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
-        'pop_all',
-        'age_share', 'race_share',
-        'fert'
-       )
-    ),
-    name_suffix = NULL,
-    clustering = c('year', 'state_fips'),
-    gly_nonlinear = NULL,
-    iv_nonlinear = FALSE,
-    include_ols = FALSE,
-    skip_iv = FALSE,
-    water_types = NULL
-  )
-  # Instrument: 1990-1995 max yield percentile
-  est_twfe(
-    outcomes = c(
-      'dbwt',
-      'gestation',
-      'index'
-    ),
-    iv = 'percentile_gm_yield_max_e100m',
-    iv_shift = NULL,
-    spatial_subset = 'rural',
-    county_subset = NULL,
-    county_subset_name = NULL,
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    dem_fe = TRUE,
-    dad_fe = TRUE,
-    control_set = list2(
-      'none',
-      c(
-        'pest',
-        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
-        'pop_all',
-        'age_share', 'race_share',
-        'fert'
-       )
-    ),
-    name_suffix = NULL,
-    clustering = c('year', 'state_fips'),
-    gly_nonlinear = NULL,
-    iv_nonlinear = FALSE,
-    include_ols = FALSE,
-    skip_iv = FALSE,
-    water_types = NULL
-  )
+# Done
+# # Alternative instruments with only Eastern US -------------------------------------------
+# # NOTE Run time: 4 hours
+#   # Instrument: 1990-1995 acreage percentiles (normalized by total cnty size)
+#   est_twfe(
+#     outcomes = c(
+#       'dbwt',
+#       'gestation',
+#       'index'
+#     ),
+#     iv = 'percentile_gm_acres_pct_cnty_e100m',
+#     iv_shift = NULL,
+#     spatial_subset = 'rural',
+#     county_subset = NULL,
+#     county_subset_name = NULL,
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     dem_fe = TRUE,
+#     dad_fe = TRUE,
+#     control_set = list2(
+#       'none',
+#       c(
+#         'pest',
+#         'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+#         'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+#         'pop_all',
+#         'age_share', 'race_share',
+#         'fert'
+#        )
+#     ),
+#     name_suffix = NULL,
+#     clustering = c('year', 'state_fips'),
+#     gly_nonlinear = NULL,
+#     iv_nonlinear = FALSE,
+#     include_ols = FALSE,
+#     skip_iv = FALSE,
+#     water_types = NULL
+#   )
+#   # Instrument: 1990-1995 max yield percentile
+#   est_twfe(
+#     outcomes = c(
+#       'dbwt',
+#       'gestation',
+#       'index'
+#     ),
+#     iv = 'percentile_gm_yield_max_e100m',
+#     iv_shift = NULL,
+#     spatial_subset = 'rural',
+#     county_subset = NULL,
+#     county_subset_name = NULL,
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     dem_fe = TRUE,
+#     dad_fe = TRUE,
+#     control_set = list2(
+#       'none',
+#       c(
+#         'pest',
+#         'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+#         'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+#         'pop_all',
+#         'age_share', 'race_share',
+#         'fert'
+#        )
+#     ),
+#     name_suffix = NULL,
+#     clustering = c('year', 'state_fips'),
+#     gly_nonlinear = NULL,
+#     iv_nonlinear = FALSE,
+#     include_ols = FALSE,
+#     skip_iv = FALSE,
+#     water_types = NULL
+#   )
 
 
 # # Estimates: Heterogeneity by predicted quintile and month ------------------------------
@@ -1692,7 +1769,7 @@
 #   )
 
 
-# Test changing demographics -------------------------------------------------------------
+# # Test changing demographics -------------------------------------------------------------
 #   # Instrument: Yield diff percentile GMO
 #   est_twfe(
 #     outcomes = c(
