@@ -1283,6 +1283,7 @@
   }
 
 
+# TODO Update specifications and run
 # Estimates: Main, pooled results --------------------------------------------------------
   # Instrument: Yield diff percentile GMO max
   est_twfe(
@@ -1697,6 +1698,7 @@
 #   )
 
 
+# TODO Update specifications and run
 # # Estimates: Heterogeneity by predicted quintile and month ------------------------------
 #   # Yield diff percentile GMO
 #   est_twfe(
@@ -1769,6 +1771,7 @@
 #   )
 
 
+# TODO Update specifications, add additional demographics, and run
 # # Test changing demographics -------------------------------------------------------------
 #   # Instrument: Yield diff percentile GMO
 #   est_twfe(
@@ -1796,6 +1799,7 @@
 #   )
 
 
+# TODO Update specifications and run
 # # Separate estimates by region -----------------------------------------------------------
 #   # Estimate only for midwest and northeast
 #   est_twfe(
@@ -1838,6 +1842,7 @@
 #   )
 
 
+# TODO Update specifications and run
 # # Just the OLS model --------------------------------------------------------------------
 #   # This should only estimate OLS results (not rf or 2sls or water)
 #   est_twfe(
@@ -1854,6 +1859,7 @@
 #   )
 
 
+# TODO Update water model, specifications, and run
 # # Water results -------------------------------------------------------------------------
 #   # This should only estimate water results (not rf or 2sls or ols)
 # # NOTE Takes ~ 5 hours to run
@@ -1872,6 +1878,7 @@
 #   )
 
 
+# TODO Update specifications and run
 # # Estimate by counties' rural status -----------------------------------------------------
 # # NOTE Crashed during second-stage estimation
 #   est_twfe(
@@ -1902,6 +1909,7 @@
 #   )
 
 
+# TODO Update specifications and run
 # # Estimate on purely urban births --------------------------------------------------------
 #   est_twfe(
 #     outcomes = 'dbwt',
@@ -1918,6 +1926,7 @@
 #   )
 
 
+# TODO Update specifications and run
 # # Estimate on purely rural births --------------------------------------------------------
 #   est_twfe(
 #     outcomes = c('dbwt', 'gestation'),
