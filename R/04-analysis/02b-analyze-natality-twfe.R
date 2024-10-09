@@ -683,6 +683,7 @@
     gly_nonlinear = NULL,
     iv_nonlinear = FALSE,
     include_ols = FALSE,
+    include_did = FALSE,
     skip_iv = FALSE,
     water_types = NULL,
     ...
@@ -1060,6 +1061,36 @@
         as.formula()
     }
 
+    # Formula: Difference-in-differences
+    if (include_did == TRUE) {
+      # Add variable for post-treatment (1996+) interacted with treatment
+      set(
+        x = est_dt,
+        j = 'trt_post',
+        value = est_dt[[iv]] * (est_dt[['year']] >= 1996)
+      )
+      # Add gly_km2 to the outcome variables
+      fml_y_did = paste0(
+        'c(',
+        paste(c(outcome_vars, 'glyph_km2'), collapse = ', '),
+        ')'
+      )
+      fml_did =
+        paste(
+          fml_y_did,
+          ' ~ ',
+          iv, ' + trt_post',
+          ifelse(
+            !is.null(fml_controls),
+            paste0(' + ', fml_controls),
+            ''
+          ),
+          ' | ',
+          fml_fes
+        ) |>
+        as.formula()
+    }
+
     # Make folder for the results
     dir_today = here('data', 'results', 'micro-new')
     dir_today |> dir.create(showWarnings = FALSE, recursive = TRUE)
@@ -1146,12 +1177,32 @@
         gly_nonlinear = gly_nonlinear,
         iv_nonlinear = iv_nonlinear,
         include_ols = include_ols,
+        include_did = include_did,
         skip_iv = skip_iv,
         water_types = water_types
       ),
       file.path(dir_today, paste0('info_', time_suffix, '.qs')),
       preset = 'fast'
     )
+
+    # If requested: Estimate difference-in-differences
+    if (include_did == TRUE) {
+      # Estimate
+      est_did = feols(
+        fml = fml_did,
+        cluster = fml_inf,
+        data = est_dt[year %in% c(1990:1995, 2000:2005)],
+        lean = TRUE
+      )
+      # Save
+      qsave(
+        est_did,
+        file.path(dir_today, paste0('est_did', base_name)),
+        preset = 'fast'
+      )
+      rm(est_did)
+      invisible(gc())
+    }
 
     # Estimate reduced form and 2SLS
     if (skip_iv == FALSE) {
@@ -1313,6 +1364,7 @@
     gly_nonlinear = NULL,
     iv_nonlinear = FALSE,
     include_ols = TRUE,
+    include_did = TRUE,
     skip_iv = FALSE,
     water_types = NULL
   )
@@ -1351,6 +1403,7 @@
     gly_nonlinear = NULL,
     iv_nonlinear = FALSE,
     include_ols = TRUE,
+    include_did = TRUE,
     skip_iv = FALSE,
     water_types = NULL
   )
@@ -1389,6 +1442,7 @@
     gly_nonlinear = NULL,
     iv_nonlinear = FALSE,
     include_ols = TRUE,
+    include_did = TRUE,
     skip_iv = FALSE,
     water_types = NULL
   )
@@ -1427,6 +1481,7 @@
     gly_nonlinear = NULL,
     iv_nonlinear = FALSE,
     include_ols = TRUE,
+    include_did = TRUE,
     skip_iv = FALSE,
     water_types = NULL
   )
