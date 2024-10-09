@@ -360,13 +360,15 @@
   )]
   # Add month of sample
   natality_dt[, year_month := paste0(year, '-', month)]
-  # Add indicators for child's race and mother's race, ethnicity, marital status
+  # Add indicators for child's race; mother's race, ethnicity, marital status, education
   natality_dt[, `:=`(
     i_female = 1 * (sex == 'F'),
     i_m_black = 1 * (mrace == 2),
     i_m_nonwhite = 1 * (mrace != 1),
     i_m_hispanic = 1 * (mhisp > 0),
-    i_m_married = 1 * (mar == 1)
+    i_m_married = 1 * (mar == 1),
+    i_m_hs = 1 * (meduc >= 3),
+    i_m_college = 1 * (meduc >= 5)
   )]
 
 
@@ -1778,77 +1780,203 @@
 #   )
 
 
-# TODO Update specifications and run
-# # Estimates: Heterogeneity by predicted quintile and month ------------------------------
-#   # Yield diff percentile GMO
-#   est_twfe(
-#     iv = 'all_yield_diff_percentile_gmo',
-#     spatial_subset = 'rural',
-#     het_split = 'pred_q5',
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = c(0, 3),
-#     clustering = c('year', 'state_fips')
-#   )
-#   est_twfe(
-#     iv = 'e100m_yield_diff_percentile_gmo',
-#     spatial_subset = 'rural',
-#     het_split = 'pred_q5',
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = c(0, 3),
-#     clustering = c('year', 'state_fips')
-#   )
-#   # More refined heterogeneity splits: Deciles
-#   est_twfe(
-#     iv = 'all_yield_diff_percentile_gmo',
-#     spatial_subset = 'rural',
-#     het_split = 'pred_q10',
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = c(0, 3),
-#     clustering = c('year', 'state_fips')
-#   )
-#   # More refined heterogeneity splits: Deciles with top/bottom 1%, 5% separate)
-#   est_twfe(
-#     iv = 'all_yield_diff_percentile_gmo',
-#     spatial_subset = 'rural',
-#     het_split = 'pred_q14',
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = c(0, 3),
-#     clustering = c('year', 'state_fips')
-#   )
-#   # More refined heterogeneity splits: vigintiles
-#   est_twfe(
-#     iv = 'all_yield_diff_percentile_gmo',
-#     spatial_subset = 'rural',
-#     het_split = 'pred_q20',
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = c(0, 3),
-#     clustering = c('year', 'state_fips')
-#   )
-#   # Heterogeneity by month of birth
-#   est_twfe(
-#     iv = 'all_yield_diff_percentile_gmo',
-#     spatial_subset = 'rural',
-#     het_split = 'month',
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = c(0, 3),
-#     clustering = c('year', 'state_fips')
-#   )
-#   # Yield diff percentile GMO; heterogeneity by quintile and sex
-#   est_twfe(
-#     iv = 'all_yield_diff_percentile_gmo',
-#     spatial_subset = 'rural',
-#     het_split = 'pred_q5_sex',
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = 3,
-#     controls = 3,
-#     clustering = c('year', 'state_fips')
-#   )
+# TODO Run
+# Estimates: Heterogeneity by predicted quintile and month ------------------------------
+  # Yield diff percentile GMO
+  est_twfe(
+    outcomes = c(
+      'dbwt',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
+    iv = 'all_yield_diff_percentile_gmo_max',
+    spatial_subset = 'rural',
+    het_split = 'pred_q5',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips')
+  )
+  est_twfe(
+    outcomes = c(
+      'dbwt',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
+    iv = 'e100m_yield_diff_percentile_gmo_max',
+    spatial_subset = 'rural',
+    het_split = 'pred_q5',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips')
+  )
+  # More refined heterogeneity splits: Deciles
+  est_twfe(
+    outcomes = c(
+      'dbwt',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
+    iv = 'all_yield_diff_percentile_gmo_max',
+    spatial_subset = 'rural',
+    het_split = 'pred_q10',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips')
+  )
+  # More refined heterogeneity splits: Deciles with top/bottom 1%, 5% separate)
+  est_twfe(
+    outcomes = c(
+      'dbwt',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
+    iv = 'all_yield_diff_percentile_gmo_max',
+    spatial_subset = 'rural',
+    het_split = 'pred_q14',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips')
+  )
+  # More refined heterogeneity splits: vigintiles
+  est_twfe(
+    outcomes = c(
+      'dbwt',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
+    iv = 'all_yield_diff_percentile_gmo_max',
+    spatial_subset = 'rural',
+    het_split = 'pred_q20',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips')
+  )
+  # Heterogeneity by month of birth
+  est_twfe(
+    outcomes = c(
+      'dbwt',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
+    iv = 'all_yield_diff_percentile_gmo_max',
+    spatial_subset = 'rural',
+    het_split = 'month',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips')
+  )
+  # Yield diff percentile GMO; heterogeneity by quintile and sex
+  est_twfe(
+    outcomes = c(
+      'dbwt',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
+    iv = 'all_yield_diff_percentile_gmo_max',
+    spatial_subset = 'rural',
+    het_split = 'pred_q5_sex',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips')
+  )
 
 
 # TODO Run
@@ -1909,92 +2037,151 @@
   )
 
 
-# TODO Update specifications, add additional demographics, and run
-# # Test changing demographics -------------------------------------------------------------
-#   # Instrument: Yield diff percentile GMO
-#   est_twfe(
-#     outcomes = c(
-#       'i_female', 'i_m_black', 'i_m_nonwhite', 'i_m_hispanic', 'i_m_married'
-#     ),
-#     iv = 'all_yield_diff_percentile_gmo',
-#     spatial_subset = 'rural',
-#     het_split = NULL,
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = 0,
-#     controls = 0,
-#     clustering = c('year', 'state_fips')
-#   )
-#   # Estimate white and nonwhite mothers separately
-#   est_twfe(
-#     iv = 'all_yield_diff_percentile_gmo',
-#     iv_shift = 'glyphosate_nat_100km',
-#     spatial_subset = 'rural',
-#     het_split = 'i_m_nonwhite',
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = c(0, 3),
-#     clustering = c('year', 'state_fips')
-#   )
+# TODO Run
+# Test changing demographics -------------------------------------------------------------
+  # Instrument: Yield diff percentile GMO
+  est_twfe(
+    outcomes = c(
+      'mage', 'i_m_hs', 'i_m_college',
+      'i_female', 'i_m_black', 'i_m_nonwhite', 'i_m_hispanic', 'i_m_married'
+    ),
+    iv = 'all_yield_diff_percentile_gmo_max',
+    spatial_subset = 'rural',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = FALSE,
+    dad_fe = FALSE,
+    control_set = 'none',
+    clustering = c('year', 'state_fips')
+  )
+  # Estimate white and nonwhite mothers separately
+  est_twfe(
+    iv = 'all_yield_diff_percentile_gmo_max',
+    iv_shift = 'glyphosate_nat_100km',
+    spatial_subset = 'rural',
+    het_split = 'i_m_nonwhite',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips')
+  )
 
 
-# TODO Update specifications and run
-# # Separate estimates by region -----------------------------------------------------------
-#   # Estimate only for midwest and northeast
-#   est_twfe(
-#     iv = 'all_yield_diff_percentile_gmo',
-#     iv_shift = 'glyphosate_nat_100km',
-#     spatial_subset = 'rural',
-#     county_subset =
-#       comb_cnty_dt[census_region %in% c('Midwest', 'Northeast'), funique(fips)],
-#     county_subset_name = 'mw-ne',
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = 3,
-#     controls = 3,
-#     clustering = c('year', 'state_fips')
-#   )
-#   # Estimate only for the south
-#   est_twfe(
-#     iv = 'all_yield_diff_percentile_gmo',
-#     iv_shift = 'glyphosate_nat_100km',
-#     spatial_subset = 'rural',
-#     county_subset =
-#       comb_cnty_dt[census_region == 'South', funique(fips)],
-#     county_subset_name = 'south',
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = 3,
-#     controls = 3,
-#     clustering = c('year', 'state_fips')
-#   )
-#   # Estimate only for the south without Florida
-#   est_twfe(
-#     iv = 'all_yield_diff_percentile_gmo',
-#     iv_shift = 'glyphosate_nat_100km',
-#     spatial_subset = 'rural',
-#     county_subset =
-#       comb_cnty_dt[census_region == 'South' & state_fips != '12', funique(fips)],
-#     county_subset_name = 'south-nofl',
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = 3,
-#     controls = 3,
-#     clustering = c('year', 'state_fips')
-#   )
+# TODO Run
+# Separate estimates by region -----------------------------------------------------------
+  # Estimate only for midwest and northeast
+  est_twfe(
+    iv = 'all_yield_diff_percentile_gmo_max',
+    iv_shift = 'glyphosate_nat_100km',
+    spatial_subset = 'rural',
+    county_subset =
+      comb_cnty_dt[census_region %in% c('Midwest', 'Northeast'), funique(fips)],
+    county_subset_name = 'mw-ne',
+    het_split = NULL,
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips'),
+  )
+  # Estimate only for the south
+  est_twfe(
+    iv = 'all_yield_diff_percentile_gmo_max',
+    iv_shift = 'glyphosate_nat_100km',
+    spatial_subset = 'rural',
+    county_subset =
+      comb_cnty_dt[census_region == 'South', funique(fips)],
+    county_subset_name = 'south',
+    het_split = NULL,
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips'),
+  )
+  # Estimate only for the south without Florida
+  est_twfe(
+    iv = 'all_yield_diff_percentile_gmo_max',
+    iv_shift = 'glyphosate_nat_100km',
+    spatial_subset = 'rural',
+    county_subset =
+      comb_cnty_dt[census_region == 'South' & state_fips != '12', funique(fips)],
+    county_subset_name = 'south-nofl',
+    het_split = NULL,
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips'),
+  )
 
 
-# TODO Update specifications and run
-# # Just the OLS model --------------------------------------------------------------------
-#   # This should only estimate OLS results (not rf or 2sls or water)
-#   est_twfe(
-#     iv = 'all_yield_diff_percentile_gmo',
-#     iv_shift = NULL,
-#     spatial_subset = 'rural',
-#     het_split = 'pred_q5',
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = c(0, 3),
-#     controls = 0:3,
-#     clustering = c('year', 'state_fips'),
-#     include_ols = TRUE,
-#     skip_iv = TRUE
-#   )
+# TODO Run
+# Just the OLS model --------------------------------------------------------------------
+  # This should only estimate OLS results (not rf or 2sls or water)
+  est_twfe(
+    iv = 'all_yield_diff_percentile_gmo_max',
+    iv_shift = NULL,
+    spatial_subset = 'rural',
+    het_split = 'pred_q5',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips'),
+    include_ols = TRUE,
+    skip_iv = TRUE
+  )
 
 
 # TODO Update water model, specifications, and run
