@@ -2203,66 +2203,208 @@
 #   )
 
 
-# TODO Update specifications and run
-# # Estimate by counties' rural status -----------------------------------------------------
-# # NOTE Crashed during second-stage estimation
-#   est_twfe(
-#     outcomes = 'dbwt',
-#     iv = 'all_yield_diff_percentile_gmo',
-#     iv_shift = NULL,
-#     spatial_subset = NULL,
-#     het_split = 'rural_res',
-#     county_subset = NULL,
-#     county_subset_name = NULL,
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = 3,
-#     controls = 3,
-#     clustering = c('year', 'state_fips')
-#   )
-#   est_twfe(
-#     outcomes = 'dbwt',
-#     iv = 'all_yield_diff_percentile_gmo',
-#     iv_shift = NULL,
-#     spatial_subset = NULL,
-#     het_split = 'rural_grp',
-#     county_subset = NULL,
-#     county_subset_name = NULL,
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = 3,
-#     controls = 3,
-#     clustering = c('year', 'state_fips')
-#   )
+# TODO Run
+# Estimate on purely urban births --------------------------------------------------------
+  est_twfe(
+    outcomes = c(
+      'dbwt',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
+    iv = 'all_yield_diff_percentile_gmo_max',
+    iv_shift = NULL,
+    spatial_subset = 'urban res; urban occ',
+    het_split = NULL,
+    county_subset = NULL,
+    county_subset_name = NULL,
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips'),
+    include_ols = FALSE
+  )
 
 
-# TODO Update specifications and run
-# # Estimate on purely urban births --------------------------------------------------------
-#   est_twfe(
-#     outcomes = 'dbwt',
-#     iv = 'all_yield_diff_percentile_gmo',
-#     iv_shift = NULL,
-#     spatial_subset = 'urban res; urban occ',
-#     het_split = NULL,
-#     county_subset = NULL,
-#     county_subset_name = NULL,
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = 3,
-#     controls = 3,
-#     clustering = c('year', 'state_fips')
-#   )
+# TODO Run
+# Estimate on purely rural births --------------------------------------------------------
+  est_twfe(
+    outcomes = c(
+      'dbwt',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
+    iv = 'all_yield_diff_percentile_gmo_max',
+    iv_shift = NULL,
+    spatial_subset = 'rural res; rural occ',
+    het_split = NULL,
+    county_subset = NULL,
+    county_subset_name = NULL,
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips'),
+    include_ols = FALSE
+  )
 
 
-# TODO Update specifications and run
-# # Estimate on purely rural births --------------------------------------------------------
-#   est_twfe(
-#     outcomes = c('dbwt', 'gestation'),
-#     iv = 'all_yield_diff_percentile_gmo',
-#     iv_shift = NULL,
-#     spatial_subset = 'rural res; rural occ',
-#     het_split = NULL,
-#     county_subset = NULL,
-#     county_subset_name = NULL,
-#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
-#     fes = 3,
-#     controls = 3,
-#     clustering = c('year', 'state_fips')
-#   )
+# TODO Run
+# Estimate by counties' rural status -----------------------------------------------------
+# NOTE Crashed during second-stage estimation
+  est_twfe(
+    outcomes = 'dbwt',
+    iv = 'all_yield_diff_percentile_gmo_max',
+    iv_shift = NULL,
+    spatial_subset = NULL,
+    het_split = 'rural_res',
+    county_subset = NULL,
+    county_subset_name = NULL,
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips')
+  )
+  est_twfe(
+    outcomes = 'dbwt',
+    iv = 'all_yield_diff_percentile_gmo_max',
+    iv_shift = NULL,
+    spatial_subset = NULL,
+    het_split = 'rural_grp',
+    county_subset = NULL,
+    county_subset_name = NULL,
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips')
+  )
+
+
+# TODO Run
+# Test changing demographics with controls -----------------------------------------------
+  # Define standard demographic FEs
+  dem_v = c(
+    'sex', 'mage', 'mrace', 'mhisp', 'meduc', 'mar',
+    'birth_facility', 'restatus', 'total_birth_order'
+  )
+  # Define the demographics that we will test
+  out_v = c(
+    'mage', 'i_m_hs', 'i_m_college',
+    'i_female', 'i_m_black', 'i_m_nonwhite', 'i_m_hispanic', 'i_m_married'
+  )
+  # Iterate over the outcome vector
+  blah = lapply(
+    X = out_v,
+    FUN = function(v) {
+      # Drop demographic controls related the outcome
+      to_drop = fcase(
+        v == 'mage', 'mage',
+        v %in% c('i_m_hs', 'i_m_college'), 'meduc',
+        v == 'i_female', 'sex',
+        v %in% c('i_m_black', 'i_m_nonwhite'), 'mrace',
+        v == 'i_m_hispanic', 'mhisp',
+        v == 'i_m_married', 'mar'
+      )
+      # Define the updated set of demongraphic controls
+      ctrl_set = setdiff(dem_v, to_drop)
+      # Estimate with instrument: Yield diff percentile GMO (max)
+      est_twfe(
+        outcomes = v,
+        iv = 'all_yield_diff_percentile_gmo_max',
+        spatial_subset = 'rural',
+        base_fe = c('year_month', 'fips_res', 'fips_occ', ctrl_set),
+        dem_fe = FALSE,
+        dad_fe = TRUE,
+        control_set = list2(
+          'none',
+          c(
+            'pest',
+            'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+            'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+            'pop_all',
+            'age_share', 'race_share',
+            'fert'
+           )
+        ),
+        clustering = c('year', 'state_fips')
+      )
+      # Return something simple
+      return('done')
+    }
+  )
+  rm(blah, dem_v, out_v)
+  invisible(gc())
+
+
+# TODO Run
+# Estimate main results separately by education level ------------------------------------
+  # Estimate white and nonwhite mothers separately
+  est_twfe(
+    outcomes = c(
+      'dbwt',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
+    iv = 'all_yield_diff_percentile_gmo_max',
+    spatial_subset = 'rural',
+    het_split = 'i_m_hs',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips')
+  )
