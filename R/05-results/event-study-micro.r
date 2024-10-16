@@ -130,37 +130,139 @@ extract_event_study_coefs = function(mod_path){
       use.names = TRUE, fill = TRUE
     )
   # Adding info from filename 
+  info_ls = 
+    qread(here(
+      str_extract(mod_path, '.*micro-new(?=/)'),
+      paste0('info_',str_extract(mod_path, '\\d*\\.qs'))
+    ))
+  path_fe = str_extract(mod_path, '(?<=_fe).*(?=_spatial)')
+  path_fe_special = str_extract(mod_path, '(?<=_fe).{1,2}(?=_\\d{10}\\.qs)')
   mod_dt[,':='(
-    spatial = str_extract(mod_path, '(?<=_spatial-)[ ;a-zA-Z-]+(?=_)'),
-    cluster = str_extract(mod_path, '(?<=_cl-)[a-zA-Z-]+(?=_)'),
-    county_subset = str_extract(mod_path, '(?<=_county-)[a-zA-Z-]+(?=_)'),
-    lhs = lhs |> str_remove('^c\\(') |> str_remove('\\)$')
+    spatial = info_ls$spatial_subset, 
+    cluster = paste(info_ls$clustering, collapse = ' '),
+    county_subset = ifelse(
+      is.null(info_ls$county_subset_name), 
+      'All', 
+      info_ls$county_subset_name
+    ),
+    #lhs = paste0(info_ls$lhs, collapse = ' '), 
+    fixef_num = fcase(
+      path_fe_special == '0' , 
+        'Family demographics, county and year by month',
+      path_fe_special == '1' , 
+        'Family demographics, county, year, and month',
+      path_fe_special == '2a', 
+        'Family demographics, county, year by Census Region, and month by Census Region',
+      path_fe_special == '2b', 
+        'Family demographics, county, year by month by Census Region',
+      path_fe_special == '2c', 
+        'Family demographics, county, year by Census Division, and month by Census Division',
+      path_fe_special == '2d', 
+        'Family demographics, county, year by month by Census Division',
+      path_fe_special == '3a', 
+        'Family demographics, county, year by Farm Region, and month by Farm Region',
+      path_fe_special == '3b', 
+        'Family demographics, county, year by month by Farm Region',
+      path_fe_special == '4a', 
+        'Family demographics, county, year by state, and month by state',
+      path_fe_special == '4b', 
+        'Family demographics, county, year by month by state',
+      path_fe_special == '5a', 
+        'Family demographics, county, year by month by Census Region and month by Ag District',
+      path_fe_special == '5b', 
+        'Family demographics, county, year by month by Farm Region and month by Ag District',
+      path_fe_special == '6a', 
+        'Family demographics, county, year by Ag District and month by Ag District',
+      path_fe_special == '6b', 
+        'Family demographics, county, year by month by Ag District', 
+      path_fe == '-yearmonth-fipsres-fipsocc-dem-dad_dem-fe_dad-fe', 
+        'Family demographics, county, and year by month', 
+      path_fe == '-yearmonth-fipsres-fipsocc--', 
+        'County and year by month'
+    ) |> factor(levels = c(
+      'County and year by month',
+      'Family demographics, county and year by month',
+      'Family demographics, county, year, and month',
+      'Family demographics, county, year by Census Region, and month by Census Region',
+      'Family demographics, county, year by month by Census Region',
+      'Family demographics, county, year by Census Division, and month by Census Division',
+      'Family demographics, county, year by month by Census Division',
+      'Family demographics, county, year by Farm Region, and month by Farm Region',
+      'Family demographics, county, year by month by Farm Region',
+      'Family demographics, county, year by state, and month by state',
+      'Family demographics, county, year by month by state',
+      'Family demographics, county, year by month by Census Region and month by Ag District',
+      'Family demographics, county, year by month by Farm Region and month by Ag District',
+      'Family demographics, county, year by Ag District and month by Ag District',
+      'Family demographics, county, year by month by Ag District', 
+      'Family demographics, county, and year by month'
+    ))
   )]
-  # Some cleaning of fixef names
+  # Cleaning other things: Year, Controls, trt variable (instrument) 
   mod_dt[,':='(
     year = str_extract(coefficient, '(?<=year::)\\d{4}') |> as.integer(),
-    fixef_num = fcase(
-      fixef == 'year_month + fips_res + fips_occ', "No Add'l FEs",
-      fixef == 'year_month + fips_res + fips_occ + sex + mage + mrace + mhisp + meduc + mar + birth_facility + restatus + total_birth_order', 'Mother FEs',
-      fixef == 'year_month + fips_res + fips_occ + fage + fhisp + frace', 'Father FEs',
-      fixef == 'year_month + fips_res + fips_occ + sex + mage + mrace + mhisp + meduc + mar + birth_facility + restatus + total_birth_order + fage + fhisp + frace', 'Add Family FEs'
-    ) |> factor(levels = c("No Add'l FEs",'Mother FEs','Father FEs','Add Family FEs')),
     control_num = fcase(
-      str_detect(rhs, 'atrazine') & str_detect(rhs, 'unemployment'), 'Pesticides and Unemployment',
+      str_detect(rhs, 'atrazine') & 
+        str_detect(rhs, 'unempl') &  
+        str_detect(rhs, 'empl') &  
+        str_detect(rhs, 'inc_per_cap') &  
+        str_detect(rhs, 'pop_all') &  
+        str_detect(rhs, 'shr_age') &  
+        str_detect(rhs, 'shr_race') &  
+        str_detect(rhs, 'p_farm'), 
+        'All',
+      str_detect(rhs, 'p_farm'), 
+        'Fertilizers',
+      str_detect(rhs, 'shr_age') &  
+        str_detect(rhs, 'shr_race'), 
+        'Age and Race Shares',
+      str_detect(rhs, 'shr_age') , 
+        'Age Shares', 
+      str_detect(rhs, 'unempl') &  
+        str_detect(rhs, 'empl') &  
+        str_detect(rhs, 'inc_per_cap') &  
+        str_detect(rhs, 'pop_all'), 
+        'Employment, Income, and Population', 
+      str_detect(rhs, 'unempl') &  
+        str_detect(rhs, 'empl') &  
+        str_detect(rhs, 'inc_per_cap'),
+        'Employment and Income', 
+      str_detect(rhs, 'unempl') &  
+        str_detect(rhs, 'empl'),
+        'Employment',
+      str_detect(rhs, 'atrazine') & 
+        str_detect(rhs, 'unemployment'), 
+        'Pesticides and Unemployment',
       str_detect(rhs, 'atrazine'), 'Pesticides',
       str_detect(rhs, 'unemployment'), 'Unemployment',
       default = 'None'
-    ) |> factor(levels = c('None','Pesticides','Unemployment','Pesticides and Unemployment')),
+    ) |> factor(levels = c(
+      'None',
+      'Pesticides and Unemployment',
+      'Employment',
+      'Employment and Income' , 
+      'Employment, Income, and Population', 
+      'Age Shares', 
+      'Age and Race Shares',
+      'Fertilizers',
+      'All'
+    )),
     trt = str_extract(rhs, '(?<=i\\(year, ).*(?=, ref = 1995\\))')
   )]
   mod_dt[,':='(
     var_of_interest = str_detect(coefficient, trt),
     trt_name = fcase(
       trt == 'all_yield_diff_gmo_50_0', 'Attainable Yield, GM Avg Split at Median',
+      trt == 'all_yield_diff_gmo_max_50_0', 'Attainable Yield, GM Max Split at Median',
       trt == 'all_yield_diff_percentile_gmo', 'Attainable Yield, GM Avg Percentile',
       trt == 'all_yield_diff_percentile_gmo_max', 'Attainable Yield, GM Max Percentile',
       trt == 'e100m_yield_diff_percentile_gmo', 'Attainable Yield, GM Avg Percentile, Eastern US',
-      trt == 'percentile_gm_acres','1990-1995 GM Acreage Percentile'
+      trt == 'percentile_gm_acres','1990-1995 GM Acreage Percentile',
+      trt == 'percentile_gm_acres_pct_cnty', '1990-1995 GM Acreage Percentile',
+      trt == 'percentile_gm_yield_max', '1990-1995 GM Max Yield Percentile',
+      trt == 'percentile_gm_acres_pct_cnty_e100m', '1990-1995 GM Acreage Percentile, Eastern US',
+      trt == 'percentile_gm_yield_max_e100m', '1990-1995 GM Max Yield Percentile, Eastern US',
+      trt == 'e100m_yield_diff_percentile_gmo_max', 'Attainable Yield, GM Max Percentile, Eastern US'
     ),
     county_subset = fcase(
       county_subset == 'mw-ne', 'Midwest and Northeast',
@@ -181,7 +283,8 @@ extract_event_study_coefs = function(mod_path){
       lhs == 'i_m_black', 'Pr(Mother Black)',
       lhs == 'i_m_nonwhite', 'Pr(Mother Non-white)',
       lhs == 'i_m_hispanic', 'Pr(Mother Hispanic)',
-      lhs == 'i_m_married', 'Pr(Mother Married)'
+      lhs == 'i_m_married', 'Pr(Mother Married)',
+      lhs == 'index', 'Health Index'
     ) 
   )]
   # return the results 
@@ -1060,10 +1163,11 @@ theme_set(
   theme(axis.title.x = element_blank())
 )
 # Running for all models EXCEPT shift share
+# TODO: save results as I go...
 mod_paths = 
   str_subset(
-    list.files(here('data/results/micro'), full.names = TRUE),
-    'est_2sls_ss|est_ols|est_water_rf', 
+    list.files(here('data/results/micro-new'), full.names = TRUE),
+    'est_2sls_ss|est_ols|est_water_rf|info|est_did', 
     negate = TRUE
   )
 mod_dt = lapply(mod_paths, extract_event_study_coefs) |> 

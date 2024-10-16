@@ -27,7 +27,7 @@ p_load(
     i_preterm = 'Preterm',
     c_section = 'C-section',
     any_anomaly = 'Anomaly',
-    index = 'Birth Outcome Index',
+    index = 'Health Index',
     year = 'Year',
     state_fips = 'State',
     alachlor_km2 = 'Alachlor/$km^2$',
@@ -143,7 +143,7 @@ p_load(
           lhs == 'gestation', 'Gestation Length (days)',
           lhs == 'i_preterm', 'Preterm (%pt)',
           lhs == 'c_section', 'C-section (%pt)', 
-          lhs == 'index', 'Birth Outcome Index (sd)'
+          lhs == 'index', 'Health Index (sd)'
         ) |> 
         factor(levels = c(
           'Birthweight (g)', 
@@ -153,7 +153,7 @@ p_load(
           'Very Low Birthweight (%pt)',
           'Preterm (%pt)',
           'C-section (%pt)', 
-          'Birth Outcome Index (sd)'
+          'Health Index (sd)'
         )),
       `Estimate` = as.character(effect_policy), 
       `Conf. Interval` = ci_policy, 
@@ -439,7 +439,7 @@ make_outcome_control_table = function(outcome_in, mod, trt, spatial){
     outcome_in == 'i_lbw', 'probability of low birthweight',
     outcome_in == 'i_vlbw', 'probability of very low birthweight',
     outcome_in == 'i_preterm', 'probability of preterm birth', 
-    outcome_in == 'index', 'Birth Outcome Index', 
+    outcome_in == 'index', 'Health Index', 
   )
   # Making the table 
   etable(
