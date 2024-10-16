@@ -240,3 +240,53 @@ ggsave(
   width = 8, height = 8/1.4,
   bg = 'white'
 )
+
+# Map of rural counties 
+rural_p = 
+  left_join(
+    county_sf, 
+    gly_change_dt,
+    by = 'GEOID'
+  )|>
+  ggplot() + 
+  geom_sf(aes(fill = rural, color = rural)) + 
+  geom_sf(
+    data = states_sf, 
+    color = "black", 
+    fill = NA, 
+    linewidth = 0.5
+  ) +
+  scale_color_manual(
+    labels = c('Non-rural', 'Rural'),
+    values = c('gray90', 'grey60'),
+    aesthetics = c('fill','color'),
+    name = ""
+  ) 
+ggsave(
+  rural_p,
+  filename = here("figures/descriptive/rural.jpeg"),
+  width = 8, height = 8/1.4,
+  bg = 'white'
+)
+ggsave(
+  change_glyph_rural_p,
+  filename = here("figures/descriptive/glyph-km2-diff-9512-rural.eps"),
+  device = cairo_ps,
+  width = 8, height = 8/1.4,
+  bg = 'white'
+)
+
+
+crop_instr_dt = read.fst(
+  path = here('data/clean/crop-acre-percentile-90-95.fst'), 
+  as.data.table = TRUE
+)
+
+merge(
+  crop_instr_dt, 
+  comb_cnty_dt[,.(GEOID, rural)] |> unique(), 
+  by = 'GEOID'
+)[,
+  .(gm_acres = sum(gm_acres)), 
+  keyby = rural
+]

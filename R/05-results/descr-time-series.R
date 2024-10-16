@@ -43,7 +43,7 @@ comb_dt = read.fst(
 glyph_ts_p =
   comb_dt[year %in% 1992:2012,.(
     avg_glyph_km2 = sum(glyph_km2, na.rm = TRUE)), 
-    by = .(year, trt = all_yield_diff_gmo_50_0)
+    by = .(year, trt = all_yield_diff_gmo_max_50_0)
   ][!is.na(trt)] |>
   ggplot(aes(
     x = year, 
@@ -51,7 +51,7 @@ glyph_ts_p =
     color = trt,
     group = interaction(year <= 1995, trt)
   )) + 
-  geom_line(size = 1.2) +
+  geom_line(linewidth = 1.2) +
   geom_point(size = 3) + 
   geom_vline(xintercept = 1995.5, col = 'black', size = 1, linetype ='dashed') +
   geom_hline(yintercept = 0) +
@@ -74,6 +74,85 @@ ggsave(
       panel.grid.minor = element_blank()
     ),
   filename = here("figures/descriptive/ts-glyph.jpeg"),
+  width = 8*0.8, height = 6*0.8,
+  bg = 'white'
+)  
+ggsave(
+  plot = glyph_ts_p + 
+    theme_minimal(base_size = 24) + 
+    theme(
+      legend.text=element_text(size=20), 
+      legend.position = 'bottom',
+      legend.margin=margin(t=-25), 
+      panel.grid.minor = element_blank()
+    ),
+  filename = here("figures/descriptive/ts-glyph.eps"),
+  device = cairo_ps,
+  width = 8*0.8, height = 6*0.8,
+  bg = 'white'
+)  
+# Time series by treatment deciles 
+glyph_ts_decile_p =
+  comb_dt[year %in% 1992:2012,.(
+    avg_glyph_km2 = sum(glyph_km2, na.rm = TRUE)), 
+    by = .(
+      year, 
+      trt = cut(
+        all_yield_diff_percentile_gmo_max, 
+        breaks = seq(0,1, by = 0.25), 
+        labels = c('0-25%', '25-50%', '50-75%', '75-100%'),
+        include.lowest = TRUE
+        #, labels = scales::label_percent()(1:4/4)
+      )
+    )
+  ][!is.na(trt)] |>
+  ggplot(aes(
+    x = year, 
+    y = avg_glyph_km2, 
+    color = trt,
+    shape = trt,
+    group = interaction(year <= 1995, trt), 
+  )) + 
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) + 
+  geom_vline(xintercept = 1995.5, col = 'black', size = 1, linetype ='dashed') +
+  geom_hline(yintercept = 0) +
+  scale_color_viridis_d(
+    option = 'magma', 
+    end = 0.95, begin = 0.1,
+    name = ""
+  ) + 
+  scale_shape_manual(
+    name = '',
+    values = c(4,15,17,16)
+  ) + 
+  scale_y_continuous('GLY (kg/km²)') +
+  scale_x_continuous('', breaks = seq(1990, 2015, 5))
+glyph_ts_decile_p
+ggsave(
+  plot = glyph_ts_decile_p + 
+    theme_minimal(base_size = 24) + 
+    theme(
+      legend.text=element_text(size=16), 
+      legend.position = 'bottom',
+      legend.margin=margin(t=-25), 
+      panel.grid.minor = element_blank()
+    ),
+  filename = here("figures/descriptive/ts-glyph-decile.jpeg"),
+  width = 8*0.8, height = 6*0.8,
+  bg = 'white'
+)  
+ggsave(
+  plot = glyph_ts_p + 
+    theme_minimal(base_size = 24) + 
+    theme(
+      legend.text=element_text(size=20), 
+      legend.position = 'bottom',
+      legend.margin=margin(t=-25), 
+      panel.grid.minor = element_blank()
+    ),
+  filename = here("figures/descriptive/ts-glyph.jpeg"),
+  device = cairo_ps,
   width = 8*0.8, height = 6*0.8,
   bg = 'white'
 )  
