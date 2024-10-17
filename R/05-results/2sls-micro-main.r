@@ -439,12 +439,12 @@ make_outcome_control_table = function(outcome_in, mod, trt, spatial){
     outcome_in == 'i_lbw', 'probability of low birthweight',
     outcome_in == 'i_vlbw', 'probability of very low birthweight',
     outcome_in == 'i_preterm', 'probability of preterm birth', 
-    outcome_in == 'index', 'Health Index', 
+    outcome_in == 'index', 'Health Index'
   )
   # Making the table 
   etable(
     mod[lhs = paste0('^',outcome_in,'$')],
-    tex = TRUE,
+    #tex = TRUE,
     depvar = FALSE, 
     style.tex = style.tex(
       depvar.title = 'Dep Var:',
@@ -492,6 +492,60 @@ make_outcome_control_table = function(outcome_in, mod, trt, spatial){
   ) |> write(here(paste0(
     'tables/2sls/robust-cntrl/',outcome_in,'-',trt,'.tex'
   )))
+  etable(
+    mod[
+      lhs = paste0('^',outcome_in,'$'),
+      rhs = "!(ala|p_comm|shr)"
+    ],
+    tex = TRUE,
+    depvar = FALSE, 
+    style.tex = style.tex(
+      depvar.title = 'Dep Var:',
+      model.format = "", 
+      line.top = 'simple',
+      line.bottom = 'simple',
+      var.title = '\\midrule'
+    ),
+    se.below = TRUE,
+    digits = 3,
+    signif.code = NA,
+    keep = 'Glyphosate',
+    group = list(
+      #'^_Pesticides' = 'Nicosulfuron',
+      #'^_Fertilizers' = 'p_commercial',
+      #'^_Unemployment' = 'unempl_rate',
+      '^_Employment' = 'empl',
+      '^_Income' = 'inc_per_cap',
+      #'^_Age Shares' = 'shr_age',
+      #'^_Race Shares' = 'shr_race',
+      '^_Population' = 'pop'
+    ),
+    fixef.group = list(
+      '-^Yr x Mo' = 'year_month',
+      '-^County' = 'fips',
+      '-^Family Demog' = 'age|sex|race|hisp|birth|mar|educ|restatus'
+    ),
+    se.row = FALSE,
+    fitstat = ~n_millions,
+    digits.stats = 4,
+    tpt = TRUE, 
+    notes = paste0(
+      "Sample restricted to births from mothers ",
+      spatial_name,
+      ". Instruments are the ", 
+      trt_name,
+      " in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Employment controls include the unemployment rate, employment rate, percent farm employment, and farm employment per capita. Income controls include nonfarm income per capita and farm income per capita. Glyphosate/$km^2$ is $kg/km^2$."
+    ),
+    label = paste0('tab:robust-cntrl-income',outcome_in,'-',trt),
+    title = paste0(
+      '\\textbf{The effect of glyphosate on ',
+      outcome_name,
+      ', \\\\ Robustness to employment and income effects}' 
+    ),
+    fontsize = 'small'
+  ) |> write(here(paste0(
+    'tables/2sls/robust-cntrl/income-',outcome_in,'-',trt,'.tex'
+  )))
 }
 
 # Control tables for all outcomes of a particular model 
@@ -500,7 +554,7 @@ make_control_robust_tables = function(mod_path){
   mods = qread(mod_path)
   # Get metadata from filepath 
   trt = str_extract(mod_path,'(?<=_iv-).*(?=_cl-)')
-  spatial = str_extract(mod_path,'(?<=_spatial-).*(?=_het-)')
+  spatial = str_extract(mod_path,'(?<=_spatial-).*(?=_iv-)')
   # Run estimation
   lapply(
     unique(coeftable(mods)$lhs),
@@ -514,15 +568,18 @@ make_control_robust_tables = function(mod_path){
 
 # ES NOTE: This isn't working presently, but we don't use it in the paper
 # Running control tables for all estimations
-# mod_paths = 
+# mod_path =  
 #   str_subset(
-#     list.files(here('data/results/micro'), full.names = TRUE),
+#     list.files(here('data/results/micro-new'), full.names = TRUE),
 #     'est_2sls_outcome'
-#   ) 
+#   ) |>
+#   str_subset("1726169143")
 # lapply(
 #   mod_paths,  
 #   make_control_robust_tables
 # )
+
+
 
 # Table for shift-share estimation --------------------------------------------
   main_spec_ss = qread(str_subset(
