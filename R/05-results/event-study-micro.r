@@ -130,14 +130,16 @@ extract_event_study_coefs = function(mod_path){
       use.names = TRUE, fill = TRUE
     )
   # Adding info from filename 
+  mod_id = str_extract(mod_path, '\\d*\\.qs')
   info_ls = 
     qread(here(
       str_extract(mod_path, '.*micro-new(?=/)'),
-      paste0('info_',str_extract(mod_path, '\\d*\\.qs'))
+      paste0('info_',mod_id)
     ))
   path_fe = str_extract(mod_path, '(?<=_fe).*(?=_spatial)')
   path_fe_special = str_extract(mod_path, '(?<=_fe).{1,2}(?=_\\d{10}\\.qs)')
   mod_dt[,':='(
+    mod_id = mod_id,
     spatial = info_ls$spatial_subset, 
     cluster = paste(info_ls$clustering, collapse = ' '),
     county_subset = ifelse(
@@ -148,7 +150,7 @@ extract_event_study_coefs = function(mod_path){
     #lhs = paste0(info_ls$lhs, collapse = ' '), 
     fixef_num = fcase(
       path_fe_special == '0' , 
-        'Family demographics, county and year by month',
+        'Family demographics, county, and year by month',
       path_fe_special == '1' , 
         'Family demographics, county, year, and month',
       path_fe_special == '2a', 
@@ -176,12 +178,14 @@ extract_event_study_coefs = function(mod_path){
       path_fe_special == '6b', 
         'Family demographics, county, year by month by Ag District', 
       path_fe == '-yearmonth-fipsres-fipsocc-dem-dad_dem-fe_dad-fe', 
-        'Family demographics, county, and year by month', 
+        'Family demographics, county, and year by month',
+      str_detect(path_fe, '-yearmonth-fipsres-fipsocc-.*dad-fe'),
+        'Family demographics, county, and year by month',
       path_fe == '-yearmonth-fipsres-fipsocc--', 
         'County and year by month'
     ) |> factor(levels = c(
       'County and year by month',
-      'Family demographics, county and year by month',
+      'Family demographics, county, and year by month',
       'Family demographics, county, year, and month',
       'Family demographics, county, year by Census Region, and month by Census Region',
       'Family demographics, county, year by month by Census Region',
@@ -194,8 +198,7 @@ extract_event_study_coefs = function(mod_path){
       'Family demographics, county, year by month by Census Region and month by Ag District',
       'Family demographics, county, year by month by Farm Region and month by Ag District',
       'Family demographics, county, year by Ag District and month by Ag District',
-      'Family demographics, county, year by month by Ag District', 
-      'Family demographics, county, and year by month'
+      'Family demographics, county, year by month by Ag District'
     ))
   )]
   # Cleaning other things: Year, Controls, trt variable (instrument) 
@@ -209,32 +212,32 @@ extract_event_study_coefs = function(mod_path){
         str_detect(rhs, 'pop_all') &  
         str_detect(rhs, 'shr_age') &  
         str_detect(rhs, 'shr_race') &  
-        str_detect(rhs, 'p_farm'), 
+        str_detect(rhs, 'p_commercial_km2'), 
         'All',
-      str_detect(rhs, 'p_farm'), 
+      str_detect(rhs, 'p_commercial_km2'), 
         'Fertilizers',
       str_detect(rhs, 'shr_age') &  
         str_detect(rhs, 'shr_race'), 
         'Age and Race Shares',
       str_detect(rhs, 'shr_age') , 
         'Age Shares', 
-      str_detect(rhs, 'unempl') &  
-        str_detect(rhs, 'empl') &  
+      #str_detect(rhs, 'unempl') &  
+      str_detect(rhs, 'farm_empl') &  
         str_detect(rhs, 'inc_per_cap') &  
         str_detect(rhs, 'pop_all'), 
         'Employment, Income, and Population', 
-      str_detect(rhs, 'unempl') &  
-        str_detect(rhs, 'empl') &  
+      #str_detect(rhs, 'unempl') &  
+      str_detect(rhs, 'farm_empl') &  
         str_detect(rhs, 'inc_per_cap'),
         'Employment and Income', 
       str_detect(rhs, 'unempl') &  
-        str_detect(rhs, 'empl'),
+        str_detect(rhs, 'farm_empl'),
         'Employment',
       str_detect(rhs, 'atrazine') & 
-        str_detect(rhs, 'unemployment'), 
+        str_detect(rhs, 'unempl_rate'), 
         'Pesticides and Unemployment',
       str_detect(rhs, 'atrazine'), 'Pesticides',
-      str_detect(rhs, 'unemployment'), 'Unemployment',
+      str_detect(rhs, 'unempl_rate'), 'Unemployment',
       default = 'None'
     ) |> factor(levels = c(
       'None',
@@ -267,7 +270,10 @@ extract_event_study_coefs = function(mod_path){
     county_subset = fcase(
       county_subset == 'mw-ne', 'Midwest and Northeast',
       county_subset == 'south', 'South',
-      county_subset == 'south-nofl', 'South, no FL'
+      county_subset == 'south-nofl', 'South, no FL', 
+      county_subset == 'agshr95', 'Censor Ag Share, 95th percentile', 
+      county_subset == 'agshr90', 'Censor Ag Share, 90th percentile', 
+      county_subset == 'agshr75', 'Censor Ag Share, 75th percentile'
     ),
     lhs_name = fcase(
       lhs == 'dbwt', 'Birthweight (g)',
@@ -284,9 +290,19 @@ extract_event_study_coefs = function(mod_path){
       lhs == 'i_m_nonwhite', 'Pr(Mother Non-white)',
       lhs == 'i_m_hispanic', 'Pr(Mother Hispanic)',
       lhs == 'i_m_married', 'Pr(Mother Married)',
-      lhs == 'index', 'Health Index'
+      lhs == 'i_m_college', 'Pr(Mother College)',
+      lhs == 'i_m_hs', 'Pr(Mother HS)',
+      lhs == 'mage', "Mother's Age",
+      lhs == 'index', 'Health Index' 
     ) 
   )]
+  # Save the results 
+  path = 'data/results/mod-dt'
+  dir.create(here(path))
+  write.fst(
+    mod_dt, 
+    here(path,paste0(str_extract(mod_path, '(?<=micro-new/).*(?=\\.qs)'),'.fst'))
+  )
   # return the results 
   return(mod_dt)
 }
@@ -312,6 +328,8 @@ plot_reduced_form = function(
     outcome_in == 'i_m_nonwhite', 'Mother Non-white',# (%)',
     outcome_in == 'i_m_hispanic', 'Mother Hispanic',# (%)',
     outcome_in == 'i_m_married', 'Mother Married',# (%)',
+    outcome_in == 'mage', "Mother's Age",
+    outcome_in == 'index', 'Health Index',
     default = 'Estimate'
   )
   # Main plot--first stage 
@@ -320,12 +338,13 @@ plot_reduced_form = function(
       type == '2sls-fs' & 
       var_of_interest == TRUE & 
       lhs == outcome_in &
-      fixef_num == 'Add Family FEs' & 
-      control_num == 'Pesticides and Unemployment' &
-      trt == 'all_yield_diff_percentile_gmo' & 
+      fixef_num == 'Family demographics, county, and year by month' & 
+      control_num == 'All' &
+      trt == 'all_yield_diff_percentile_gmo_max' & 
       spatial == 'rural' &
       paste0(sample_var, sample) == 'NANA' & 
-      is.na(county_subset)
+      is.na(county_subset) & 
+      mod_id == '1726169143.qs'
     ]
   if(nrow(fs_event_main_dt) > 0){
     fs_event_p = 
@@ -359,12 +378,13 @@ plot_reduced_form = function(
       type == '2sls-fs' & 
       var_of_interest == TRUE & 
       lhs == outcome_in &
-      fixef_num == 'Add Family FEs' & 
+      fixef_num == 'Family demographics, county, and year by month' & 
       control_num == 'None' &
-      trt == 'all_yield_diff_percentile_gmo' & 
+      trt == 'all_yield_diff_percentile_gmo_max' & 
       spatial == 'rural' &
       paste0(sample_var, sample) == 'NANA' & 
-      is.na(county_subset)
+      is.na(county_subset) & 
+      mod_id == '1726169143.qs'
     ]
   if(nrow(fs_event_main_policy_dt) > 0){
     fs_event_policy_p = 
@@ -399,12 +419,13 @@ plot_reduced_form = function(
       type == 'rf' & 
       var_of_interest == TRUE & 
       lhs == outcome_in &
-      fixef_num == 'Add Family FEs' & 
-      control_num == 'Pesticides and Unemployment' &
-      trt == 'all_yield_diff_percentile_gmo' & 
+      fixef_num == 'Family demographics, county, and year by month' & 
+      control_num == 'All' &
+      trt == 'all_yield_diff_percentile_gmo_max' & 
       spatial == 'rural' &
       paste0(sample_var, sample) == 'NANA' & 
-      is.na(county_subset)
+      is.na(county_subset) & 
+      mod_id == '1726169143.qs'
     ]
   if(nrow(rf_event_main_dt)>0){
     rf_event_p = 
@@ -438,12 +459,13 @@ plot_reduced_form = function(
       type == 'rf' & 
       var_of_interest == TRUE & 
       lhs == outcome_in &
-      fixef_num == 'Add Family FEs' & 
+      fixef_num == 'Family demographics, county, and year by month' & 
       control_num == 'None' &
-      trt == 'all_yield_diff_percentile_gmo' & 
+      trt == 'all_yield_diff_percentile_gmo_max' & 
       spatial == 'rural' &
       paste0(sample_var, sample) == 'NANA' & 
-      is.na(county_subset)
+      is.na(county_subset) & 
+      mod_id == '1726169143.qs'
     ]
   if(nrow(rf_event_main_policy_dt)>0){
     rf_event_policy_p = 
@@ -472,46 +494,46 @@ plot_reduced_form = function(
       width = width_in, height = height_in
     )
   }
-  # Reduced form with no controls/fe's
-  rf_event_nc_dt = 
-    mod_dt[
-      type == 'rf' & 
-      var_of_interest == TRUE & 
-      lhs == outcome_in &
-      fixef_num == "No Add'l FEs" & 
-      control_num == 'None' &
-      trt == 'all_yield_diff_percentile_gmo' & 
-      spatial == 'rural' &
-      paste0(sample_var, sample) == 'NANA'& 
-      is.na(county_subset)
-    ]
-  if(nrow(rf_event_nc_dt)>0){
-    rf_event_nc_p = 
-      ggplot(
-        data = rf_event_nc_dt,
-        aes(x = year, y = estimate, ymin = ci_l, ymax = ci_h)
-      ) +
-      geom_hline(yintercept = 0) +
-      geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
-      geom_ribbon(fill = pink, alpha = 0.5) +
-      geom_point(color = pink, size = 2.5) +
-      geom_line(linewidth = 0.3, color = pink) +
-      scale_y_continuous(name = y_lab, minor_breaks = NULL) +
-      scale_x_continuous(
-        name = 'Year', 
-        limits = c(1990,2015),
-        breaks = seq(1990, 2015, 5), 
-        minor_breaks = NULL
-      ) 
-    if(print) print(rf_event_p)
-    ggsave(
-      rf_event_nc_p, 
-      filename = here(paste0(
-        'figures/micro/rf-event/no-cntrl-fe-',outcome_in,'.jpeg'
-      )), 
-      width = width_in, height = height_in
-    )
-  }
+  # Reduced form with no controls/fe's: We don't estimate w/o family FEs anymore
+  # rf_event_nc_dt = 
+  #   mod_dt[
+  #     type == 'rf' & 
+  #     var_of_interest == TRUE & 
+  #     lhs == outcome_in &
+  #     fixef_num == 'Family demographics, county, and year by month' & 
+  #     control_num == 'None' &
+  #     trt == 'all_yield_diff_percentile_gmo_max' & 
+  #     spatial == 'rural' &
+  #     paste0(sample_var, sample) == 'NANA'& 
+  #     is.na(county_subset)
+  #   ]
+  # if(nrow(rf_event_nc_dt)>0){
+  #   rf_event_nc_p = 
+  #     ggplot(
+  #       data = rf_event_nc_dt,
+  #       aes(x = year, y = estimate, ymin = ci_l, ymax = ci_h)
+  #     ) +
+  #     geom_hline(yintercept = 0) +
+  #     geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+  #     geom_ribbon(fill = pink, alpha = 0.5) +
+  #     geom_point(color = pink, size = 2.5) +
+  #     geom_line(linewidth = 0.3, color = pink) +
+  #     scale_y_continuous(name = y_lab, minor_breaks = NULL) +
+  #     scale_x_continuous(
+  #       name = 'Year', 
+  #       limits = c(1990,2015),
+  #       breaks = seq(1990, 2015, 5), 
+  #       minor_breaks = NULL
+  #     ) 
+  #   if(print) print(rf_event_p)
+  #   ggsave(
+  #     rf_event_nc_p, 
+  #     filename = here(paste0(
+  #       'figures/micro/rf-event/no-cntrl-fe-',outcome_in,'.jpeg'
+  #     )), 
+  #     width = width_in, height = height_in
+  #   )
+  # }
   # Now robustness to different definitions of trt 
   fs_event_trt_p = 
     ggplot(
@@ -519,12 +541,14 @@ plot_reduced_form = function(
         type == '2sls-fs' & 
         var_of_interest == TRUE & 
         lhs == outcome_in &
-        fixef_num == 'Add Family FEs' & 
-        control_num == 'Pesticides and Unemployment' &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' &
         trt != 'percentile_gm_acres' & 
         spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA'& 
-        is.na(county_subset)
+        is.na(county_subset) & 
+        mod_id != '1728516819.qs' & 
+        str_detect(trt, 'e100', negate = TRUE)
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -558,14 +582,67 @@ plot_reduced_form = function(
     )), 
     width = width_in*1.75, height = height_in
   )
+  fs_event_trt_e100m_p = 
+    ggplot(
+      data = mod_dt[
+        type == '2sls-fs' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' &
+        trt != 'percentile_gm_acres' & 
+        spatial == 'rural' &
+        paste0(sample_var, sample) == 'NANA'& 
+        is.na(county_subset) & 
+        mod_id != '1728516819.qs' & 
+        str_detect(trt, 'e100')
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = str_remove(trt_name, 'Attainable Yield, '), 
+        fill = str_remove(trt_name, 'Attainable Yield, ')
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Attainable Yield Measure', 
+      aesthetics = c('color','fill')
+    ) 
+  if(print) print(fs_event_trt_e100m_p)
+  ggsave(
+    fs_event_trt_e100m_p, 
+    filename = here(paste0(
+      'figures/micro/fs-event/robust-trt-e100m-',outcome_in,'.jpeg'
+    )), 
+    width = width_in*1.75, height = height_in
+  )
   rf_event_trt_p = 
     ggplot(
       data = mod_dt[
-        type == 'rf' & var_of_interest == TRUE & lhs == outcome_in &
-        fixef_num == 'Add Family FEs' & control_num == 'Pesticides and Unemployment' &
-        trt != 'percentile_gm_acres' & spatial == 'rural' &
-        paste0(sample_var, sample) == 'NANA' & 
-      is.na(county_subset)
+        type == 'rf' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' &
+        trt != 'percentile_gm_acres' & 
+        spatial == 'rural' &
+        paste0(sample_var, sample) == 'NANA'& 
+        is.na(county_subset) & 
+        mod_id != '1728516819.qs' & 
+        str_detect(trt, 'e100', negate = TRUE)
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -599,17 +676,255 @@ plot_reduced_form = function(
     )), 
     width = width_in*1.75, height = height_in
   )
-  # Now for control and FE robustness
+  rf_event_trt_e100m_p = 
+    ggplot(
+      data = mod_dt[
+        type == 'rf' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' &
+        trt != 'percentile_gm_acres' & 
+        spatial == 'rural' &
+        paste0(sample_var, sample) == 'NANA'& 
+        is.na(county_subset) & 
+        mod_id != '1728516819.qs' & 
+        str_detect(trt, 'e100')
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = str_remove(trt_name, 'Attainable Yield, '), 
+        fill = str_remove(trt_name, 'Attainable Yield, ')
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    scale_y_continuous(name = y_lab, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Attainable Yield Measure', 
+      aesthetics = c('color','fill')
+    ) 
+  if(print) print(rf_event_trt_e100m_p)
+  ggsave(
+    rf_event_trt_e100m_p, 
+    filename = here(paste0(
+      'figures/micro/rf-event/robust-trt-e100m-',outcome_in,'.jpeg'
+    )), 
+    width = width_in*1.75, height = height_in
+  )
+  # TRT robustness without any controls (Policy effect)
+  fs_event_trt_policy_p = 
+    ggplot(
+      data = mod_dt[
+        type == '2sls-fs' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'None' &
+        trt != 'percentile_gm_acres' & 
+        spatial == 'rural' &
+        paste0(sample_var, sample) == 'NANA'& 
+        is.na(county_subset) & 
+        mod_id != '1728516819.qs' & 
+        str_detect(trt, 'e100', negate = TRUE)
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = str_remove(trt_name, 'Attainable Yield, '), 
+        fill = str_remove(trt_name, 'Attainable Yield, ')
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Attainable Yield Measure', 
+      aesthetics = c('color','fill')
+    ) 
+  if(print) print(fs_event_trt_policy_p)
+  ggsave(
+    fs_event_trt_p, 
+    filename = here(paste0(
+      'figures/micro/fs-event/robust-trt-policy-',outcome_in,'.jpeg'
+    )), 
+    width = width_in*1.75, height = height_in
+  )
+  fs_event_trt_e100m_policy_p = 
+    ggplot(
+      data = mod_dt[
+        type == '2sls-fs' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'None' &
+        trt != 'percentile_gm_acres' & 
+        spatial == 'rural' &
+        paste0(sample_var, sample) == 'NANA'& 
+        is.na(county_subset) & 
+        mod_id != '1728516819.qs' & 
+        str_detect(trt, 'e100')
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = str_remove(trt_name, 'Attainable Yield, '), 
+        fill = str_remove(trt_name, 'Attainable Yield, ')
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Attainable Yield Measure', 
+      aesthetics = c('color','fill')
+    ) 
+  if(print) print(fs_event_trt_e100m_policy_p)
+  ggsave(
+    fs_event_trt_e100m_policy_p, 
+    filename = here(paste0(
+      'figures/micro/fs-event/robust-trt-policy-e100m',outcome_in,'.jpeg'
+    )), 
+    width = width_in*1.75, height = height_in
+  )
+  rf_event_trt_policy_p = 
+    ggplot(
+      data = mod_dt[
+        type == 'rf' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'None' &
+        trt != 'percentile_gm_acres' & 
+        spatial == 'rural' &
+        paste0(sample_var, sample) == 'NANA'& 
+        is.na(county_subset) & 
+        mod_id != '1728516819.qs' & 
+        str_detect(trt, 'e100', negate = TRUE)
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = str_remove(trt_name, 'Attainable Yield, '), 
+        fill = str_remove(trt_name, 'Attainable Yield, ')
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    scale_y_continuous(name = y_lab, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Attainable Yield Measure', 
+      aesthetics = c('color','fill')
+    ) 
+  if(print) print(rf_event_trt_policy_p)
+  ggsave(
+    rf_event_trt_policy_p, 
+    filename = here(paste0(
+      'figures/micro/rf-event/robust-trt-policy-',outcome_in,'.jpeg'
+    )), 
+    width = width_in*1.75, height = height_in
+  )
+  rf_event_trt_e100m_policy_p = 
+    ggplot(
+      data = mod_dt[
+        type == 'rf' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'None' &
+        trt != 'percentile_gm_acres' & 
+        spatial == 'rural' &
+        paste0(sample_var, sample) == 'NANA'& 
+        is.na(county_subset) & 
+        mod_id != '1728516819.qs' & 
+        str_detect(trt, 'e100')
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = str_remove(trt_name, 'Attainable Yield, '), 
+        fill = str_remove(trt_name, 'Attainable Yield, ')
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    scale_y_continuous(name = y_lab, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Attainable Yield Measure', 
+      aesthetics = c('color','fill')
+    ) 
+  if(print) print(rf_event_trt_e100m_policy_p)
+  ggsave(
+    rf_event_trt_e100m_policy_p, 
+    filename = here(paste0(
+      'figures/micro/rf-event/robust-trt-policy-e100m-',outcome_in,'.jpeg'
+    )), 
+    width = width_in*1.75, height = height_in
+  )
+  # Now for control robustness
   fs_event_cntrl_p = 
     ggplot(
       data = mod_dt[
         type == '2sls-fs' & 
         var_of_interest == TRUE & 
         lhs == outcome_in &
-        trt == 'all_yield_diff_percentile_gmo' &
+        trt == 'all_yield_diff_percentile_gmo_max' &
+        fixef_num == 'Family demographics, county, and year by month' & 
         spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA' & 
-        is.na(county_subset)
+        is.na(county_subset) & 
+        mod_id == '1726169143.qs'
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -634,15 +949,16 @@ plot_reduced_form = function(
       end = 0.9,
       name = 'Controls', 
       aesthetics = c('color','fill')
-    ) +
-    facet_grid(rows = vars(fixef_num))
+    )+
+    theme(legend.position = 'bottom') +
+    guides(color = guide_legend(ncol = 3)) 
   if(print) print(fs_event_cntrl_p)
   ggsave(
     fs_event_cntrl_p, 
     filename = here(paste0(
       'figures/micro/fs-event/robust-cntrl-',outcome_in,'.jpeg'
     )), 
-    width = width_in*1.75, height = height_in*2
+    width = width_in*2.5, height = height_in*1.5
   )
   rf_event_cntrl_p = 
     ggplot(
@@ -650,10 +966,12 @@ plot_reduced_form = function(
         type == 'rf' & 
         var_of_interest == TRUE & 
         lhs == outcome_in &
-        trt == 'all_yield_diff_percentile_gmo' &
+        trt == 'all_yield_diff_percentile_gmo_max' &
+        fixef_num == 'Family demographics, county, and year by month' & 
         spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA' & 
-        is.na(county_subset)
+        is.na(county_subset) &
+        mod_id == '1726169143.qs'
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -678,15 +996,217 @@ plot_reduced_form = function(
       end = 0.9,
       name = 'Controls', 
       aesthetics = c('color','fill')
-    ) +
-    facet_grid(rows = vars(fixef_num))
+    )+
+    theme(legend.position = 'bottom') +
+    guides(color = guide_legend(ncol = 3)) 
   if(print) print(rf_event_cntrl_p)
   ggsave(
     rf_event_cntrl_p, 
     filename = here(paste0(
       'figures/micro/rf-event/robust-cntrl-',outcome_in,'.jpeg'
     )), 
-    width = width_in*1.75, height = height_in*2
+    width = width_in*2.5, height = height_in*1.5
+  )
+  # Now for FE robustness
+  fs_event_fixef_p = 
+    ggplot(
+      data = mod_dt[
+        type == '2sls-fs' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        trt == 'all_yield_diff_percentile_gmo_max' &
+        spatial == 'rural' &
+        control_num == 'All' & 
+        paste0(sample_var, sample) == 'NANA' & 
+        is.na(county_subset) &
+        mod_id != '1726169143.qs' &
+        (str_detect(fixef_num, 'state|Ag District', negate = TRUE) |
+          fixef_num == 'Family demographics, county, and year by month')
+          #&str_detect(fixef_num, 'and month by', negate = TRUE)
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = fixef_num, 
+        fill = fixef_num
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.8)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.8)) +
+    scale_y_continuous(name = y_lab, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Fixed Effects', 
+      aesthetics = c('color','fill')
+    ) +
+    theme(legend.position = 'bottom') +
+    guides(color = guide_legend(ncol = 1)) 
+  if(print) print(fs_event_fixef_p)
+  ggsave(
+    fs_event_fixef_p, 
+    filename = here(paste0(
+      'figures/micro/fs-event/robust-fixef-',outcome_in,'.jpeg'
+    )), 
+    width = width_in*2, height = height_in*2
+  )
+  fs_event_fixef2_p = 
+    ggplot(
+      data = mod_dt[
+        type == '2sls-fs' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        trt == 'all_yield_diff_percentile_gmo_max' &
+        spatial == 'rural' &
+        control_num == 'All' & 
+        paste0(sample_var, sample) == 'NANA' & 
+        is.na(county_subset) &
+        mod_id != '1726169143.qs' &
+        (str_detect(fixef_num, 'state|Ag District') |
+          fixef_num == 'Family demographics, county, and year by month')
+          #&str_detect(fixef_num, 'year by month by', negate = TRUE)
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = fixef_num, 
+        fill = fixef_num
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.8)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.8)) +
+    scale_y_continuous(name = y_lab, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Fixed Effects', 
+      aesthetics = c('color','fill')
+    ) +
+    theme(legend.position = 'bottom') +
+    guides(color = guide_legend(ncol = 1)) 
+  if(print) print(fs_event_fixef2_p)
+  ggsave(
+    fs_event_fixef2_p, 
+    filename = here(paste0(
+      'figures/micro/fs-event/robust-fixef2-',outcome_in,'.jpeg'
+    )), 
+    width = width_in*2, height = height_in*2
+  )
+  rf_event_fixef_p = 
+    ggplot(
+      data = mod_dt[
+        type == 'rf' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        trt == 'all_yield_diff_percentile_gmo_max' &
+        spatial == 'rural' &
+        control_num == 'All' & 
+        paste0(sample_var, sample) == 'NANA' & 
+        is.na(county_subset) &
+        mod_id != '1726169143.qs' &
+        (str_detect(fixef_num, 'state|Ag District', negate = TRUE) |
+          fixef_num == 'Family demographics, county, and year by month')
+          #&str_detect(fixef_num, 'and month by', negate = TRUE)
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = fixef_num, 
+        fill = fixef_num
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.8)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.8)) +
+    scale_y_continuous(name = y_lab, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Fixed Effects', 
+      aesthetics = c('color','fill')
+    ) +
+    theme(legend.position = 'bottom') +
+    guides(color = guide_legend(ncol = 1)) 
+  if(print) print(rf_event_fixef_p)
+  ggsave(
+    rf_event_fixef_p, 
+    filename = here(paste0(
+      'figures/micro/rf-event/robust-fixef-',outcome_in,'.jpeg'
+    )), 
+    width = width_in*2, height = height_in*2
+  )
+  rf_event_fixef2_p = 
+    ggplot(
+      data = mod_dt[
+        type == 'rf' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        trt == 'all_yield_diff_percentile_gmo_max' &
+        spatial == 'rural' &
+        control_num == 'All' & 
+        paste0(sample_var, sample) == 'NANA' & 
+        is.na(county_subset) &
+        mod_id != '1726169143.qs' &
+        (str_detect(fixef_num, 'state|Ag District') |
+          fixef_num == 'Family demographics, county, and year by month')
+          #&str_detect(fixef_num, 'year by month by', negate = TRUE)
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = fixef_num, 
+        fill = fixef_num
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.8)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.8)) +
+    scale_y_continuous(name = y_lab, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Fixed Effects', 
+      aesthetics = c('color','fill')
+    ) +
+    theme(legend.position = 'bottom') +
+    guides(color = guide_legend(ncol = 1)) 
+  if(print) print(rf_event_fixef2_p)
+  ggsave(
+    rf_event_fixef2_p, 
+    filename = here(paste0(
+      'figures/micro/rf-event/robust-fixef2-',outcome_in,'.jpeg'
+    )), 
+    width = width_in*2, height = height_in*2
   )
   # Now for County Subset robustness
   fs_event_cntysub_p = 
@@ -695,12 +1215,13 @@ plot_reduced_form = function(
         type == '2sls-fs' & 
         var_of_interest == TRUE & 
         lhs == outcome_in &
-        fixef_num == 'Add Family FEs' & 
-        control_num == 'Pesticides and Unemployment' &
-        trt == 'all_yield_diff_percentile_gmo' & 
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' &
+        trt == 'all_yield_diff_percentile_gmo_max' & 
         spatial == 'rural' &
-        paste0(sample_var, sample) == 'NANA' 
-        #& !is.na(county_subset)
+        paste0(sample_var, sample) == 'NANA' &
+        (is.na(county_subset) | str_detect(county_subset,'Censor Ag', negate = TRUE)) &
+        mod_id != '1726169143.qs'
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -740,12 +1261,13 @@ plot_reduced_form = function(
         type == 'rf' & 
         var_of_interest == TRUE & 
         lhs == outcome_in &
-        fixef_num == 'Add Family FEs' & 
-        control_num == 'Pesticides and Unemployment' &
-        trt == 'all_yield_diff_percentile_gmo' & 
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' &
+        trt == 'all_yield_diff_percentile_gmo_max' & 
         spatial == 'rural' &
-        paste0(sample_var, sample) == 'NANA' 
-        #& !is.na(county_subset)
+        paste0(sample_var, sample) == 'NANA' &
+        (is.na(county_subset) | str_detect(county_subset,'Censor Ag', negate = TRUE)) &
+        mod_id != '1726169143.qs'
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -779,6 +1301,99 @@ plot_reduced_form = function(
     )), 
     width = width_in*1.75, height = height_in
   )
+  # Censoring ag share
+  fs_event_agshare_p = 
+    ggplot(
+      data = mod_dt[
+        type == '2sls-fs' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' &
+        trt == 'all_yield_diff_percentile_gmo_max' & 
+        spatial == 'rural' &
+        paste0(sample_var, sample) == 'NANA' &
+        (is.na(county_subset) | str_detect(county_subset,'Censor Ag')) &
+        mod_id != '1726169143.qs'
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = ifelse(is.na(county_subset),'Full Sample', county_subset), 
+        fill = ifelse(is.na(county_subset),'Full Sample', county_subset)
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'County Subset', 
+      aesthetics = c('color','fill')
+    )
+  if(print) print(fs_event_agshare_p)
+  ggsave(
+    fs_event_agshare_p, 
+    filename = here(paste0(
+      'figures/micro/fs-event/robust-agshr-',outcome_in,'.jpeg'
+    )), 
+    width = width_in*1.75, height = height_in
+  )
+  rf_event_agshare_p = 
+    ggplot(
+      data = mod_dt[
+        type == 'rf' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' &
+        trt == 'all_yield_diff_percentile_gmo_max' & 
+        spatial == 'rural' &
+        paste0(sample_var, sample) == 'NANA' &
+        (is.na(county_subset) | str_detect(county_subset,'Censor Ag')) &
+        mod_id != '1726169143.qs'
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = ifelse(is.na(county_subset),'Full Sample', county_subset), 
+        fill = ifelse(is.na(county_subset),'Full Sample', county_subset)
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    scale_y_continuous(name = y_lab, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'County Subset', 
+      aesthetics = c('color','fill')
+    ) 
+  if(print) print(rf_event_agshare_p)
+  ggsave(
+    rf_event_agshare_p, 
+    filename = here(paste0(
+      'figures/micro/rf-event/robust-agshr-',outcome_in,'.jpeg'
+    )), 
+    width = width_in*1.75, height = height_in
+  )
   # Now for Heterogeneity by pred bw
   fs_event_het_predbw_p = 
     ggplot(
@@ -786,9 +1401,9 @@ plot_reduced_form = function(
         type == '2sls-fs' & 
         var_of_interest == TRUE & 
         lhs == outcome_in &
-        fixef_num == 'Add Family FEs' & 
-        control_num == 'None' &
-        trt == 'all_yield_diff_percentile_gmo' & 
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' &
+        trt == 'all_yield_diff_percentile_gmo_max' & 
         spatial == 'rural' &
         sample_var == 'pred_q5' & 
         sample != 'Full sample' & 
@@ -831,9 +1446,9 @@ plot_reduced_form = function(
       data = mod_dt[
         type == 'rf' & 
         var_of_interest == TRUE & lhs == outcome_in &
-        fixef_num == 'Add Family FEs' & 
-        control_num == 'None' &
-        trt == 'all_yield_diff_percentile_gmo' & 
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' &
+        trt == 'all_yield_diff_percentile_gmo_max' & 
         spatial == 'rural' &
         sample_var == 'pred_q5' & 
         sample != 'Full sample' & 
@@ -876,9 +1491,9 @@ plot_reduced_form = function(
     type == '2sls-fs' & 
     var_of_interest == TRUE & 
     lhs == outcome_in &
-    fixef_num == 'Add Family FEs' & 
-    control_num == 'Pesticides and Unemployment' &
-    trt == 'all_yield_diff_percentile_gmo' & 
+    fixef_num == 'Family demographics, county, and year by month' & 
+    control_num == 'All' &
+    trt == 'all_yield_diff_percentile_gmo_max' & 
     spatial %in% c('urban res; urban occ','rural res; rural occ')
   ]
   if(nrow(fs_res_dt) > 0){
@@ -924,9 +1539,9 @@ plot_reduced_form = function(
       type == 'rf' & 
       var_of_interest == TRUE & 
       lhs == outcome_in &
-      fixef_num == 'Add Family FEs' & 
-      control_num == 'Pesticides and Unemployment' &
-      trt == 'all_yield_diff_percentile_gmo' & 
+      fixef_num == 'Family demographics, county, and year by month' & 
+      control_num == 'All' &
+      trt == 'all_yield_diff_percentile_gmo_max' & 
       sample_var == 'rural_res' & 
       sample != 'Full sample'
     ]
@@ -977,14 +1592,15 @@ plot_results_faceted_outcomes = function(mod_dt, print = FALSE, width_in = 6, he
   rf_event_main_dt = 
     mod_dt[
       type == 'rf' & 
-      !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')) &
+      lhs %in% c('dbwt','gestation','index','i_lbw','i_vlbw','i_preterm') &
       var_of_interest == TRUE & 
-      fixef_num == 'Add Family FEs' & 
-      control_num == 'Pesticides and Unemployment' &
-      trt == 'all_yield_diff_percentile_gmo' & 
+      fixef_num == 'Family demographics, county, and year by month' & 
+      control_num == 'All' &
+      trt == 'all_yield_diff_percentile_gmo_max' & 
       spatial == 'rural' &
       paste0(sample_var, sample) == 'NANA' & 
-      is.na(county_subset )
+      is.na(county_subset ) & 
+      mod_id == '1728516819.qs'
     ]
   if(nrow(rf_event_main_dt)>0){
     rf_event_p = 
@@ -1019,14 +1635,15 @@ plot_results_faceted_outcomes = function(mod_dt, print = FALSE, width_in = 6, he
   rf_event_main_policy_dt = 
     mod_dt[
       type == 'rf' & 
-      !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')) &
+      lhs %in% c('dbwt','gestation','index','i_lbw','i_vlbw','i_preterm') &
       var_of_interest == TRUE & 
-      fixef_num == 'Add Family FEs' & 
+      fixef_num == 'Family demographics, county, and year by month' & 
       control_num == 'None' &
-      trt == 'all_yield_diff_percentile_gmo' & 
+      trt == 'all_yield_diff_percentile_gmo_max' & 
       spatial == 'rural' &
       paste0(sample_var, sample) == 'NANA' & 
-      is.na(county_subset )
+      is.na(county_subset ) & 
+      mod_id == '1728516819.qs'
     ]
   if(nrow(rf_event_main_policy_dt)>0){
     rf_event_policy_p = 
@@ -1062,12 +1679,13 @@ plot_results_faceted_outcomes = function(mod_dt, print = FALSE, width_in = 6, he
     mod_dt[
       type == 'rf' & 
       lhs %in% c(
-        'dbwt_pred','i_m_black','i_m_hispanic','i_m_married','i_m_nonwhite','i_female'
+        'dbwt_pred','i_m_black','i_m_hispanic','i_m_married','i_m_nonwhite','i_female', 
+        'i_m_college','i_m_hs','mage'
       ) &
       var_of_interest == TRUE & 
-      fixef_num == "No Add'l FEs" & 
-      control_num == 'None' &
-      trt == 'all_yield_diff_percentile_gmo' & 
+      fixef_num == "Family demographics, county, and year by month" & 
+      control_num == 'All' &
+      trt == 'all_yield_diff_percentile_gmo_max' & 
       spatial == 'rural' &
       paste0(sample_var, sample) == 'NANA' & 
       is.na(county_subset)
@@ -1105,11 +1723,11 @@ plot_results_faceted_outcomes = function(mod_dt, print = FALSE, width_in = 6, he
   rf_het_white_dt = 
     mod_dt[
       type == 'rf' & 
-      !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')) &
+      !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly','c_section')) &
       var_of_interest == TRUE & 
-      fixef_num == 'Add Family FEs' & 
-      control_num == 'None' & #'Pesticides and Unemployment' &
-      trt == 'all_yield_diff_percentile_gmo' & 
+      fixef_num == 'Family demographics, county, and year by month' & 
+      control_num == 'All' & #'Pesticides and Unemployment' &
+      trt == 'all_yield_diff_percentile_gmo_max' & 
       spatial == 'rural' &
       sample_var == 'i_m_nonwhite' &
       sample != 'Full sample' & 
@@ -1162,15 +1780,32 @@ theme_set(
   theme_minimal(base_size = 14) +
   theme(axis.title.x = element_blank())
 )
-# Running for all models EXCEPT shift share
-# TODO: save results as I go...
+# List of all RF/2SLS first stage models available
 mod_paths = 
   str_subset(
-    list.files(here('data/results/micro-new'), full.names = TRUE),
+    list.files(here('data/results/micro-new')),
     'est_2sls_ss|est_ols|est_water_rf|info|est_did', 
     negate = TRUE
   )
-mod_dt = lapply(mod_paths, extract_event_study_coefs) |> 
+# Getting list of already-run models 
+mods_run = 
+  list.files(here('data/results/mod-dt')) |>
+  str_replace('fst','qs')
+mods_to_run = 
+  mod_paths |>
+  setdiff(mods_run)
+# Running cleaning function for those models 
+lapply(
+  here('data/results/micro-new', mods_to_run), 
+  extract_event_study_coefs
+)
+# Reading the results 
+mod_dt = 
+  lapply(
+    list.files(here('data/results/mod-dt'), full.names = TRUE), 
+    read.fst, 
+    as.data.table = TRUE
+  ) |> 
   rbindlist(use.names = TRUE, fill = TRUE)
 # Running for all outcomes 
 lapply(
