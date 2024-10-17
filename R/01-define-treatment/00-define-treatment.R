@@ -163,7 +163,7 @@
   splits = seq(0.25, 0.75, by = 0.05)
   splits_p = percent(splits, accuracy = 1) |> str_remove("%")
   # Buffers: Always include 0 and only use even numbers
-  buffers = c(0,0.1) 
+  buffers = c(0,0.1,0.5) 
   
   # Cartesian join of splits and buffers
   splits_buffers = CJ(splits, buffers)[,':='(

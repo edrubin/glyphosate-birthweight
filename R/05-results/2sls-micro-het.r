@@ -859,7 +859,7 @@ theme_set(theme_minimal(base_size = 12))
 # Loading the data from different pred splits 
 mod_paths = 
   str_subset(
-    list.files(here('data/results/micro'), full.names = TRUE),
+    list.files(here('data/results/micro-new'), full.names = TRUE),
     'est_2sls_outcome'
   ) |>
   str_subset('het-pred|het-month')
