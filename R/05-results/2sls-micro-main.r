@@ -567,6 +567,7 @@ make_control_robust_tables = function(mod_path){
 
 
 # ES NOTE: This isn't working presently, but we don't use it in the paper
+# ER NOTE: 10/17/24, need to fix it because we do now...
 # Running control tables for all estimations
 # mod_path =  
 #   str_subset(
