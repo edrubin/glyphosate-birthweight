@@ -2020,7 +2020,7 @@
 
 # TODO Run
 # Estimates: Heterogeneity for double-diff spec ------------------------------------------
-  # Deciles
+  # Deciles (instrument: diff GMO max)
   est_twfe(
     outcomes = c(
       'dbwt',
