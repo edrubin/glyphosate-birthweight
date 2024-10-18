@@ -1370,7 +1370,7 @@
 #     skip_iv = FALSE,
 #     water_types = NULL
 #   )
-#   # Instrument: Yield diff percentile GMO, east of 100th meridian
+#   # Instrument: Yield diff percentile GMO max, east of 100th meridian
 #   est_twfe(
 #     outcomes = c(
 #       'dbwt',
@@ -1448,7 +1448,7 @@
 #     skip_iv = FALSE,
 #     water_types = NULL
 #   )
-#   # Instrument: Yield diff GMO, 50-0
+#   # Instrument: Yield diff GMO max, 50-0
 #   est_twfe(
 #     outcomes = c(
 #       'dbwt',
@@ -1487,6 +1487,45 @@
 #     skip_iv = FALSE,
 #     water_types = NULL
 #   )
+  # Instrument: Yield diff GMO max, 50-50
+  est_twfe(
+    outcomes = c(
+      'dbwt',
+      'dbwt_pctl_pre',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
+    iv = 'all_yield_diff_gmo_max_50_50',
+    iv_shift = NULL,
+    spatial_subset = 'rural',
+    county_subset = NULL,
+    county_subset_name = NULL,
+    het_split = NULL,
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    name_suffix = NULL,
+    clustering = c('year', 'state_fips'),
+    gly_nonlinear = NULL,
+    iv_nonlinear = FALSE,
+    include_ols = TRUE,
+    include_did = TRUE,
+    skip_iv = FALSE,
+    water_types = NULL
+  )
 
 
 # Done
@@ -1979,6 +2018,41 @@
 #   )
 
 
+# TODO Run
+# Estimates: Heterogeneity for double-diff spec ------------------------------------------
+  # Deciles (instrument: diff GMO max)
+  est_twfe(
+    outcomes = c(
+      'dbwt',
+      'i_lbw', 'i_vlbw',
+      'gestation', 'i_preterm',
+      'c_section',
+      'index'
+    ),
+    iv = 'all_yield_diff_percentile_gmo_max',
+    spatial_subset = 'rural',
+    het_split = 'pred_q10',
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    include_ols = FALSE,
+    include_did = FALSE,
+    skip_iv = FALSE,
+    clustering = c('year', 'state_fips')
+  )
+
+
 # Done
 # # Estimates: Dropping top ag-employment counties -----------------------------------------
 # # NOTE Request from Reviewer 2: Drop top ag-employment-share counties
@@ -2291,38 +2365,38 @@
 #   )
 
 
-# TODO Run
-# Estimate on purely rural births --------------------------------------------------------
-  est_twfe(
-    outcomes = c(
-      'dbwt',
-      'i_lbw', 'i_vlbw',
-      'gestation', 'i_preterm',
-      'c_section',
-      'index'
-    ),
-    iv = 'all_yield_diff_percentile_gmo_max',
-    iv_shift = NULL,
-    spatial_subset = 'rural res; rural occ',
-    het_split = NULL,
-    county_subset = NULL,
-    county_subset_name = NULL,
-    dem_fe = TRUE,
-    dad_fe = TRUE,
-    control_set = list2(
-      'none',
-      c(
-        'pest',
-        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
-        'pop_all',
-        'age_share', 'race_share',
-        'fert'
-       )
-    ),
-    clustering = c('year', 'state_fips'),
-    include_ols = FALSE
-  )
+# Done
+# # Estimate on purely rural births --------------------------------------------------------
+#   est_twfe(
+#     outcomes = c(
+#       'dbwt',
+#       'i_lbw', 'i_vlbw',
+#       'gestation', 'i_preterm',
+#       'c_section',
+#       'index'
+#     ),
+#     iv = 'all_yield_diff_percentile_gmo_max',
+#     iv_shift = NULL,
+#     spatial_subset = 'rural res; rural occ',
+#     het_split = NULL,
+#     county_subset = NULL,
+#     county_subset_name = NULL,
+#     dem_fe = TRUE,
+#     dad_fe = TRUE,
+#     control_set = list2(
+#       'none',
+#       c(
+#         'pest',
+#         'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+#         'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+#         'pop_all',
+#         'age_share', 'race_share',
+#         'fert'
+#        )
+#     ),
+#     clustering = c('year', 'state_fips'),
+#     include_ols = FALSE
+#   )
 
 
 # TODO Run
@@ -2330,9 +2404,10 @@
   est_twfe(
     outcomes = c(
       'dbwt',
-      'i_lbw', 'i_vlbw',
-      'gestation', 'i_preterm',
-      'c_section',
+      # 'i_lbw', 'i_vlbw',
+      'gestation',
+      # 'i_preterm',
+      # 'c_section',
       'index'
     ),
     iv = 'all_yield_diff_percentile_gmo_max',
