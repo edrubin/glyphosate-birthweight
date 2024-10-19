@@ -404,7 +404,12 @@
   # Calculate additional variables
   comb_cnty_dt[, `:=`(
     empl_rate = tot_empl / tot_pop,
-    farm_empl_per_cap = farm_empl / tot_pop
+    farm_empl_per_cap = farm_empl / tot_pop, 
+    tot_acres_km2  = tot_acres/area_km2,
+    corn_acres_km2  = corn_acres/area_km2,
+    soy_acres_km2  = soy_acres/area_km2,
+    cotton_acres_km2  = cotton_acres/area_km2,
+    other_acres_km2  = other_acres/area_km2
   )]
   # Change name of unemployment rate
   setnames(comb_cnty_dt, old = 'unemployment_rate', new = 'unempl_rate')
@@ -759,6 +764,15 @@
       NULL
     )
     fert_fml = paste(fert_controls, collapse = ' + ')
+    # Acre controls
+    acre_controls = c(
+      'corn_acres_km2',
+      'soy_acres_km2',
+      'cotton_acres_km2',
+      'other_acres_km2'
+      NULL
+    )
+    acre_fml = paste(acre_controls, collapse = ' + ')
     # Age-share controls
 # NOTE Omitting the 70+ share (colinear)
     age_controls = paste0('shr_age_', seq(0, 60, 10), '_all')
@@ -975,6 +989,7 @@
         unlist() |>
         paste(collapse = ' + ') |>
         str_replace(pattern = 'fert', replacement = fert_fml) |>
+        str_replace(pattern = 'acres', replacement = acre_fml) |>
         str_replace(pattern = 'age_share', replacement = age_fml) |>
         str_replace(pattern = 'pest', replacement = pest_fml) |>
         str_replace(pattern = 'race_share', replacement = race_fml)
@@ -997,6 +1012,7 @@
                 unlist() |>
                 paste(collapse = ' + ') |>
                 str_replace(pattern = 'fert', replacement = fert_fml) |>
+                str_replace(pattern = 'acres', replacement = acre_fml) |>
                 str_replace(pattern = 'age_share', replacement = age_fml) |>
                 str_replace(pattern = 'pest', replacement = pest_fml) |>
                 str_replace(pattern = 'race_share', replacement = race_fml)
@@ -1692,7 +1708,41 @@
 #     skip_iv = FALSE,
 #     water_types = NULL
 #   )
-
+  est_twfe(
+    outcomes = c(
+      'dbwt',
+      'gestation',
+      'index'
+    ),
+    iv = 'all_yield_diff_percentile_gmo_max',
+    iv_shift = NULL,
+    spatial_subset = 'rural',
+    county_subset = NULL,
+    county_subset_name = NULL,
+    het_split = NULL,
+    base_fe = c('year_month', 'fips_res', 'fips_occ'),
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_sets = list2(
+      'acres',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert', 
+        'acres'
+       )
+    ),
+    name_suffix = NULL,
+    clustering = c('year', 'state_fips'),
+    gly_nonlinear = NULL,
+    iv_nonlinear = FALSE,
+    include_ols = FALSE,
+    skip_iv = FALSE,
+    water_types = NULL
+  )
 
 # Done
 # # Alternative instruments using historic acreages/yields ---------------------------------
