@@ -473,11 +473,16 @@
   # This function is called within the analysis script to estimate water spec
   estimate_water_spec = function(
     water_type, # c('bins-simple','bins-soil','ml-pred')
-    iv, est_dt,
-    controls, pest_controls, econ_controls,
-    fml_y, fml_iv, fml_controls, fml_fes, fml_inf,
+    est_dt,
+    iv, 
+    fml_y, 
+    fml_iv, 
+    fml_controls, 
+    fml_fes, 
+    fml_inf,
     het_split,
-    dir_today, base_name
+    dir_today, 
+    base_name
   ) {
     if (str_detect(water_type, 'bins')) {
       # Reading raw data
@@ -535,7 +540,7 @@
         )
       } else if (water_type == 'bins-simple') {
         # Simple just has upstream trt
-        col_regex = c('^all_yield_diff_percentile_gmo_d\\d{2,3}')
+        col_regex = paste0('^', iv, '_d\\d{2,3}$')
         water_dt =
           get_vars(
             county_exposure_dt,
@@ -584,22 +589,16 @@
         by = c('fips_res', 'year', 'month'),
         all.x = TRUE
       )
+      # Need to run each prediction with each set of controls 
+      vec_controls = fml_controls |>
+        str_remove_all('sw\\(|\\)') |>
+        str_split(',') 
       # Add water to formula in reduced form
       rhs_raw_fml =
         CJ(
-          controls = controls,
+          controls = vec_controls[[1]],
           pred = str_subset(colnames(county_exposure_pred_dt), 'pred')
-        )[, .(
-          fml_string = fcase(
-            controls == 0, pred,
-            controls == 1, paste0(pred, ' + ', paste(pest_controls, collapse = '+')),
-            controls == 2, paste0(pred, ' + ', paste(econ_controls, collapse = '+')),
-            controls == 3, paste0(
-              pred, ' + ',
-              paste(c(pest_controls, econ_controls), collapse = '+')
-            )
-          )
-        )]$fml_string
+        )[,.(fml_string = paste0(pred,' +',controls))]$fml_string
       fml_rhs_water = paste0(
         ifelse(length(rhs_raw_fml) > 1, 'sw(', ''),
         paste(rhs_raw_fml, collapse = ', '),
@@ -1322,11 +1321,13 @@
       lapply(
         water_types,
         estimate_water_spec,
-        iv = iv, est_dt = est_dt, controls = controls,
-        pest_controls = pest_controls, econ_controls = econ_controls,
-        fml_y = fml_y, fml_iv = fml_iv,
+        est_dt = est_dt, 
+        iv = iv, 
+        fml_y = fml_y, 
+        fml_iv = fml_iv,
         fml_controls = fml_controls,
-        fml_fes = fml_fes, fml_inf = fml_inf,
+        fml_fes = fml_fes, 
+        fml_inf = fml_inf,
         het_split = het_split,
         dir_today = dir_today,
         base_name = base_name
