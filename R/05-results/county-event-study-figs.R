@@ -149,7 +149,7 @@ make_cnty_event_study_figs = function(rural_in){
     # Plotting first stage for many pesticides 
     pest_fs_p = 
       ggplot(
-        data = coef_dt[str_detect(lhs, 'km2') & year  >= 1992],# == outcome_in],
+        data = coef_dt[str_detect(lhs, 'km2') & as.numeric(year) >= 1992],
         aes(x = year, y = estimate_std)
       ) +
       geom_point() + 
@@ -202,3 +202,25 @@ make_cnty_event_study_figs = function(rural_in){
 make_cnty_event_study_figs(rural_in = 'TRUE')
 make_cnty_event_study_figs(rural_in = 'FALSE')
 make_cnty_event_study_figs(rural_in = 'district')
+
+
+# Some testing 
+ggplot(
+  data = coef_dt[
+#    lhs %in% c('corn_acres','soy_acres','cotton_acres','tot_acres') &
+    lhs == 'tot_acres' &
+    str_detect(rhs_n, 'gmo_max')
+  ], 
+  aes(
+    x = year, 
+    y = estimate_std, 
+    ymin = estimate_std + qnorm(0.025)*std_error_std, 
+    ymax = estimate_std + qnorm(0.975)*std_error_std,
+    color = lhs
+  )
+) + 
+geom_pointrange(position = position_dodge(width = 0.5)) + 
+geom_vline(xintercept = 1995.5, linetype = 'dashed') + 
+geom_hline(yintercept = 0) + 
+theme_minimal() + 
+facet_wrap(~rhs_n)

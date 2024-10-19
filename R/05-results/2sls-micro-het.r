@@ -80,7 +80,18 @@ p_load(
     melt(id.var = 'year')
 
 # Function to extract estimates -----------------------------------------------
-extract_pred_bw_effects = function(mod_path){
+extract_pred_bw_effects = function(mod_path, overwrite = FALSE){
+  path = 'data/results/mod-dt-2sls'
+  dir.create(here(path))
+  save_path = here(
+    path, 
+    paste0(str_extract(mod_path, '(?<=micro-new/).*(?=\\.qs)'),'.fst')
+  )
+  # If we have already extracted coefs, get those
+  if(overwrite == FALSE & file.exists(save_path)){
+    return(read.fst(save_path, as.data.table = TRUE))
+  }
+  # otherwise extract the coefs
   print(paste0('starting', mod_path))
   mod = qread(mod_path)
   if(class(mod) == 'fixest_multi'){
@@ -101,12 +112,25 @@ extract_pred_bw_effects = function(mod_path){
     ) |>
     clean_names()
   rm(raw_coeftable)
-  # Adding info from filename 
+  # Adding model metadata 
+  mod_id = str_extract(mod_path, '\\d*\\.qs')
+  info_ls = 
+    qread(here(
+      str_extract(mod_path, '.*micro-new(?=/)'),
+      paste0('info_',mod_id)
+    ))
+  path_fe = str_extract(mod_path, '(?<=_fe).*(?=_spatial)')
+  path_fe_special = str_extract(mod_path, '(?<=_fe).{1,2}(?=_\\d{10}\\.qs)')
   pred_bw_dt[,':='(
-    cluster = str_extract(mod_path, '(?<=_cl-).*(?=_glynl)'),
-    county_subset = str_extract(mod_path, '(?<=_county-)[a-zA-Z-]+(?=_)'),
-    spatial = str_extract(mod_path, '(?<=_spatial-)[ ;a-zA-Z-]+(?=_)'),
-    trt = str_extract(mod_path, '(?<=iv-).*(?=_cl)')
+    trt = info_ls$iv,
+    mod_id = mod_id,
+    spatial = info_ls$spatial_subset, 
+    cluster = paste(info_ls$clustering, collapse = ' '),
+    county_subset = ifelse(
+      is.null(info_ls$county_subset_name), 
+      'All', 
+      info_ls$county_subset_name
+    )
   )]
   # Adding missing columns if they don't exist
   if (!exists('sample', where = pred_bw_dt)) {
@@ -130,27 +154,119 @@ extract_pred_bw_effects = function(mod_path){
   # Some cleaning of fixef names
   pred_bw_dt[,':='(
     fixef_num = fcase(
-      fixef == 'year_month + fips_res + fips_occ', "No Add'l FEs",
-      fixef == 'year_month + fips_res + fips_occ + sex + mage + mrace + mhisp + meduc + mar + birth_facility + restatus + total_birth_order', 'Mother FEs',
-      fixef == 'year_month + fips_res + fips_occ + fage + fhisp + frace', 'Father FEs',
-      fixef == 'year_month + fips_res + fips_occ + sex + mage + mrace + mhisp + meduc + mar + birth_facility + restatus + total_birth_order + fage + fhisp + frace', 'Mother and Father FEs'
-    ) |> factor(levels = c("No Add'l FEs",'Mother FEs','Father FEs','Mother and Father FEs')),
+      path_fe_special == '0' , 
+        'Family demographics, county, and year by month',
+      path_fe_special == '1' , 
+        'Family demographics, county, year, and month',
+      path_fe_special == '2a', 
+        'Family demographics, county, year by Census Region, and month by Census Region',
+      path_fe_special == '2b', 
+        'Family demographics, county, year by month by Census Region',
+      path_fe_special == '2c', 
+        'Family demographics, county, year by Census Division, and month by Census Division',
+      path_fe_special == '2d', 
+        'Family demographics, county, year by month by Census Division',
+      path_fe_special == '3a', 
+        'Family demographics, county, year by Farm Region, and month by Farm Region',
+      path_fe_special == '3b', 
+        'Family demographics, county, year by month by Farm Region',
+      path_fe_special == '4a', 
+        'Family demographics, county, year by state, and month by state',
+      path_fe_special == '4b', 
+        'Family demographics, county, year by month by state',
+      path_fe_special == '5a', 
+        'Family demographics, county, year by month by Census Region and month by Ag District',
+      path_fe_special == '5b', 
+        'Family demographics, county, year by month by Farm Region and month by Ag District',
+      path_fe_special == '6a', 
+        'Family demographics, county, year by Ag District and month by Ag District',
+      path_fe_special == '6b', 
+        'Family demographics, county, year by month by Ag District', 
+      path_fe == '-yearmonth-fipsres-fipsocc-dem-dad_dem-fe_dad-fe', 
+        'Family demographics, county, and year by month',
+      str_detect(path_fe, '-yearmonth-fipsres-fipsocc-.*dad-fe'),
+        'Family demographics, county, and year by month',
+      path_fe == '-yearmonth-fipsres-fipsocc--', 
+        'County and year by month'
+    ) |> factor(levels = c(
+      'County and year by month',
+      'Family demographics, county, and year by month',
+      'Family demographics, county, year, and month',
+      'Family demographics, county, year by Census Region, and month by Census Region',
+      'Family demographics, county, year by month by Census Region',
+      'Family demographics, county, year by Census Division, and month by Census Division',
+      'Family demographics, county, year by month by Census Division',
+      'Family demographics, county, year by Farm Region, and month by Farm Region',
+      'Family demographics, county, year by month by Farm Region',
+      'Family demographics, county, year by state, and month by state',
+      'Family demographics, county, year by month by state',
+      'Family demographics, county, year by month by Census Region and month by Ag District',
+      'Family demographics, county, year by month by Farm Region and month by Ag District',
+      'Family demographics, county, year by Ag District and month by Ag District',
+      'Family demographics, county, year by month by Ag District'
+    )),
     control_num = fcase(
-      str_detect(rhs, 'atrazine') & str_detect(rhs, 'unemployment'), 'Pesticides and Unemployment',
+      str_detect(rhs, 'atrazine') & 
+        str_detect(rhs, 'unempl') &  
+        str_detect(rhs, 'empl') &  
+        str_detect(rhs, 'inc_per_cap') &  
+        str_detect(rhs, 'pop_all') &  
+        str_detect(rhs, 'shr_age') &  
+        str_detect(rhs, 'shr_race') &  
+        str_detect(rhs, 'p_commercial_km2'), 
+        'All',
+      str_detect(rhs, 'p_commercial_km2'), 
+        'Fertilizers',
+      str_detect(rhs, 'shr_age') &  
+        str_detect(rhs, 'shr_race'), 
+        'Age and Race Shares',
+      str_detect(rhs, 'shr_age') , 
+        'Age Shares', 
+      #str_detect(rhs, 'unempl') &  
+      str_detect(rhs, 'farm_empl') &  
+        str_detect(rhs, 'inc_per_cap') &  
+        str_detect(rhs, 'pop_all'), 
+        'Employment, Income, and Population', 
+      #str_detect(rhs, 'unempl') &  
+      str_detect(rhs, 'farm_empl') &  
+        str_detect(rhs, 'inc_per_cap'),
+        'Employment and Income', 
+      str_detect(rhs, 'unempl') &  
+        str_detect(rhs, 'farm_empl'),
+        'Employment',
+      str_detect(rhs, 'atrazine') & 
+        str_detect(rhs, 'unempl_rate'), 
+        'Pesticides and Unemployment',
       str_detect(rhs, 'atrazine'), 'Pesticides',
-      str_detect(rhs, 'unemployment'), 'Unemployment',
+      str_detect(rhs, 'unempl_rate'), 'Unemployment',
       default = 'None'
-    ) |> factor(levels = c('None','Pesticides','Unemployment','Pesticides and Unemployment')),
+    ) |> factor(levels = c(
+      'None',
+      'Pesticides and Unemployment',
+      'Employment',
+      'Employment and Income' , 
+      'Employment, Income, and Population', 
+      'Age Shares', 
+      'Age and Race Shares',
+      'Fertilizers',
+      'All'
+    )),
     lhs = lhs |> str_remove('^c\\(') |> str_remove('\\)$')
   )]
   pred_bw_dt[,':='(
     var_of_interest = str_detect(coefficient, 'fit_glyph_km2'),
     trt_name = fcase(
-      trt == 'allyielddiffgmo500', 'Attainable Yield, GM Avg Split at Median',
-      trt == 'allyielddiffpercentilegmo', 'Attainable Yield, GM Avg Percentile',
-      trt == 'allyielddiffpercentilegmomax', 'Attainable Yield, GM Max Percentile',
-      trt == 'e100myielddiffpercentilegmo', 'Attainable Yield, GM Avg Percentile',
-      trt == 'percentilegmacres','1990-1995 GM Acreage Percentile'
+      trt == 'all_yield_diff_gmo_50_0', 'Attainable Yield, GM Avg Split at Median',
+      trt == 'all_yield_diff_gmo_max_50_0', 'Attainable Yield, GM Max Split at Median',
+      trt == 'all_yield_diff_percentile_gmo', 'Attainable Yield, GM Avg Percentile',
+      trt == 'all_yield_diff_percentile_gmo_max', 'Attainable Yield, GM Max Percentile',
+      trt == 'e100m_yield_diff_percentile_gmo', 'Attainable Yield, GM Avg Percentile, Eastern US',
+      trt == 'percentile_gm_acres','1990-1995 GM Acreage Percentile',
+      trt == 'percentile_gm_acres_pct_cnty', '1990-1995 GM Acreage Percentile',
+      trt == 'percentile_gm_yield_max', '1990-1995 GM Max Yield Percentile',
+      trt == 'percentile_gm_acres_pct_cnty_e100m', '1990-1995 GM Acreage Percentile, Eastern US',
+      trt == 'percentile_gm_yield_max_e100m', '1990-1995 GM Max Yield Percentile, Eastern US',
+      trt == 'e100m_yield_diff_percentile_gmo_max', 'Attainable Yield, GM Max Percentile, Eastern US'
     ),
     county_subset = fcase(
       spatial == 'rural' & trt == 'e100myielddiffpercentilegmo', 'Rural, Eastern US',
@@ -159,14 +275,25 @@ extract_pred_bw_effects = function(mod_path){
       spatial == 'rural' & county_subset == 'south-nofl', 'Rural, South, no FL',
       spatial == 'urban res; urban occ', 'Non-rural',
       spatial == 'rural res; rural occ', 'Rural residence & occurrence',
+      county_subset == 'agshr95', 'Censor Ag Share, 95th percentile', 
+      county_subset == 'agshr90', 'Censor Ag Share, 90th percentile', 
+      county_subset == 'agshr75', 'Censor Ag Share, 75th percentile',
       default = 'Rural'
     ) |> 
     factor(levels = c(
       "Rural", "Rural residence & occurrence", "Rural, Midwest and Northeast", 
       "Rural, Eastern US", "Rural, South", "Rural, South, no FL", 
-      "Non-rural"
+      "Non-rural", 
+      'Censor Ag Share, 95th percentile',
+      'Censor Ag Share, 90th percentile',
+      'Censor Ag Share, 75th percentile'
     ))
   )]
+  # Save the results 
+  write.fst(
+    pred_bw_dt, 
+    save_path
+  )
   return(pred_bw_dt)
 }
 
@@ -184,6 +311,7 @@ plot_predbw_results = function(
     outcome_in == 'i_lbw', 'LBW (%)',
     outcome_in == 'i_vlbw', 'VLBW (%)',
     outcome_in == 'i_preterm', 'Preterm (%)',
+    outcome_in == 'index', 'Health Index',
     default = 'Estimate'
   )
   if(str_detect(y_lab, '%')){
@@ -196,16 +324,16 @@ plot_predbw_results = function(
     ggplot(
       data = pctl_est_dt[
         lhs == outcome_in & 
-        trt == 'allyielddiffpercentilegmo' &
+        trt == 'all_yield_diff_percentile_gmo_max' &
         sample_var == 'pred_q10' & 
         var_of_interest == TRUE & 
-        fixef_num == 'Mother and Father FEs' & 
-        control_num == 'Pesticides and Unemployment',
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All',
         -'pctl'
       ] |> unique(), 
       aes(x = as.integer(sample), y = estimate, ymin = ci_l, ymax = ci_h),
     ) + 
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     geom_ribbon(alpha = 0.3, color = NA) + 
     geom_point() + 
     geom_line() +
@@ -231,11 +359,11 @@ plot_predbw_results = function(
     ggplot(
       data = pctl_est_dt[
         lhs == outcome_in & 
-        trt == 'allyielddiffpercentilegmo' &
+        trt == 'all_yield_diff_percentile_gmo_max' &
         sample_var == 'pred_q10' & 
         var_of_interest == TRUE & 
-        fixef_num == 'Mother and Father FEs' & 
-        control_num == 'Pesticides and Unemployment',
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All',
         -'pctl'
       ] |> unique(), 
       aes(
@@ -243,7 +371,7 @@ plot_predbw_results = function(
         y = effect_at_mean, ymin = effect_at_mean_l, ymax = effect_at_mean_h
       ),
     ) + 
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     geom_ribbon(alpha = 0.3, color = NA) + 
     geom_point() + 
     geom_line() +
@@ -269,10 +397,10 @@ plot_predbw_results = function(
     ggplot(
       data = pctl_est_dt[
         lhs == outcome_in & 
-        trt == 'allyielddiffpercentilegmo' &
+        trt == 'all_yield_diff_percentile_gmo_max' &
         sample_var == 'pred_q10' & 
         var_of_interest == TRUE & 
-        fixef_num == 'Mother and Father FEs' & 
+        fixef_num == 'Family demographics, county, and year by month' & 
         control_num == 'None',
         -'pctl'
       ] |> unique(), 
@@ -281,7 +409,7 @@ plot_predbw_results = function(
         y = effect_at_mean, ymin = effect_at_mean_l, ymax = effect_at_mean_h
       ),
     ) + 
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     geom_ribbon(alpha = 0.3, color = NA) + 
     geom_point() + 
     geom_line() +
@@ -307,10 +435,10 @@ plot_predbw_results = function(
     ggplot(
       data = pctl_est_dt[
         lhs == outcome_in & 
-        trt == 'allyielddiffpercentilegmo' &
+        trt == 'all_yield_diff_percentile_gmo_max' &
         sample_var == 'pred_q10' & 
         var_of_interest == TRUE & 
-        fixef_num == 'Mother and Father FEs',
+        fixef_num == 'Family demographics, county, and year by month',
         -'pctl'
       ] |> unique(), 
       aes(
@@ -319,7 +447,7 @@ plot_predbw_results = function(
         color = control_num, fill = control_num
       ),
     ) + 
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.3, color = NA) + 
     #geom_point() + 
     #geom_line() +
@@ -360,9 +488,9 @@ plot_predbw_results = function(
       data = pctl_est_dt[
         lhs == outcome_in & 
         var_of_interest == TRUE & 
-        trt == 'allyielddiffpercentilegmo' &
-        fixef_num == 'Mother and Father FEs' & 
-        control_num == 'Pesticides and Unemployment' & 
+        trt == 'all_yield_diff_percentile_gmo_max' &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' & 
         sample_var != 'month' & 
         sample_var != 'pred_q14'& 
         sample_var != 'pred_q5_sex'
@@ -373,7 +501,7 @@ plot_predbw_results = function(
         fill  = str_remove(sample_var, 'pred_q')|> as.integer() |> as.factor()
       ),
     ) + 
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     geom_ribbon(alpha = 0.3, color = NA) + 
     geom_line() +
     scale_color_viridis_d(
@@ -404,7 +532,7 @@ plot_predbw_results = function(
     ggplot(
       data = pctl_est_dt[
         lhs == outcome_in &
-        trt == 'allyielddiffpercentilegmo' &
+        trt == 'all_yield_diff_percentile_gmo_max' &
         var_of_interest == TRUE & 
         sample_var == 'pred_q10', 
         -'pctl'
@@ -414,7 +542,7 @@ plot_predbw_results = function(
         color = control_num, fill = control_num
       ),
     ) + 
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.3, color = NA) + 
     #geom_line() +
     geom_pointrange(
@@ -453,18 +581,18 @@ plot_predbw_results = function(
     ggplot(
       data = pctl_est_dt[
         lhs == outcome_in &
-        fixef_num == 'Mother and Father FEs' & 
-        control_num == 'Pesticides and Unemployment' &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' &
         var_of_interest == TRUE & 
         sample_var == 'pred_q5', 
         -'pctl'
       ] |> unique(), 
       aes(
         x = as.integer(sample), y = estimate, ymin = ci_l, ymax = ci_h,
-        color = county_subset, fill = county_subset
+        color = trt_name, fill = trt_name
       ),
     ) + 
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.3, color = NA) + 
     #geom_line() +
     geom_pointrange(
@@ -503,11 +631,11 @@ plot_predbw_results = function(
     ggplot(
       data = pctl_est_dt[
         lhs == outcome_in & 
-        trt == 'allyielddiffpercentilegmo' &
+        trt == 'all_yield_diff_percentile_gmo_max' &
         sample_var == 'month' & 
         var_of_interest == TRUE & 
-        fixef_num == 'Mother and Father FEs' & 
-        #control_num == 'Pesticides and Unemployment' & 
+        fixef_num == 'Family demographics, county, and year by month' & 
+        #control_num == 'All' & 
         sample != 'Full sample'
       ], 
       aes(
@@ -516,7 +644,7 @@ plot_predbw_results = function(
         color = control_num
       ),
     ) + 
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.3, color = NA) + 
     #geom_line()  + 
     geom_pointrange(
@@ -552,7 +680,7 @@ plot_predbw_results = function(
     ggplot(
       data = pctl_est_dt[
         lhs == outcome_in & 
-        trt == 'allyielddiffpercentilegmo' &
+        trt == 'all_yield_diff_percentile_gmo_max' &
         sample_var == 'month' & 
         var_of_interest == TRUE & 
         sample != 'Full sample'
@@ -562,7 +690,7 @@ plot_predbw_results = function(
         color = control_num, fill = control_num
       ),
     ) + 
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.3, color = NA) + 
     #geom_line() +
     geom_pointrange(
@@ -601,11 +729,11 @@ plot_predbw_results = function(
     ggplot(
       data = pctl_est_dt[
         lhs == outcome_in &
-        trt == 'allyielddiffpercentilegmo' &
+        trt == 'all_yield_diff_percentile_gmo_max' &
         var_of_interest == TRUE & 
         sample_var == 'pred_q5_sex' & 
-        fixef_num == 'Mother and Father FEs' & 
-        control_num == 'Pesticides and Unemployment' & 
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' & 
         sample != 'Full sample', 
         -'pctl'
       ] |> unique(), 
@@ -614,7 +742,7 @@ plot_predbw_results = function(
         color = str_extract(sample, 'M|F'), fill = str_extract(sample, 'M|F')
       ),
     ) + 
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.3, color = NA) + 
     geom_pointrange(
       linewidth = 0.75,
@@ -659,13 +787,13 @@ plot_predbw_results_all_outcome = function(
     ggplot(
       data = pctl_est_dt[
         var_of_interest == TRUE & 
-        trt == 'allyielddiffpercentilegmo' &
-        fixef_num == 'Mother and Father FEs' & 
-        control_num == 'Pesticides and Unemployment' & 
+        trt == 'all_yield_diff_percentile_gmo_max' &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' & 
         sample_var != 'month' & 
         sample_var != 'pred_q14' &
         sample_var != 'pred_q5_sex' &
-        !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly'))
+        !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly','c_section'))
       ], 
       aes(
         x = pctl, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -673,7 +801,7 @@ plot_predbw_results_all_outcome = function(
         fill  = str_remove(sample_var, 'pred_q')|> as.integer() |> as.factor()
       ),
     ) + 
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     geom_ribbon(alpha = 0.3, color = NA) + 
     geom_line() +
     scale_color_viridis_d(
@@ -706,13 +834,13 @@ plot_predbw_results_all_outcome = function(
     ggplot(
       data = pctl_est_dt[
         var_of_interest == TRUE & 
-        trt == 'allyielddiffpercentilegmo' &
-        fixef_num == 'Mother and Father FEs' & 
+        trt == 'all_yield_diff_percentile_gmo_max' &
+        fixef_num == 'Family demographics, county, and year by month' & 
         control_num == 'None' & 
         sample_var != 'month' & 
         sample_var != 'pred_q14' &
         sample_var != 'pred_q5_sex' &
-        !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly'))
+        !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly','c_section'))
       ], 
       aes(
         x = pctl, 
@@ -721,7 +849,7 @@ plot_predbw_results_all_outcome = function(
         fill  = str_remove(sample_var, 'pred_q')|> as.integer() |> as.factor()
       ),
     ) + 
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     geom_ribbon(alpha = 0.3, color = NA) + 
     geom_line() +
     scale_color_viridis_d(
@@ -753,12 +881,12 @@ plot_predbw_results_all_outcome = function(
   month_p = 
     ggplot(
       data = pctl_est_dt[
-        !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')) &
-        trt == 'allyielddiffpercentilegmo' &
+        !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly','c_section')) &
+        trt == 'all_yield_diff_percentile_gmo_max' &
         sample_var == 'month' & 
         var_of_interest == TRUE & 
-        fixef_num == 'Mother and Father FEs' & 
-        #control_num == 'Pesticides and Unemployment' & 
+        fixef_num == 'Family demographics, county, and year by month' & 
+        #control_num == 'All' & 
         sample != 'Full sample'
       ], 
       aes(
@@ -768,7 +896,7 @@ plot_predbw_results_all_outcome = function(
         color = control_num
       ),
     ) + 
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.3, color = NA) + 
     #geom_line() +
     geom_pointrange(
@@ -804,12 +932,12 @@ plot_predbw_results_all_outcome = function(
   quintile_sex_p = 
     ggplot(
       data = pctl_est_dt[
-        !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')) & 
-        trt == 'allyielddiffpercentilegmo' &
+        !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly','c_section')) & 
+        trt == 'all_yield_diff_percentile_gmo_max' &
         var_of_interest == TRUE & 
         sample_var == 'pred_q5_sex' & 
-        fixef_num == 'Mother and Father FEs' & 
-        control_num == 'Pesticides and Unemployment' & 
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' & 
         sample != 'Full sample', 
         -'pctl'
       ] |> unique(), 
@@ -818,7 +946,7 @@ plot_predbw_results_all_outcome = function(
         color = str_extract(sample, 'M|F'), fill = str_extract(sample, 'M|F')
       ),
     ) + 
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.3, color = NA) + 
     geom_pointrange(
       linewidth = 0.75,
@@ -897,7 +1025,8 @@ pctl_est_dt[,':='(
     lhs == 'i_m_black', 'Pr(Mother Black)',
     lhs == 'i_m_nonwhite', 'Pr(Mother Non-white)',
     lhs == 'i_m_hispanic', 'Pr(Mother Hispanic)',
-    lhs == 'i_m_married', 'Pr(Mother Married)'
+    lhs == 'i_m_married', 'Pr(Mother Married)', 
+    lhs == 'index', 'Health Index'
   ) 
 )]
 # Making the plots 
@@ -938,16 +1067,16 @@ source(here('R/functions/spec_chart_function.R'))
 # Getting coefficients  
 mod_paths = 
   str_subset(
-    list.files(here('data/results/micro'), full.names = TRUE),
+    list.files(here('data/results/micro-new'), full.names = TRUE),
     'est_2sls_outcome'
-  ) |>
-  str_subset('percentilegmacres', negate = TRUE) 
+  )# |>str_subset('percentilegmacres', negate = TRUE) 
 pred_bw_dt = 
   lapply(mod_paths, extract_pred_bw_effects) |> 
   rbindlist(use.names = TRUE, fill = TRUE)
 pred_bw_dt[,':='(
   effect_at_mean_l = ci_l*mean_dt[year == 2012 & variable == 'glyph_km2']$value,
-  effect_at_mean = estimate*mean_dt[year == 2012 & variable == 'glyph_km2']$value,effect_at_mean_h = ci_h*mean_dt[year == 2012 & variable == 'glyph_km2']$value
+  effect_at_mean = estimate*mean_dt[year == 2012 & variable == 'glyph_km2']$value,
+  effect_at_mean_h = ci_h*mean_dt[year == 2012 & variable == 'glyph_km2']$value
 )]
 # Setup for spec chart 
 spec_chart_outcome = function(
@@ -966,6 +1095,7 @@ spec_chart_outcome = function(
     outcome_in == 'i_lbw', 'LBW (%)',
     outcome_in == 'i_vlbw', 'VLBW (%)',
     outcome_in == 'i_preterm', 'Preterm (%)',
+    outcome_in == 'index', 'Health Index',
     default = 'Estimate'
   )
   if(str_detect(y_lab, '%')){
@@ -985,9 +1115,9 @@ spec_chart_outcome = function(
     pred_bw_dt[
       lhs == outcome_in & 
       var_of_interest == TRUE & 
-      trt == 'allyielddiffpercentilegmo' &
-      fixef_num == 'Mother and Father FEs' & 
-      control_num == 'Pesticides and Unemployment' & 
+      trt == 'all_yield_diff_percentile_gmo_max' &
+      fixef_num == 'Family demographics, county, and year by month' & 
+      control_num == 'All' & 
       is.na(sample_var) & 
       county_subset != 'Rural residence & occurrence'
     ]
@@ -1004,6 +1134,12 @@ spec_chart_outcome = function(
       sample == 'Full sample', 'Full sample'
     ) |> factor(levels = c('Full sample','Mother white','Mother non-white'))
   ]
+  # Setting order
+  spec_dt_robust = spec_dt_robust[c(
+      11:12,3:6,1:2,9:10,52:53, #7:8,50:51, # 1:12,50:53, # Trt vars
+      13:14,17:40,# Fixef vars
+      42:48# Control vars
+    )]
   # Getting values for each group of options
   control_num_v = unique(spec_dt_robust$control_num)
   fixef_num_v = unique(spec_dt_robust$fixef_num)
@@ -1032,22 +1168,28 @@ spec_chart_outcome = function(
   # Creating labels 
   labels_robust = list(
     "Controls" = control_num_v |> as.character() |> str_replace(' and ', '+'), 
-    "Fixed Effects" = fixef_num_v |> as.character(),
+    "Fixed Effects" = fixef_num_v |> 
+      as.character() |> 
+      str_remove('Family demographics, ')|>
+      str_remove('county, ') |>
+      str_remove('^and ') |>
+      str_remove(',') |>
+      str_replace('^year','Year'), 
     "Attainable Yield Measure" = trt_name_v |> as.character() |> str_remove('Attainable Yield, ')
   )
   # Finding main spec to highlight
   hl_policy = spec_dt_robust[
     control_num == 'None' & 
-    fixef_num == 'Mother and Father FEs' & 
-    trt_name == 'Attainable Yield, GM Avg Percentile' & 
+    fixef_num == 'Family demographics, county, and year by month' & 
+    trt_name == 'Attainable Yield, GM Max Percentile' & 
     county_subset == 'Rural' & 
     is.na(sample),
     which = TRUE
   ]
   hl_gly = spec_dt_robust[
-    control_num == 'Pesticides and Unemployment' & 
-    fixef_num == 'Mother and Father FEs' & 
-    trt_name == 'Attainable Yield, GM Avg Percentile' & 
+    control_num == 'All' & 
+    fixef_num == 'Family demographics, county, and year by month' & 
+    trt_name == 'Attainable Yield, GM Max Percentile' & 
     county_subset == 'Rural' & 
     is.na(sample),
     which = TRUE
@@ -1057,7 +1199,7 @@ spec_chart_outcome = function(
     filename = here(paste0(
       "figures/micro/2sls/spec-chart-robust-",outcome_in,".jpeg")),
     quality = 100, res = 300, 
-    width = 3000, height = 3000
+    width = 3500, height = 3500
   )
   # Setting margins
   par(oma=c(1,0,1,1))
@@ -1066,6 +1208,8 @@ spec_chart_outcome = function(
     labels_robust, 
     highlight = c(hl_gly, hl_policy),
     order = order_in,
+    n = c(12, 26,7),
+    leftmargin = 22,
     col.est=c("grey85","#e64173"), 
     col.est2=c("grey85","#e64173"),
     col.dot=c("grey60","grey95","grey95","#e64173"),
@@ -1094,15 +1238,16 @@ spec_chart_outcome = function(
   # Finally mother's race
   mrace_p = 
     ggplot(
-      data = spec_dt_mrace[fixef_num == 'Mother and Father FEs'],
+      data = spec_dt_mrace,#[fixef_num == 'Family demographics, county, and year by months'],
       aes(
         x = control_num, 
         y = effect_at_mean, 
-        ymin = effect_at_mean_l, ymax = effect_at_mean_h, 
+        ymin = effect_at_mean_l, 
+        ymax = effect_at_mean_h, 
         color = sample
       )
     )  +
-    geom_hline(yintercept = 0, linetype = 'solid', linewidth = 0.2) +
+    geom_hline(yintercept = 0, linetype = 'dashed', linewidth = 0.2) +
     geom_pointrange(
       position = position_dodge(width = 0.5), 
       linewidth = 0.75
@@ -1129,10 +1274,187 @@ spec_chart_outcome = function(
     )), 
     width = 6, height = 3.5, bg = 'white'
   )
+  # Fixed Effects plot 
+  fixef_p = 
+    ggplot(
+      data = pred_bw_dt[
+        lhs == outcome_in & 
+        trt == 'all_yield_diff_percentile_gmo_max' & 
+        var_of_interest == TRUE & 
+        county_subset == 'Rural' & 
+        is.na(sample_var) &
+        mod_id != '1726169143.qs'
+      ],
+      aes(
+        x = fixef_num, 
+        y = effect_at_mean, 
+        ymin = effect_at_mean_l, 
+        ymax = effect_at_mean_h, 
+        color = fixef_num
+      )
+    )  +
+    geom_hline(yintercept = 0, linetype = 'dashed', linewidth = 0.2) +
+    geom_pointrange(
+      position = position_dodge(width = 0.5), 
+      linewidth = 0.75
+    ) + 
+    #facet_grid(cols = vars(fixef_num)) + 
+    scale_y_continuous(
+      name = paste('Effect at Mean for ', y_lab), 
+      labels = y_labels
+    ) +
+    scale_x_discrete(
+      name = '' ,
+      labels = 1:14
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma', 
+      end = 0.9,
+      name = '', 
+      labels = paste0(
+        1:14,': ',
+        unique(pred_bw_dt[,.N,keyby = fixef_num])$fixef_num[-1]
+      )
+    ) +
+    theme_minimal() +
+    facet_grid(cols = vars(
+      ifelse(control_num == 'None', 'No Controls','All Controls') |>
+      factor(levels = c('No Controls','All Controls'))
+    ))
+  ggsave(
+    fixef_p, 
+    filename = here(paste0(
+      "figures/micro/2sls/spec-chart-fixef-",outcome_in,".jpeg"
+    )), 
+    width = 12, height = 4, bg = 'white'
+  )
+  # Controls plot 
+  control_p = 
+    ggplot(
+      data = pred_bw_dt[
+        lhs == outcome_in & 
+        trt == 'all_yield_diff_percentile_gmo_max' & 
+        var_of_interest == TRUE & 
+        county_subset == 'Rural' & 
+        is.na(sample_var) &
+        mod_id == '1726169143.qs'
+      ],
+      aes(
+        #color = control_num,
+        x = fcase(
+          control_num == 'None', 'None',
+          control_num == 'All', 'All', 
+          control_num == 'Pesticides and Unemployment', 'Pest. and Unempl.', 
+          control_num == 'Employment', 'Empl.', 
+          control_num == 'Employment and Income', 'Empl. and Inc.', 
+          control_num == 'Employment, Income, and Population', 'Empl. Inc. and Pop.', 
+          control_num == 'Age Shares', 'Age Sh.', 
+          control_num == 'Age and Race Shares', 'Age and Race Sh.', 
+          control_num == 'Fertilizers', 'Fert.'
+        ) |> factor(levels = c(
+          'None',
+          'Empl.', 
+          'Empl. and Inc.', 
+          'Empl. Inc. and Pop.', 
+          'Age Sh.', 
+          'Age and Race Sh.', 
+          'Fert.',
+          'Pest. and Unempl.', 
+          'All'
+        )),   
+        y = effect_at_mean, 
+        ymin = effect_at_mean_l, 
+        ymax = effect_at_mean_h
+      )
+    )  +
+    geom_hline(yintercept = 0, linetype = 'dashed', linewidth = 0.2) +
+    geom_pointrange(
+      position = position_dodge(width = 0.5), 
+      linewidth = 0.75
+    ) + 
+    #facet_grid(cols = vars(fixef_num)) + 
+    scale_y_continuous(
+      name = paste('Effect at Mean for ', y_lab), 
+      labels = y_labels
+    ) +
+    scale_x_discrete(
+      #labels = 1:14,
+      guide = guide_axis(n.dodge=2),
+      name = 'Controls' 
+    ) + 
+    #scale_color_viridis_d(
+    #  option = 'magma', 
+    #  end = 0.9,
+    #  #labels = paste0(
+    #  #  1:14,': ',
+    #  #  unique(pred_bw_dt[,.N,keyby = fixef_num])$fixef_num[-1]
+    #  #),
+    #  name = ''
+    #) +
+    theme_minimal()
+  ggsave(
+    control_p, 
+    filename = here(paste0(
+      "figures/micro/2sls/spec-chart-controls-",outcome_in,".jpeg"
+    )), 
+    width = 7, height = 3, bg = 'white'
+  )
+  # Trt plot 
+  trt_p = 
+    ggplot(
+      data = pred_bw_dt[
+        lhs == outcome_in & 
+        fixef_num == 'Family demographics, county, and year by month' & 
+        var_of_interest == TRUE & 
+        county_subset == 'Rural' & 
+        is.na(sample_var) &
+        mod_id != '1726169143.qs'
+      ],
+      aes(
+        color = control_num,
+        x = trt_name,   
+        y = effect_at_mean, 
+        ymin = effect_at_mean_l, 
+        ymax = effect_at_mean_h
+      )
+    )  +
+    geom_hline(yintercept = 0, linetype = 'dashed', linewidth = 0.2) +
+    geom_pointrange(
+      position = position_dodge(width = 0.5), 
+      linewidth = 0.75
+    ) + 
+    #facet_grid(cols = vars(fixef_num)) + 
+    scale_y_continuous(
+      name = paste('Effect at Mean for ', y_lab), 
+      labels = y_labels
+    ) +
+    scale_x_discrete(
+      #labels = 1:14,
+      guide = guide_axis(n.dodge=2),
+      name = 'Controls' 
+    ) + 
+    #scale_color_viridis_d(
+    #  option = 'magma', 
+    #  end = 0.9,
+    #  #labels = paste0(
+    #  #  1:14,': ',
+    #  #  unique(pred_bw_dt[,.N,keyby = fixef_num])$fixef_num[-1]
+    #  #),
+    #  name = ''
+    #) +
+    theme_minimal() 
+  ggsave(
+    trt_p, 
+    filename = here(paste0(
+      "figures/micro/2sls/spec-chart-controls-",outcome_in,".jpeg"
+    )), 
+    width = 7, height = 3, bg = 'white'
+  )
+
 }
 
 lapply(
-  unique(pred_bw_dt$lhs)[1:9],
+  c('dbwt','gestation','index'),
   spec_chart_outcome,
   pred_bw_dt = pred_bw_dt,
   order_in = 'asis'
@@ -1164,9 +1486,9 @@ pred_bw_dt[,
         !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')) & 
         county_subset != 'Non-rural'&
         var_of_interest == TRUE & 
-        trt == 'allyielddiffpercentilegmo' &
-        fixef_num == 'Mother and Father FEs' & 
-        control_num == 'Pesticides and Unemployment' & 
+        trt == 'all_yield_diff_percentile_gmo_max' &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' & 
         is.na(sample_var) & 
         county_subset != 'Rural residence & occurrence'
       ], 
@@ -1203,7 +1525,7 @@ mrace_all_p =
   pred_bw_dt[
     var_of_interest == TRUE & 
     sample_var == 'i_m_nonwhite' & 
-    fixef_num == 'Mother and Father FEs' & 
+    fixef_num == 'Family demographics, county, and year by month' & 
     !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')),.(
       lhs_name,
       control_num, 
