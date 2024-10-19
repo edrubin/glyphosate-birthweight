@@ -2048,8 +2048,8 @@
        )
     ),
     include_ols = FALSE,
-    include_did = FALSE,
-    skip_iv = FALSE,
+    include_did = TRUE,
+    skip_iv = TRUE,
     clustering = c('year', 'state_fips')
   )
 
