@@ -22,7 +22,12 @@ comb_cnty_health_dt = read_fst(
   metribuzin_km2 = metribuzin/area_km2,
   nicosulfuron_km2 = nicosulfuron/area_km2,
   herbicide_km2 = herbicide/area_km2,
-  insecticide_km2  = insecticide/area_km2
+  insecticide_km2  = insecticide/area_km2,
+  tot_acres_km2  = tot_acres/area_km2,
+  corn_acres_km2  = corn_acres/area_km2,
+  soy_acres_km2  = soy_acres/area_km2,
+  cotton_acres_km2  = cotton_acres/area_km2,
+  other_acres_km2  = other_acres/area_km2
 )]
 # Restrict years
 comb_cnty_health_dt %<>% .[between(year, 1990, 2013)]
@@ -124,9 +129,15 @@ pesticides = c(
 alt_outcomes = c(  
   # Farm varibles
   'soy_acres', 
-  'corn_acres', 
+  'corn_acres',
+  'cotton_acres', 
   'tot_acres', 
   'other_acres',
+  'soy_acres_km2', 
+  'corn_acres_km2',
+  'cotton_acres_km2', 
+  'tot_acres_km2', 
+  'other_acres_km2',
   'soy_yield', 
   'corn_yield', 
   'cotton_yield', 
@@ -169,7 +180,7 @@ trt = c(
   "all_yield_diff_percentile_srg",
   "all_yield_diff_percentile_wpo"
 )
-trt_main = 'all_yield_diff_percentile_gmo'
+trt_main = 'all_yield_diff_percentile_gmo_max'
 
 # Running different combinations 
 est_twfe_cnty(

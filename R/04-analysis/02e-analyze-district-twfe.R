@@ -56,7 +56,11 @@ aggregate_cnty_to_asd = function(comb_cnty_health_dt){
       get_vars(
         comb_cnty_health_dt,
         c('^year$', '^asd_code$', '^state_fips$', 
-          '_acres$', '_tot_yield$','^tot_inf_births$', 'tot_pop$'),
+          '_acres$', '_tot_yield$','^tot_inf_births$', 'tot_pop$'
+          'alachlor$', 'atrazine$', 'cyanazine$', 'fluazifop$',
+          'metolachlor$', 'metribuzin$', 'nicosulfuron$', 
+          'area_km2'
+          ),
         regex = TRUE
       ) |>
       gby(year, state_fips, asd_code) |>
@@ -69,6 +73,13 @@ aggregate_cnty_to_asd = function(comb_cnty_health_dt){
     soy_yield = soy_tot_yield/soy_acres,
     cotton_yield = cotton_tot_yield/cotton_acres,
     csc_acres = corn_acres + soy_acres + cotton_acres,
+    alachlor_km2 = alachlor/area_km2,
+    atrazine_km2 = atrazine/area_km2,
+    cyanazine_km2 = cyanazine/area_km2,
+    fluazifop_km2 = fluazifop/area_km2,
+    metolachlor_km2 = metolachlor/area_km2,
+    metribuzin_km2 = metribuzin/area_km2,
+    nicosulfuron_km2 = nicosulfuron/area_km2,
     GEOID_asd = paste0(state_fips, asd_code)
   )]
   return(comb_asd_dt)

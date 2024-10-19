@@ -143,6 +143,10 @@ write.fst(
 # Plotting interpolation for select counties ----------------------------------
 p_load(ggplot2, fixest, collapse)
 dir.create('figures/descriptive/fertilizer', showWarnings = FALSE)
+annual_fert_dt = read.fst(
+  here('data/raw/fertilizer-dt-interpolated.fst'), 
+  as.data.table = TRUE
+)
 tmp = merge(
   annual_fert_dt, 
   fert_dt_long, 
