@@ -24,7 +24,9 @@
   # Pre-period county-level crop yield percentiles
   pctl_dt = here(
     'data', 'clean', 'crop-acre-percentile-90-95.fst'
-  ) |> read_fst(as.data.table = TRUE)
+  ) |> 
+  read_fst(as.data.table = TRUE) |>
+  get_vars(vars = c('GEOID','percentile'), regex = TRUE)
   # Shift-share data
   share_dt = here(
     'data', 'clean', 'glyph-nat-dt.fst'
@@ -376,7 +378,7 @@
   # Add income quintiles 
   inc_dt = comb_cnty_dt[
     year == 1995,.(
-    GEOID, 
+    fips, 
     tot_pop = ifelse(is.na(tot_pop), 0, tot_pop), 
     income_per_cap = inc_per_cap_farm + inc_per_cap_nonfarm,
     inc_per_cap_farm , 
@@ -397,8 +399,8 @@
   comb_cnty_dt = 
     merge(
       comb_cnty_dt[,-"income_quintile"], 
-      inc_dt[,.(GEOID, income_quintile)],
-      by = 'GEOID', 
+      inc_dt[,.(fips, income_quintile)],
+      by = 'fips', 
       all.x = TRUE
     )
   # Calculate additional variables
