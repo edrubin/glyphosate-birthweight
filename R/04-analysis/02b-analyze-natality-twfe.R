@@ -876,6 +876,7 @@
         pest_controls,
         econ_controls,
         fert_controls,
+        acre_controls,
         clustering
       )), with = FALSE],
       by.x = c('fips_res', 'year'),
