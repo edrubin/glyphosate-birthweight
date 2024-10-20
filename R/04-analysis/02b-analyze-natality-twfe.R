@@ -771,7 +771,7 @@
       'corn_acres_km2',
       'soy_acres_km2',
       'cotton_acres_km2',
-      'other_acres_km2'
+      'other_acres_km2',
       NULL
     )
     acre_fml = paste(acre_controls, collapse = ' + ')
