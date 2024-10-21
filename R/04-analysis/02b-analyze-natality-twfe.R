@@ -694,6 +694,7 @@
     iv = 'all_yield_diff_percentile_gmo_max',
     iv_shift = NULL,
     spatial_subset = 'rural',
+    random_subset = NULL,
     county_subset = NULL,
     county_subset_name = NULL,
     het_split = NULL,
@@ -905,6 +906,14 @@
     if (!is.null(county_subset)) {
       # Take the implied subset
       est_dt %<>% .[fips_res %in% county_subset]
+    }
+
+    # Enforce random subset (if requested)
+    if (!is.null(random_subset)) {
+      # Set seed
+      set.seed(random_subset[2])
+      # Sample desired rows (rounding the percent up to nearest integer)
+      est_dt %<>% .[sample(.N, ceiling(random_subset[1] * .N))]
     }
 
     # Build the requested pieces of the formula...
@@ -1168,6 +1177,12 @@
       ifelse(dad_fe, '_dad-fe', ''),
       # Spatial subset
       ifelse(is.null(spatial_subset), '', paste0('_spatial-', spatial_subset)),
+      # Random subset
+      ifelse(
+        is.null(random_subset),
+        '',
+        paste0('_random-', round(100 * random_subset[1], 0), '-', random_subset[2])
+      ),
       # County subset
       ifelse(
         is.null(county_subset),
@@ -1213,6 +1228,7 @@
         iv = iv,
         iv_shift = iv_shift,
         spatial_subset = spatial_subset,
+        random_subset = random_subset,
         county_subset = county_subset,
         county_subset_name = county_subset_name,
         het_split = het_split,
@@ -1826,83 +1842,83 @@
 #     skip_iv = FALSE,
 #     water_types = NULL
 #   )
-# TODO: Forgot to run these with shift shares
-  # Instrument: 1990-1995 acreage percentiles (normalized by total cnty size)
-  est_twfe(
-    outcomes = c(
-      'dbwt',
-      'dbwt_pctl_pre',
-      'i_lbw', 'i_vlbw',
-      'gestation', 'i_preterm',
-      'c_section',
-      'index'
-    ),
-    iv = 'percentile_gm_acres_pct_cnty',
-    iv_shift = 'glyphosate_nat_100km',
-    spatial_subset = 'rural',
-    county_subset = NULL,
-    county_subset_name = NULL,
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    dem_fe = TRUE,
-    dad_fe = TRUE,
-    control_set = list2(
-      'none',
-      c(
-        'pest',
-        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
-        'pop_all',
-        'age_share', 'race_share',
-        'fert'
-       )
-    ),
-    name_suffix = NULL,
-    clustering = c('year', 'state_fips'),
-    gly_nonlinear = NULL,
-    iv_nonlinear = FALSE,
-    include_ols = FALSE,
-    skip_iv = TRUE,
-    water_types = NULL
-  )
-  # Instrument: 1990-1995 max yield percentile
-  est_twfe(
-    outcomes = c(
-      'dbwt',
-      'dbwt_pctl_pre',
-      'i_lbw', 'i_vlbw',
-      'gestation', 'i_preterm',
-      'c_section',
-      'index'
-    ),
-    iv = 'percentile_gm_yield_max',
-    iv_shift = 'glyphosate_nat_100km',
-    spatial_subset = 'rural',
-    county_subset = NULL,
-    county_subset_name = NULL,
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    dem_fe = TRUE,
-    dad_fe = TRUE,
-    control_set = list2(
-      'none',
-      c(
-        'pest',
-        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
-        'pop_all',
-        'age_share', 'race_share',
-        'fert'
-       )
-    ),
-    name_suffix = NULL,
-    clustering = c('year', 'state_fips'),
-    gly_nonlinear = NULL,
-    iv_nonlinear = FALSE,
-    include_ols = FALSE,
-    skip_iv = TRUE,
-    water_types = NULL
-  )
+# # NOTE Forgot to run these with specs shift shares
+#   # Instrument: 1990-1995 acreage percentiles (normalized by total cnty size)
+#   est_twfe(
+#     outcomes = c(
+#       'dbwt',
+#       'dbwt_pctl_pre',
+#       'i_lbw', 'i_vlbw',
+#       'gestation', 'i_preterm',
+#       'c_section',
+#       'index'
+#     ),
+#     iv = 'percentile_gm_acres_pct_cnty',
+#     iv_shift = 'glyphosate_nat_100km',
+#     spatial_subset = 'rural',
+#     county_subset = NULL,
+#     county_subset_name = NULL,
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     dem_fe = TRUE,
+#     dad_fe = TRUE,
+#     control_set = list2(
+#       'none',
+#       c(
+#         'pest',
+#         'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+#         'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+#         'pop_all',
+#         'age_share', 'race_share',
+#         'fert'
+#        )
+#     ),
+#     name_suffix = NULL,
+#     clustering = c('year', 'state_fips'),
+#     gly_nonlinear = NULL,
+#     iv_nonlinear = FALSE,
+#     include_ols = FALSE,
+#     skip_iv = TRUE,
+#     water_types = NULL
+#   )
+#   # Instrument: 1990-1995 max yield percentile
+#   est_twfe(
+#     outcomes = c(
+#       'dbwt',
+#       'dbwt_pctl_pre',
+#       'i_lbw', 'i_vlbw',
+#       'gestation', 'i_preterm',
+#       'c_section',
+#       'index'
+#     ),
+#     iv = 'percentile_gm_yield_max',
+#     iv_shift = 'glyphosate_nat_100km',
+#     spatial_subset = 'rural',
+#     county_subset = NULL,
+#     county_subset_name = NULL,
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     dem_fe = TRUE,
+#     dad_fe = TRUE,
+#     control_set = list2(
+#       'none',
+#       c(
+#         'pest',
+#         'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+#         'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+#         'pop_all',
+#         'age_share', 'race_share',
+#         'fert'
+#        )
+#     ),
+#     name_suffix = NULL,
+#     clustering = c('year', 'state_fips'),
+#     gly_nonlinear = NULL,
+#     iv_nonlinear = FALSE,
+#     include_ols = FALSE,
+#     skip_iv = TRUE,
+#     water_types = NULL
+#   )
 
 # Done
 # # Alternative instruments with only Eastern US -------------------------------------------
@@ -2419,45 +2435,45 @@
 #   )
 
 
-# TODO Update water model, specifications, and run
-# Water results -------------------------------------------------------------------------
-  # This should only estimate water results (not rf or 2sls or ols)
-# NOTE Takes ~ 5 hours to run
-est_twfe(
-  outcomes = c(
-    'dbwt',
-    'gestation',
-    'index'
-  ),
-  iv = 'all_yield_diff_percentile_gmo_max',
-  iv_shift = NULL,
-  spatial_subset = 'rural',
-  county_subset = NULL,
-  county_subset_name = NULL,
-  het_split = 'income_quintile',
-  base_fe = c('year_month', 'fips_res', 'fips_occ'),
-  dem_fe = TRUE,
-  dad_fe = TRUE,
-  control_set = list2(
-    'none',
-    c(
-      'pest',
-      'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-      'inc_per_cap_farm', 'inc_per_cap_nonfarm',
-      'pop_all',
-      'age_share', 'race_share',
-      'fert'
-     )
-  ),
-  name_suffix = NULL,
-  clustering = c('year', 'state_fips'),
-  gly_nonlinear = NULL,
-  iv_nonlinear = FALSE,
-  include_ols = FALSE,
-  include_did = FALSE,
-  skip_iv = TRUE,
-  water_types = c('bins-simple', 'bins-soil') #'ml-pred',
-)
+# Done
+# # Water results -------------------------------------------------------------------------
+#   # This should only estimate water results (not rf or 2sls or ols)
+# # NOTE Takes ~ 5 hours to run
+# est_twfe(
+#   outcomes = c(
+#     'dbwt',
+#     'gestation',
+#     'index'
+#   ),
+#   iv = 'all_yield_diff_percentile_gmo_max',
+#   iv_shift = NULL,
+#   spatial_subset = 'rural',
+#   county_subset = NULL,
+#   county_subset_name = NULL,
+#   het_split = 'income_quintile',
+#   base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#   dem_fe = TRUE,
+#   dad_fe = TRUE,
+#   control_set = list2(
+#     'none',
+#     c(
+#       'pest',
+#       'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+#       'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+#       'pop_all',
+#       'age_share', 'race_share',
+#       'fert'
+#      )
+#   ),
+#   name_suffix = NULL,
+#   clustering = c('year', 'state_fips'),
+#   gly_nonlinear = NULL,
+#   iv_nonlinear = FALSE,
+#   include_ols = FALSE,
+#   include_did = FALSE,
+#   skip_iv = TRUE,
+#   water_types = c('bins-simple', 'bins-soil') #'ml-pred',
+# )
 
 
 # Done
@@ -2582,20 +2598,49 @@ est_twfe(
 #   )
 
 
-# TODO Crashed last time we tried to run (10/18/24)
+# TODO Run
 # Estimate on purely urban births --------------------------------------------------------
+  # First on birthweight
   est_twfe(
     outcomes = c(
       'dbwt'
-      # 'i_lbw', 'i_vlbw',
-      #'gestation',
-      # 'i_preterm',
-      # 'c_section',
-      #'index'
     ),
     iv = 'all_yield_diff_percentile_gmo_max',
     iv_shift = NULL,
     spatial_subset = 'urban res; urban occ',
+    random_subset = c(.5, 123),
+    het_split = NULL,
+    county_subset = NULL,
+    county_subset_name = NULL,
+    dem_fe = TRUE,
+    dad_fe = TRUE,
+    control_set = list2(
+      'none',
+      c(
+        'pest',
+        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+        'pop_all',
+        'age_share', 'race_share',
+        'fert'
+       )
+    ),
+    clustering = c('year', 'state_fips'),
+    include_ols = FALSE
+  )
+  # Now the other outcomes
+  est_twfe(
+    outcomes = c(
+      'i_lbw', 'i_vlbw',
+      'gestation',
+      'i_preterm',
+      'c_section',
+      'index'
+    ),
+    iv = 'all_yield_diff_percentile_gmo_max',
+    iv_shift = NULL,
+    spatial_subset = 'urban res; urban occ',
+    random_subset = c(.5, 123),
     het_split = NULL,
     county_subset = NULL,
     county_subset_name = NULL,
