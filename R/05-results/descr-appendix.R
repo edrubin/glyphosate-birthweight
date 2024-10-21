@@ -142,7 +142,7 @@ p_load(fixest)
 list(
   feols(
     data = crop_instr_dt, 
-    fml = percentile_gm_acres_pct_cnty ~ all_yield_diff_percentile_gm
+    fml = percentile_gm_acres_pct_cnty ~ all_yield_diff_percentile_gm_max
   ),
   feols(
     data = crop_instr_dt, 
@@ -155,6 +155,22 @@ list(
   feols(
     data = crop_instr_dt, 
     fml = percentile_cotton_acres_pct_cnty ~ all_yield_diff_percentile_cotton
+  ),
+  feols(
+    data = crop_instr_dt, 
+    fml = percentile_gm_yield ~ all_yield_diff_percentile_gm_max
+  ),
+  feols(
+    data = crop_instr_dt, 
+    fml = percentile_corn_yield ~ all_yield_diff_percentile_corn
+  ),
+  feols(
+    data = crop_instr_dt, 
+    fml = percentile_soy_yield ~ all_yield_diff_percentile_soy
+  ),
+  feols(
+    data = crop_instr_dt, 
+    fml = percentile_cotton_yield ~ all_yield_diff_percentile_cotton
   )
 ) |> etable(
     tex = TRUE,
@@ -170,7 +186,11 @@ list(
       percentile_soy_acres_pct_cnty = 'Soy Acreage Percentile',
       percentile_corn_acres_pct_cnty = 'Corn Acreage Percentile',
       percentile_cotton_acres_pct_cnty = 'Cotton Acreage Percentile',
-      all_yield_diff_percentile_gm = 'GM GAEZ Yield Percentile',
+      percentile_gm_yield = 'GM Yield Percentile',
+      percentile_soy_yield = 'Soy Yield Percentile',
+      percentile_corn_yield = 'Corn Yield Percentile',
+      percentile_cotton_yield = 'Cotton Yield Percentile',
+      all_yield_diff_percentile_gm_max = 'GM GAEZ Yield Percentile',
       all_yield_diff_percentile_soy = 'Soy GAEZ Yield Percentile',
       all_yield_diff_percentile_corn = 'Corn GAEZ Yield Percentile',
       all_yield_diff_percentile_cotton = 'Cotton GAEZ Yield Percentile'
@@ -182,7 +202,7 @@ list(
     #fitstat = ~n_millions,
     digits.stats = 2,
     tpt = TRUE,
-    notes = "We first calculate the 1990 to 1995 average planted acreage for each of corn, soy, cotton, and the sum of all three as a share of a county's total area. This average acreage share is then converted into a percentile relative to all counties in the continental US. The GAEZ yield percentiles are calculated as described in \ref{sec:data}.",
+    notes = "We first calculate the county-level 1990 to 1995 average planted acreage and yield for each of corn, soy, cotton, and the aggregate of all three for GM. We divide the acreage values by the total size of the county. We then convert the acreage share and yield values into a percentile relative to all counties in the continental US. The GAEZ yield percentiles are calculated as described in \ref{sec:data}.",
     label = 'tab:gaez-acre-corr',
     title = '\\textbf{Correlation between GAEZ suitability measures and pre-period acerage for GM crops.}'
   ) |> write(here('tables/gaez-acre-corr.tex'))

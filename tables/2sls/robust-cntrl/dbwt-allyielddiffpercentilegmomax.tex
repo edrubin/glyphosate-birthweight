@@ -3,26 +3,32 @@
    \small
    \begin{threeparttable}[b]
       \caption{\label{tab:robust-cntrl-dbwt-allyielddiffpercentilegmomax} \textbf{The effect of glyphosate on birthweight, \\ Robustness to alternative controls and fixed effects}}
-      \begin{tabular}{lcccccccc}
+      \begin{tabular}{lccccccccc}
          \toprule
-         Model:           & (1)     & (2)      & (3)      & (4)      & (5)      & (6)      & (7)      & (8)\\  
+         Model:            & (1)     & (2)      & (3)     & (4)     & (5)     & (6)     & (7)     & (8)     & (9)\\  
          \midrule 
-         GLY/$km^2$       & -994.9  & -1,246.6 & -1,059.6 & -1,292.1 & -1,024.6 & -1,305.6 & -1,072.6 & -1,320.8\\   
-                          & (318.9) & (444.2)  & (327.5)  & (440.9)  & (345.6)  & (459.0)  & (370.4)  & (475.6)\\   
-         Local pesticides &         & Yes      &          & Yes      &          & Yes      &          & Yes\\  
-         Unemployment     &         &          & Yes      & Yes      &          &          & Yes      & Yes\\  
+         Glyphosate/$km^2$ & -843.5  & -1,168.5 & -830.8  & -776.7  & -774.7  & -885.4  & -855.0  & -991.6  & -1,280.7\\   
+                           & (329.8) & (573.1)  & (327.4) & (306.3) & (305.7) & (324.8) & (323.2) & (311.4) & (496.5)\\   
+         Pesticides        &         & Yes      &         &         &         &         &         &         & Yes\\  
+         Fertilizers       &         &          &         &         &         &         &         & Yes     & Yes\\  
+         Employment        &         & Yes      & Yes     & Yes     & Yes     &         &         &         & Yes\\  
+         Income            &         &          &         & Yes     & Yes     &         &         &         & Yes\\  
+         Age Shares        &         &          &         &         &         & Yes     & Yes     &         & Yes\\  
+         Race Shares       &         &          &         &         &         &         & Yes     &         & Yes\\  
+         Population        &         &          &         &         & Yes     &         &         &         & Yes\\  
          \midrule
          \emph{Fixed-effects}\\
-         Family Demog     &         &          &          &          & Yes      & Yes      & Yes      & Yes\\  
-         Yr x Mo + Cnty   & Yes     & Yes      & Yes      & Yes      & Yes      & Yes      & Yes      & Yes\\  
+         Family Demog      & Yes     & Yes      & Yes     & Yes     & Yes     & Yes     & Yes     & Yes     & Yes\\  
+         County            & Yes     & Yes      & Yes     & Yes     & Yes     & Yes     & Yes     & Yes     & Yes\\  
+         Yr x Mo           & Yes     & Yes      & Yes     & Yes     & Yes     & Yes     & Yes     & Yes     & Yes\\  
          \midrule
          \emph{Fit statistics}\\
-         N (millions)     & 15.39   & 15.39    & 15.39    & 15.39    & 11.76    & 11.76    & 11.76    & 11.76\\  
+         N (millions)      & 10.71   & 10.71    & 10.65   & 10.65   & 10.65   & 10.71   & 10.71   & 10.71   & 10.65\\  
          \midrule
-         \multicolumn{9}{l}{\emph{Clustered (Year \& State) standard-errors in parentheses}}\\
+         \multicolumn{10}{l}{\emph{Clustered (Year \& State) standard-errors in parentheses}}\\
       \end{tabular}
       
-      \begin{tablenotes}\item Sample restricted to births from mothers residing in a rural county. Instruments are the maximum attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. GLY/$km^2$ is $kg/km^2$.
+      \begin{tablenotes}\item Sample restricted to births from mothers residing in a rural county. Instruments are the maximum attainable yield percentile for GM crops in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Pesticide controls include alachlor, atrazine, cyanizine, fluazifop, metolachlor, metribuzin, and nicosulfuron. Glyphosate/$km^2$ is $kg/km^2$.
       \end{tablenotes}
    \end{threeparttable}
 \end{table}

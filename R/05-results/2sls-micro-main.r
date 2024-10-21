@@ -444,7 +444,7 @@ make_outcome_control_table = function(outcome_in, mod, trt, spatial){
   # Making the table 
   etable(
     mod[lhs = paste0('^',outcome_in,'$')],
-    #tex = TRUE,
+    tex = TRUE,
     depvar = FALSE, 
     style.tex = style.tex(
       depvar.title = 'Dep Var:',
@@ -546,6 +546,61 @@ make_outcome_control_table = function(outcome_in, mod, trt, spatial){
   ) |> write(here(paste0(
     'tables/2sls/robust-cntrl/income-',outcome_in,'-',trt,'.tex'
   )))
+  # Also want a table with age and race shares
+  etable(
+    mod[
+      rhs = "^1$|^shr",
+      lhs = paste0('^',outcome_in,'$')
+    ],
+    tex = TRUE,
+    depvar = FALSE, 
+    style.tex = style.tex(
+      depvar.title = 'Dep Var:',
+      model.format = "", 
+      line.top = 'simple',
+      line.bottom = 'simple',
+      var.title = '\\midrule'
+    ),
+    se.below = TRUE,
+    digits = 3,
+    signif.code = NA,
+    keep = 'Glyphosate',
+    group = list(
+      #'^_Pesticides' = 'Nicosulfuron',
+      #'^_Fertilizers' = 'p_commercial',
+      #'^_Unemployment' = 'unempl_rate',
+      #'^_Employment' = 'empl',
+      #'^_Income' = 'inc_per_cap',
+      '^_Age Shares' = 'shr_age',
+      '^_Race Shares' = 'shr_race'
+      #'^_Population' = 'pop'
+    ),
+    fixef.group = list(
+      '-^Yr x Mo' = 'year_month',
+      '-^County' = 'fips',
+      '-^Family Demog' = 'age|sex|race|hisp|birth|mar|educ|restatus'
+    ),
+    se.row = FALSE,
+    fitstat = ~n_millions,
+    digits.stats = 4,
+    tpt = TRUE, 
+    notes = paste0(
+      "Sample restricted to births from mothers ",
+      spatial_name,
+      ". Instruments are the ", 
+      trt_name,
+      " in each county interacted with year. Family demographic controls include mother's age, mother's race, mother's origin, mother's education, sex of child, total birth order, mother's residence status, and birth facility. Age shares include the share of population in each county in seven 10 year age bins from age 0 to 70. We omit the over 70 category. Race shares include the share of the population in each county that is black, share white, and share hispanic. Glyphosate/$km^2$ is $kg/km^2$."
+    ),
+    label = paste0('tab:robust-cntrl-income',outcome_in,'-',trt),
+    title = paste0(
+      '\\textbf{The effect of glyphosate on ',
+      outcome_name,
+      ', \\\\ Robustness to age and race shares}' 
+    ),
+    fontsize = 'small'
+  ) |> write(here(paste0(
+    'tables/2sls/robust-cntrl/shr-',outcome_in,'-',trt,'.tex'
+  )))
 }
 
 # Control tables for all outcomes of a particular model 
@@ -569,16 +624,16 @@ make_control_robust_tables = function(mod_path){
 # ES NOTE: This isn't working presently, but we don't use it in the paper
 # ER NOTE: 10/17/24, need to fix it because we do now...
 # Running control tables for all estimations
-# mod_path =  
-#   str_subset(
-#     list.files(here('data/results/micro-new'), full.names = TRUE),
-#     'est_2sls_outcome'
-#   ) |>
-#   str_subset("1726169143")
-# lapply(
-#   mod_paths,  
-#   make_control_robust_tables
-# )
+mod_path =  
+  str_subset(
+    list.files(here('data/results/micro-new'), full.names = TRUE),
+    'est_2sls_outcome'
+  ) |>
+  str_subset("1726169143")
+lapply(
+  mod_path,  
+  make_control_robust_tables
+)
 
 
 
@@ -696,6 +751,8 @@ make_control_robust_tables = function(mod_path){
     title = '\\textbf{Effect of glyphosate on perinatal health estimated with 2SLS shift-share instrument.}'
   ) |> write(here('tables/2sls/main-outcomes-ss-gly.tex'))
 
+# Single table with Policy, GLY x GAEZ, pre-yield instrument Shift-Share estimates
+# TODO: once this finishes running
 
 # Table for water ml model ----------------------------------------------------
   water_ml_spec = 

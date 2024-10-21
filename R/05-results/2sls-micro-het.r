@@ -1572,3 +1572,74 @@ mrace_all_p =
     )), 
     width = 6*1.5, height = 4*2.75, bg = 'white'
   )
+
+# Fixed Effects plot for all outcomes 
+  fixef_p = 
+    ggplot(
+      data = pred_bw_dt[
+        lhs %in% c('dbwt','gestation','index') & 
+        trt == 'all_yield_diff_percentile_gmo_max' & 
+        var_of_interest == TRUE & 
+        county_subset == 'Rural' & 
+        is.na(sample_var) &
+        !(mod_id %in% c('1726169143.qs', '1729395724.qs'))
+      ],
+      aes(
+        x = fixef_num, 
+        y = effect_at_mean, 
+        ymin = effect_at_mean_l, 
+        ymax = effect_at_mean_h, 
+        color = fixef_num
+      )
+    )  +
+    geom_hline(yintercept = 0, linetype = 'dashed', linewidth = 0.2) +
+    geom_pointrange(
+      position = position_dodge(width = 0.5), 
+      linewidth = 0.75
+    ) + 
+    scale_y_continuous(
+      name = 'Effect at Mean'
+      #labels = y_labels
+    ) +
+    scale_x_discrete(
+      name = '' ,
+      labels = 1:14
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma', 
+      end = 0.9,
+      name = '', 
+      labels = paste0(
+        1:14,': ',
+        unique(pred_bw_dt[,.N,keyby = fixef_num])$fixef_num[-1] |>
+        str_remove('Family demographics, county, ') |>
+        str_remove('and ')|>
+        str_replace('^y','Y') |>
+        str_replace(',',' and')
+      )
+    ) +
+    theme_minimal() +
+    theme(
+      panel.grid.minor = element_blank()
+    ) +
+    facet_grid(
+      cols = vars(
+        ifelse(control_num == 'None', 'No Controls','All Controls') |>
+        factor(levels = c('No Controls','All Controls'))
+      ), 
+      rows = vars(
+        fcase(
+          lhs == 'dbwt','Birthweight',
+          lhs == 'gestation','Gestation Length',
+          lhs == 'index','Health Index'
+        )
+      ), 
+      scales = 'free_y'
+    )
+  ggsave(
+    fixef_p, 
+    filename = here(paste0(
+      "figures/micro/2sls/spec-chart-fixef-all-outcomes.jpeg"
+    )), 
+    width = 10, height = 4.5, bg = 'white'
+  )
