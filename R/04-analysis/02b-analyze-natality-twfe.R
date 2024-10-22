@@ -1878,7 +1878,7 @@
 #     gly_nonlinear = NULL,
 #     iv_nonlinear = FALSE,
 #     include_ols = FALSE,
-#     skip_iv = TRUE,
+#     skip_iv = FALSE,
 #     water_types = NULL
 #   )
 #   # Instrument: 1990-1995 max yield percentile
@@ -1916,7 +1916,7 @@
 #     gly_nonlinear = NULL,
 #     iv_nonlinear = FALSE,
 #     include_ols = FALSE,
-#     skip_iv = TRUE,
+#     skip_iv = FALSE,
 #     water_types = NULL
 #   )
 
@@ -2598,36 +2598,36 @@
 #   )
 
 
-# TODO Run
+# Done
 # Estimate on purely urban births --------------------------------------------------------
-  # First on birthweight
-  est_twfe(
-    outcomes = c(
-      'dbwt'
-    ),
-    iv = 'all_yield_diff_percentile_gmo_max',
-    iv_shift = NULL,
-    spatial_subset = 'urban res; urban occ',
-    random_subset = c(.5, 123),
-    het_split = NULL,
-    county_subset = NULL,
-    county_subset_name = NULL,
-    dem_fe = TRUE,
-    dad_fe = TRUE,
-    control_set = list2(
-      'none',
-      c(
-        'pest',
-        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
-        'pop_all',
-        'age_share', 'race_share',
-        'fert'
-       )
-    ),
-    clustering = c('year', 'state_fips'),
-    include_ols = FALSE
-  )
+  # # First run only for birthweight
+  # est_twfe(
+  #   outcomes = c(
+  #     'dbwt'
+  #   ),
+  #   iv = 'all_yield_diff_percentile_gmo_max',
+  #   iv_shift = NULL,
+  #   spatial_subset = 'urban res; urban occ',
+  #   random_subset = c(.25, 123),
+  #   het_split = NULL,
+  #   county_subset = NULL,
+  #   county_subset_name = NULL,
+  #   dem_fe = TRUE,
+  #   dad_fe = TRUE,
+  #   control_set = list2(
+  #     'none',
+  #     c(
+  #       'pest',
+  #       'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+  #       'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+  #       'pop_all',
+  #       'age_share', 'race_share',
+  #       'fert'
+  #      )
+  #   ),
+  #   clustering = c('year', 'state_fips'),
+  #   include_ols = FALSE
+  # )
   # Now the other outcomes
   est_twfe(
     outcomes = c(
@@ -2640,7 +2640,7 @@
     iv = 'all_yield_diff_percentile_gmo_max',
     iv_shift = NULL,
     spatial_subset = 'urban res; urban occ',
-    random_subset = c(.5, 123),
+    random_subset = c(.25, 123),
     het_split = NULL,
     county_subset = NULL,
     county_subset_name = NULL,
