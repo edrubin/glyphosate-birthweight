@@ -1842,83 +1842,83 @@
 #     skip_iv = FALSE,
 #     water_types = NULL
 #   )
-# NOTE Forgot to run these with specs shift shares
-  # Instrument: 1990-1995 acreage percentiles (normalized by total cnty size)
-  est_twfe(
-    outcomes = c(
-      'dbwt',
-      'dbwt_pctl_pre',
-      'i_lbw', 'i_vlbw',
-      'gestation', 'i_preterm',
-      'c_section',
-      'index'
-    ),
-    iv = 'percentile_gm_acres_pct_cnty',
-    iv_shift = 'glyphosate_nat_100km',
-    spatial_subset = 'rural',
-    county_subset = NULL,
-    county_subset_name = NULL,
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    dem_fe = TRUE,
-    dad_fe = TRUE,
-    control_set = list2(
-      'none',
-      c(
-        'pest',
-        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
-        'pop_all',
-        'age_share', 'race_share',
-        'fert'
-       )
-    ),
-    name_suffix = NULL,
-    clustering = c('year', 'state_fips'),
-    gly_nonlinear = NULL,
-    iv_nonlinear = FALSE,
-    include_ols = FALSE,
-    skip_iv = FALSE,
-    water_types = NULL
-  )
-  # Instrument: 1990-1995 max yield percentile
-  est_twfe(
-    outcomes = c(
-      'dbwt',
-      'dbwt_pctl_pre',
-      'i_lbw', 'i_vlbw',
-      'gestation', 'i_preterm',
-      'c_section',
-      'index'
-    ),
-    iv = 'percentile_gm_yield_max',
-    iv_shift = 'glyphosate_nat_100km',
-    spatial_subset = 'rural',
-    county_subset = NULL,
-    county_subset_name = NULL,
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    dem_fe = TRUE,
-    dad_fe = TRUE,
-    control_set = list2(
-      'none',
-      c(
-        'pest',
-        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
-        'pop_all',
-        'age_share', 'race_share',
-        'fert'
-       )
-    ),
-    name_suffix = NULL,
-    clustering = c('year', 'state_fips'),
-    gly_nonlinear = NULL,
-    iv_nonlinear = FALSE,
-    include_ols = FALSE,
-    skip_iv = FALSE,
-    water_types = NULL
-  )
+# # NOTE Forgot to run these with specs shift shares
+#   # Instrument: 1990-1995 acreage percentiles (normalized by total cnty size)
+#   est_twfe(
+#     outcomes = c(
+#       'dbwt',
+#       'dbwt_pctl_pre',
+#       'i_lbw', 'i_vlbw',
+#       'gestation', 'i_preterm',
+#       'c_section',
+#       'index'
+#     ),
+#     iv = 'percentile_gm_acres_pct_cnty',
+#     iv_shift = 'glyphosate_nat_100km',
+#     spatial_subset = 'rural',
+#     county_subset = NULL,
+#     county_subset_name = NULL,
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     dem_fe = TRUE,
+#     dad_fe = TRUE,
+#     control_set = list2(
+#       'none',
+#       c(
+#         'pest',
+#         'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+#         'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+#         'pop_all',
+#         'age_share', 'race_share',
+#         'fert'
+#        )
+#     ),
+#     name_suffix = NULL,
+#     clustering = c('year', 'state_fips'),
+#     gly_nonlinear = NULL,
+#     iv_nonlinear = FALSE,
+#     include_ols = FALSE,
+#     skip_iv = FALSE,
+#     water_types = NULL
+#   )
+#   # Instrument: 1990-1995 max yield percentile
+#   est_twfe(
+#     outcomes = c(
+#       'dbwt',
+#       'dbwt_pctl_pre',
+#       'i_lbw', 'i_vlbw',
+#       'gestation', 'i_preterm',
+#       'c_section',
+#       'index'
+#     ),
+#     iv = 'percentile_gm_yield_max',
+#     iv_shift = 'glyphosate_nat_100km',
+#     spatial_subset = 'rural',
+#     county_subset = NULL,
+#     county_subset_name = NULL,
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     dem_fe = TRUE,
+#     dad_fe = TRUE,
+#     control_set = list2(
+#       'none',
+#       c(
+#         'pest',
+#         'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+#         'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+#         'pop_all',
+#         'age_share', 'race_share',
+#         'fert'
+#        )
+#     ),
+#     name_suffix = NULL,
+#     clustering = c('year', 'state_fips'),
+#     gly_nonlinear = NULL,
+#     iv_nonlinear = FALSE,
+#     include_ols = FALSE,
+#     skip_iv = FALSE,
+#     water_types = NULL
+#   )
 
 # Done
 # # Alternative instruments with only Eastern US -------------------------------------------
@@ -2598,36 +2598,36 @@
 #   )
 
 
-# TODO Run
+# Done
 # Estimate on purely urban births --------------------------------------------------------
-  # First on birthweight
-  est_twfe(
-    outcomes = c(
-      'dbwt'
-    ),
-    iv = 'all_yield_diff_percentile_gmo_max',
-    iv_shift = NULL,
-    spatial_subset = 'urban res; urban occ',
-    random_subset = c(.25, 123),
-    het_split = NULL,
-    county_subset = NULL,
-    county_subset_name = NULL,
-    dem_fe = TRUE,
-    dad_fe = TRUE,
-    control_set = list2(
-      'none',
-      c(
-        'pest',
-        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
-        'pop_all',
-        'age_share', 'race_share',
-        'fert'
-       )
-    ),
-    clustering = c('year', 'state_fips'),
-    include_ols = FALSE
-  )
+  # # First run only for birthweight
+  # est_twfe(
+  #   outcomes = c(
+  #     'dbwt'
+  #   ),
+  #   iv = 'all_yield_diff_percentile_gmo_max',
+  #   iv_shift = NULL,
+  #   spatial_subset = 'urban res; urban occ',
+  #   random_subset = c(.25, 123),
+  #   het_split = NULL,
+  #   county_subset = NULL,
+  #   county_subset_name = NULL,
+  #   dem_fe = TRUE,
+  #   dad_fe = TRUE,
+  #   control_set = list2(
+  #     'none',
+  #     c(
+  #       'pest',
+  #       'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+  #       'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+  #       'pop_all',
+  #       'age_share', 'race_share',
+  #       'fert'
+  #      )
+  #   ),
+  #   clustering = c('year', 'state_fips'),
+  #   include_ols = FALSE
+  # )
   # Now the other outcomes
   est_twfe(
     outcomes = c(
