@@ -166,14 +166,15 @@ gly_change_dt =
   fdiff(t = year) %>% 
   .[!is.na(glyph_km2)]
 # Censoring 
-gly_change_dt[,
-  glyph_km2 := fcase(
+gly_change_dt[,':='(
+  glyph_km2_raw = glyph_km2,
+  glyph_km2 = fcase(
     glyph_km2 < fnth(gly_change_dt$glyph_km2, 0.01), fnth(gly_change_dt$glyph_km2, 0.01),
     glyph_km2 > fnth(gly_change_dt$glyph_km2, 0.99), fnth(gly_change_dt$glyph_km2, 0.99),
     glyph_km2 >= fnth(gly_change_dt$glyph_km2, 0.01) & 
     glyph_km2 <= fnth(gly_change_dt$glyph_km2, 0.99), glyph_km2
   )
-]
+)]
 # Make the map
 change_glyph_p = 
   left_join(
@@ -276,6 +277,74 @@ ggsave(
   bg = 'white'
 )
 
+# Can we learn something about the errors
+p_load(fixest)
+
+tmp_dt = merge(
+    comb_cnty_dt[year == 1995], 
+    gly_change_dt[,.(GEOID, glyph_km2_raw)], 
+    by = 'GEOID'
+  ) 
+fs_mod = feols(
+  data = tmp_dt, 
+  fml = glyph_km2_raw ~ all_yield_diff_percentile_gmo_max 
+)
+tmp_dt[,resid := glyph_km2_raw - predict(fs_mod)]
+resid_mod = feols(
+  data = tmp_dt, 
+  fml = resid ~ 
+    csw(
+      I(other_acres*0.00404686/area_km2) + 
+        I(corn_acres*0.00404686/area_km2) + 
+        I(soy_acres*0.00404686/area_km2) + 
+        I(cotton_acres*0.00404686/area_km2), 
+      I(tot_pop/area_km2),
+      unemployment_rate + 
+        I(employed/tot_pop) + 
+        I(farm_empl/employed),
+      inc_per_cap_nonfarm + 
+        inc_per_cap_farm
+    )
+)
+etable(
+  resid_mod, 
+  tex = TRUE,
+  depvar = FALSE, 
+  style.tex = style.tex(
+    depvar.title = 'Dep Var:',
+    model.format = "", 
+    line.top = 'simple',
+    line.bottom = 'simple',
+    var.title = '\\midrule'
+  ),
+  dict = c(
+    `I(other_acres*0.00404686/area_km2)` = 'Other acre share',
+    `I(corn_acres*0.00404686/area_km2)` = 'Corn acre share',
+    `I(soy_acres*0.00404686/area_km2)` = 'Soy acre share',
+    `I(cotton_acres*0.00404686/area_km2)` = 'Cotton acre share',
+    `I(tot_pop/area_km2)` = 'Population Density',
+    `unemployment_rate` = 'Unemployment Rate',
+    `I(employed/tot_pop) ` = 'Employment Rate',
+    `I(farm_empl/employed)` = 'Farm Employment Rate',
+    `inc_per_cap_nonfarm` = 'Income per capita, nonfarm',
+    `inc_per_cap_farm` = 'Income per capita, farm'
+  ),
+  se.below = TRUE,
+  digits = 3,
+  #signif.code = NA,
+  se.row = FALSE,
+  digits.stats = 2,
+  tpt = TRUE, 
+  notes = "We first regress county-level GM max attainable yield on the change in glyphosate between 1995 and 2012. We then take the residuals from that regression and regress those on county-level values of acreage, employment, income, and population denisty in 1995.",
+  label = 'tab:fs-residuals',
+  title = 'Regression of first stage residuals on other variables',
+  fontsize = 'small'
+) |> write(here('tables/fig1-residuals.tex'))
+
+
+ggplot(data = tmp_dt, aes(x = resid)) + 
+  geom_density() + 
+  theme_minimal()
 
 crop_instr_dt = read.fst(
   path = here('data/clean/crop-acre-percentile-90-95.fst'), 

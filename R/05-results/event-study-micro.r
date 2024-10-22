@@ -205,6 +205,11 @@ extract_event_study_coefs = function(mod_path){
   mod_dt[,':='(
     year = str_extract(coefficient, '(?<=year::)\\d{4}') |> as.integer(),
     control_num = fcase(
+      str_detect(rhs, 'acres_km2') & 
+        str_detect(rhs, 'atrazine'), 
+        'Acres and all others',
+      str_detect(rhs, 'acres_km2'), 
+        'Acres',
       str_detect(rhs, 'atrazine') & 
         str_detect(rhs, 'unempl') &  
         str_detect(rhs, 'empl') &  
@@ -248,7 +253,9 @@ extract_event_study_coefs = function(mod_path){
       'Age Shares', 
       'Age and Race Shares',
       'Fertilizers',
-      'All'
+      'Acres',
+      'All', 
+      'Acres and all others'
     )),
     trt = str_extract(rhs, '(?<=i\\(year, ).*(?=, ref = 1995\\))')
   )]
@@ -260,6 +267,7 @@ extract_event_study_coefs = function(mod_path){
       trt == 'all_yield_diff_percentile_gmo', 'Attainable Yield, GM Avg Percentile',
       trt == 'all_yield_diff_percentile_gmo_max', 'Attainable Yield, GM Max Percentile',
       trt == 'e100m_yield_diff_percentile_gmo', 'Attainable Yield, GM Avg Percentile, Eastern US',
+      trt == 'all_yield_diff_gmo_max_50_50', 'Attainable Yield, GM Max Top vs Bottom Quartile',
       trt == 'percentile_gm_acres','1990-1995 GM Acreage Percentile',
       trt == 'percentile_gm_acres_pct_cnty', '1990-1995 GM Acreage Percentile',
       trt == 'percentile_gm_yield_max', '1990-1995 GM Max Yield Percentile',
@@ -293,7 +301,7 @@ extract_event_study_coefs = function(mod_path){
       lhs == 'i_m_college', 'Pr(Mother College)',
       lhs == 'i_m_hs', 'Pr(Mother HS)',
       lhs == 'mage', "Mother's Age",
-      lhs == 'index', 'Health Index' 
+      lhs == 'index', 'Health Index'
     ) 
   )]
   # Save the results 
@@ -328,6 +336,8 @@ plot_reduced_form = function(
     outcome_in == 'i_m_nonwhite', 'Mother Non-white',# (%)',
     outcome_in == 'i_m_hispanic', 'Mother Hispanic',# (%)',
     outcome_in == 'i_m_married', 'Mother Married',# (%)',
+    outcome_in == 'i_m_college', 'Mother College',
+    outcome_in == 'i_m_hs', 'Mother HS',
     outcome_in == 'mage', "Mother's Age",
     outcome_in == 'index', 'Health Index',
     default = 'Estimate'
@@ -543,7 +553,7 @@ plot_reduced_form = function(
         lhs == outcome_in &
         fixef_num == 'Family demographics, county, and year by month' & 
         control_num == 'All' &
-        trt != 'percentile_gm_acres' & 
+        str_detect(trt, 'percentile_gm_acres', negate = TRUE) & 
         spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA'& 
         is.na(county_subset) & 
@@ -559,8 +569,8 @@ plot_reduced_form = function(
     geom_hline(yintercept = 0) +
     geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.5, color = NA) +
-    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
-    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.8)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.8)) +
     scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
     scale_x_continuous(
       name = 'Year', 
@@ -590,12 +600,12 @@ plot_reduced_form = function(
         lhs == outcome_in &
         fixef_num == 'Family demographics, county, and year by month' & 
         control_num == 'All' &
-        trt != 'percentile_gm_acres' & 
+        str_detect(trt, 'percentile_gm_acres', negate = TRUE) & 
         spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA'& 
         is.na(county_subset) & 
         mod_id != '1728516819.qs' & 
-        str_detect(trt, 'e100')
+        (str_detect(trt, 'e100') | trt == 'all_yield_diff_percentile_gmo_max')
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -637,7 +647,7 @@ plot_reduced_form = function(
         lhs == outcome_in &
         fixef_num == 'Family demographics, county, and year by month' & 
         control_num == 'All' &
-        trt != 'percentile_gm_acres' & 
+        str_detect(trt, 'percentile_gm_acres', negate = TRUE) & 
         spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA'& 
         is.na(county_subset) & 
@@ -653,8 +663,8 @@ plot_reduced_form = function(
     geom_hline(yintercept = 0) +
     geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.5, color = NA) +
-    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
-    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.8)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.8)) +
     scale_y_continuous(name = y_lab, minor_breaks = NULL) +
     scale_x_continuous(
       name = 'Year', 
@@ -684,12 +694,12 @@ plot_reduced_form = function(
         lhs == outcome_in &
         fixef_num == 'Family demographics, county, and year by month' & 
         control_num == 'All' &
-        trt != 'percentile_gm_acres' & 
+        str_detect(trt, 'percentile_gm_acres', negate = TRUE) & 
         spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA'& 
         is.na(county_subset) & 
         mod_id != '1728516819.qs' & 
-        str_detect(trt, 'e100')
+        (str_detect(trt, 'e100') | trt == 'all_yield_diff_percentile_gmo_max')
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -732,7 +742,7 @@ plot_reduced_form = function(
         lhs == outcome_in &
         fixef_num == 'Family demographics, county, and year by month' & 
         control_num == 'None' &
-        trt != 'percentile_gm_acres' & 
+        str_detect(trt, 'percentile_gm_acres', negate = TRUE) & 
         spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA'& 
         is.na(county_subset) & 
@@ -748,8 +758,8 @@ plot_reduced_form = function(
     geom_hline(yintercept = 0) +
     geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.5, color = NA) +
-    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
-    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.8)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.8)) +
     scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
     scale_x_continuous(
       name = 'Year', 
@@ -779,12 +789,12 @@ plot_reduced_form = function(
         lhs == outcome_in &
         fixef_num == 'Family demographics, county, and year by month' & 
         control_num == 'None' &
-        trt != 'percentile_gm_acres' & 
+        str_detect(trt, 'percentile_gm_acres', negate = TRUE) & 
         spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA'& 
         is.na(county_subset) & 
         mod_id != '1728516819.qs' & 
-        str_detect(trt, 'e100')
+        (str_detect(trt, 'e100') | trt == 'all_yield_diff_percentile_gmo_max')
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -826,7 +836,7 @@ plot_reduced_form = function(
         lhs == outcome_in &
         fixef_num == 'Family demographics, county, and year by month' & 
         control_num == 'None' &
-        trt != 'percentile_gm_acres' & 
+        str_detect(trt, 'percentile_gm_acres', negate = TRUE) & 
         spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA'& 
         is.na(county_subset) & 
@@ -842,8 +852,8 @@ plot_reduced_form = function(
     geom_hline(yintercept = 0) +
     geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
     #geom_ribbon(alpha = 0.5, color = NA) +
-    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
-    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.8)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.8)) +
     scale_y_continuous(name = y_lab, minor_breaks = NULL) +
     scale_x_continuous(
       name = 'Year', 
@@ -873,12 +883,12 @@ plot_reduced_form = function(
         lhs == outcome_in &
         fixef_num == 'Family demographics, county, and year by month' & 
         control_num == 'None' &
-        trt != 'percentile_gm_acres' & 
+        str_detect(trt, 'percentile_gm_acres', negate = TRUE) & 
         spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA'& 
         is.na(county_subset) & 
         mod_id != '1728516819.qs' & 
-        str_detect(trt, 'e100')
+        (str_detect(trt, 'e100') | trt == 'all_yield_diff_percentile_gmo_max')
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -924,7 +934,15 @@ plot_reduced_form = function(
         spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA' & 
         is.na(county_subset) & 
-        mod_id == '1726169143.qs'
+        mod_id %in% c('1726169143.qs','1729395724.qs') & 
+        control_num %in% c(
+          'None', 
+          'Employment', 
+          'Employment and Income', 
+          'Employment, Income, and Population', 
+          'Age Shares', 
+          'Age and Race Shares'
+        )
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -949,18 +967,72 @@ plot_reduced_form = function(
       end = 0.9,
       name = 'Controls', 
       aesthetics = c('color','fill')
-    )+
-    theme(legend.position = 'bottom') +
-    guides(color = guide_legend(ncol = 3)) 
+    )#+
+    #theme(legend.position = 'bottom') +
+    #guides(color = guide_legend(ncol = 3)) 
   if(print) print(fs_event_cntrl_p)
   ggsave(
     fs_event_cntrl_p, 
     filename = here(paste0(
-      'figures/micro/fs-event/robust-cntrl-',outcome_in,'.jpeg'
+      'figures/micro/fs-event/robust-cntrl-empl-shr-',outcome_in,'.jpeg'
     )), 
-    width = width_in*2.5, height = height_in*1.5
+    width = width_in*2.25, height = height_in*1.25
   )
-  rf_event_cntrl_p = 
+  fs_event_cntrl_ag_p = 
+    ggplot(
+      data = mod_dt[
+        type == '2sls-fs' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        trt == 'all_yield_diff_percentile_gmo_max' &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        spatial == 'rural' &
+        paste0(sample_var, sample) == 'NANA' & 
+        is.na(county_subset) & 
+        mod_id %in% c('1726169143.qs','1729395724.qs') & 
+        control_num %in% c(
+          'None', 
+          'Fertilizers', 
+          'Acres', 
+          'Acres and all others', 
+          'Pesticides and Unemployment'
+        )
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = control_num, 
+        fill = control_num
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    scale_y_continuous(name = ~GLY/km^2, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Controls', 
+      aesthetics = c('color','fill')
+    )#+
+    #theme(legend.position = 'bottom') +
+    #guides(color = guide_legend(ncol = 3)) 
+  if(print) print(fs_event_cntrl_ag_p)
+  ggsave(
+    fs_event_cntrl_ag_p, 
+    filename = here(paste0(
+      'figures/micro/fs-event/robust-cntrl-ag-',outcome_in,'.jpeg'
+    )), 
+    width = width_in*2.25, height = height_in*1.25
+  )
+  rf_event_cntrl_ag_p = 
     ggplot(
       data = mod_dt[
         type == 'rf' & 
@@ -970,8 +1042,15 @@ plot_reduced_form = function(
         fixef_num == 'Family demographics, county, and year by month' & 
         spatial == 'rural' &
         paste0(sample_var, sample) == 'NANA' & 
-        is.na(county_subset) &
-        mod_id == '1726169143.qs'
+        is.na(county_subset) & 
+        mod_id %in% c('1726169143.qs','1729395724.qs') & 
+        control_num %in% c(
+          'None', 
+          'Fertilizers', 
+          'Acres', 
+          'Acres and all others', 
+          'Pesticides and Unemployment'
+        )
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
@@ -996,16 +1075,71 @@ plot_reduced_form = function(
       end = 0.9,
       name = 'Controls', 
       aesthetics = c('color','fill')
-    )+
-    theme(legend.position = 'bottom') +
-    guides(color = guide_legend(ncol = 3)) 
-  if(print) print(rf_event_cntrl_p)
+    )#+
+    #theme(legend.position = 'bottom') +
+    #guides(color = guide_legend(ncol = 3)) 
+  if(print) print(rf_event_cntrl_ag_p)
   ggsave(
-    rf_event_cntrl_p, 
+    rf_event_cntrl_ag_p, 
     filename = here(paste0(
-      'figures/micro/rf-event/robust-cntrl-',outcome_in,'.jpeg'
+      'figures/micro/rf-event/robust-cntrl-ag-',outcome_in,'.jpeg'
     )), 
-    width = width_in*2.5, height = height_in*1.5
+    width = width_in*2.25, height = height_in*1.25
+  )
+  rf_event_cntrl_empl_p = 
+    ggplot(
+      data = mod_dt[
+        type == 'rf' & 
+        var_of_interest == TRUE & 
+        lhs == outcome_in &
+        trt == 'all_yield_diff_percentile_gmo_max' &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        spatial == 'rural' &
+        paste0(sample_var, sample) == 'NANA' & 
+        is.na(county_subset) & 
+        mod_id %in% c('1726169143.qs','1729395724.qs') & 
+        control_num %in% c(
+          'None', 
+          'Employment', 
+          'Employment and Income', 
+          'Employment, Income, and Population', 
+          'Age Shares', 
+          'Age and Race Shares'
+        )
+      ],
+      aes(
+        x = year, y = estimate, ymin = ci_l, ymax = ci_h,
+        color = control_num, 
+        fill = control_num
+      )
+    ) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+    #geom_ribbon(alpha = 0.5, color = NA) +
+    geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+    geom_linerange(linewidth = 1, position = position_dodge(width = 0.63)) +
+    scale_y_continuous(name = y_lab, minor_breaks = NULL) +
+    scale_x_continuous(
+      name = 'Year', 
+      limits = c(1990,2015),
+      breaks = seq(1990, 2015, 5), 
+      minor_breaks = NULL
+    ) + 
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Controls', 
+      aesthetics = c('color','fill')
+    )#+
+    #theme(legend.position = 'bottom') +
+    #guides(color = guide_legend(ncol = 3)) 
+  if(print) print(rf_event_cntrl_empl_p)
+  ggsave(
+    rf_event_cntrl_empl_p, 
+    filename = here(paste0(
+      'figures/micro/rf-event/robust-cntrl-empl-shr-',outcome_in,'.jpeg'
+    )), 
+    width = width_in*2.25, height = height_in*1.25
   )
   # Now for FE robustness
   fs_event_fixef_p = 
@@ -1026,8 +1160,11 @@ plot_reduced_form = function(
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
-        color = fixef_num, 
-        fill = fixef_num
+        color = fixef_num |> 
+          str_remove('Family demographics, county, ') |>
+          str_remove('^and ') |>
+          str_replace(',', '') |>
+          str_replace('^y','Y')
       )
     ) +
     geom_hline(yintercept = 0) +
@@ -1047,16 +1184,16 @@ plot_reduced_form = function(
       end = 0.9,
       name = 'Fixed Effects', 
       aesthetics = c('color','fill')
-    ) +
-    theme(legend.position = 'bottom') +
-    guides(color = guide_legend(ncol = 1)) 
+    )# +
+    #theme(legend.position = 'bottom') +
+    #guides(color = guide_legend(ncol = 1)) 
   if(print) print(fs_event_fixef_p)
   ggsave(
     fs_event_fixef_p, 
     filename = here(paste0(
       'figures/micro/fs-event/robust-fixef-',outcome_in,'.jpeg'
     )), 
-    width = width_in*2, height = height_in*2
+    width = width_in*2.5, height = height_in*1.5
   )
   fs_event_fixef2_p = 
     ggplot(
@@ -1076,8 +1213,11 @@ plot_reduced_form = function(
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
-        color = fixef_num, 
-        fill = fixef_num
+        color = fixef_num|> 
+          str_remove('Family demographics, county, ') |>
+          str_remove('^and ') |>
+          str_replace(',', '') |>
+          str_replace('^y','Y')
       )
     ) +
     geom_hline(yintercept = 0) +
@@ -1097,16 +1237,16 @@ plot_reduced_form = function(
       end = 0.9,
       name = 'Fixed Effects', 
       aesthetics = c('color','fill')
-    ) +
-    theme(legend.position = 'bottom') +
-    guides(color = guide_legend(ncol = 1)) 
+    )# +
+    #theme(legend.position = 'bottom') +
+    #guides(color = guide_legend(ncol = 1)) 
   if(print) print(fs_event_fixef2_p)
   ggsave(
     fs_event_fixef2_p, 
     filename = here(paste0(
       'figures/micro/fs-event/robust-fixef2-',outcome_in,'.jpeg'
     )), 
-    width = width_in*2, height = height_in*2
+    width = width_in*2.5, height = height_in*1.5
   )
   rf_event_fixef_p = 
     ggplot(
@@ -1126,8 +1266,11 @@ plot_reduced_form = function(
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
-        color = fixef_num, 
-        fill = fixef_num
+        color = fixef_num|> 
+          str_remove('Family demographics, county, ') |>
+          str_remove('^and ') |>
+          str_replace(',', '') |>
+          str_replace('^y','Y')
       )
     ) +
     geom_hline(yintercept = 0) +
@@ -1147,16 +1290,16 @@ plot_reduced_form = function(
       end = 0.9,
       name = 'Fixed Effects', 
       aesthetics = c('color','fill')
-    ) +
-    theme(legend.position = 'bottom') +
-    guides(color = guide_legend(ncol = 1)) 
+    )# +
+    #theme(legend.position = 'bottom') +
+    #guides(color = guide_legend(ncol = 1)) 
   if(print) print(rf_event_fixef_p)
   ggsave(
     rf_event_fixef_p, 
     filename = here(paste0(
       'figures/micro/rf-event/robust-fixef-',outcome_in,'.jpeg'
     )), 
-    width = width_in*2, height = height_in*2
+    width = width_in*2.5, height = height_in*1.5
   )
   rf_event_fixef2_p = 
     ggplot(
@@ -1176,8 +1319,11 @@ plot_reduced_form = function(
       ],
       aes(
         x = year, y = estimate, ymin = ci_l, ymax = ci_h,
-        color = fixef_num, 
-        fill = fixef_num
+        color = fixef_num|> 
+          str_remove('Family demographics, county, ') |>
+          str_remove('^and ') |>
+          str_replace(',', '') |>
+          str_replace('^y','Y')
       )
     ) +
     geom_hline(yintercept = 0) +
@@ -1197,16 +1343,16 @@ plot_reduced_form = function(
       end = 0.9,
       name = 'Fixed Effects', 
       aesthetics = c('color','fill')
-    ) +
-    theme(legend.position = 'bottom') +
-    guides(color = guide_legend(ncol = 1)) 
+    ) #+
+    #theme(legend.position = 'bottom') +
+    #guides(color = guide_legend(ncol = 1)) 
   if(print) print(rf_event_fixef2_p)
   ggsave(
     rf_event_fixef2_p, 
     filename = here(paste0(
       'figures/micro/rf-event/robust-fixef2-',outcome_in,'.jpeg'
     )), 
-    width = width_in*2, height = height_in*2
+    width = width_in*2.5, height = height_in*1.5
   )
   # Now for County Subset robustness
   fs_event_cntysub_p = 
@@ -1679,7 +1825,7 @@ plot_results_faceted_outcomes = function(mod_dt, print = FALSE, width_in = 6, he
     mod_dt[
       type == 'rf' & 
       lhs %in% c(
-        'dbwt_pred','i_m_black','i_m_hispanic','i_m_married','i_m_nonwhite','i_female', 
+        'dbwt_pred','i_m_black','i_m_hispanic','i_m_married','i_m_nonwhite', 
         'i_m_college','i_m_hs','mage'
       ) &
       var_of_interest == TRUE & 
@@ -1714,9 +1860,9 @@ plot_results_faceted_outcomes = function(mod_dt, print = FALSE, width_in = 6, he
     ggsave(
       rf_event_demog_p, 
       filename = here(paste0(
-        'figures/micro/rf-event/no-cntrl-all-demog.jpeg'
+        'figures/micro/rf-event/all-cntrl-all-demog.jpeg'
       )), 
-      width = width_in*1.5, height = height_in*2
+      width = width_in*1.5, height = height_in*2.5
     )
   }
   # Estimating white and non-white separately 
@@ -1769,6 +1915,59 @@ plot_results_faceted_outcomes = function(mod_dt, print = FALSE, width_in = 6, he
       rf_het_white_p, 
       filename = here(paste0(
         'figures/micro/rf-event/het-i_m_nonwhite-all-outcomes.jpeg'
+      )), 
+      width = width_in*1.5, height = height_in*2.75
+    )
+  }
+  rf_het_hs_dt = 
+    mod_dt[
+      type == 'rf' & 
+      !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly','c_section')) &
+      var_of_interest == TRUE & 
+      fixef_num == 'Family demographics, county, and year by month' & 
+      control_num == 'All' & #'Pesticides and Unemployment' &
+      trt == 'all_yield_diff_percentile_gmo_max' & 
+      spatial == 'rural' &
+      sample_var == 'i_m_hs' &
+      sample != 'Full sample' & 
+      is.na(county_subset)
+    ]
+  if(nrow(rf_het_hs_dt)>0){
+    rf_het_hs_p = 
+      ggplot(
+        data = rf_het_hs_dt,
+        aes(x = year, y = estimate, ymin = ci_l, ymax = ci_h, color = sample, fill = sample)
+      ) +
+      geom_hline(yintercept = 0) +
+      geom_vline(xintercept = 1995.5, col = 'black', linewidth = 1, alpha = 1, linetype = 'dashed') +
+      #geom_ribbon(alpha = 0.5, color = NA) +
+      geom_point(size = 2.5, position = position_dodge(width = 0.63)) +
+      geom_linerange(position = position_dodge(width = 0.63)) +
+      #geom_line(linewidth = 0.3) +
+      scale_color_viridis_d(
+        option = 'magma',
+        begin = 0.2, end = 0.9,
+        name = '',
+        labels = c('No HS degree', 'HS degree'),
+        aesthetics = c('fill','color')
+      ) +
+      scale_y_continuous(name = '', minor_breaks = NULL) +
+      scale_x_continuous(
+        name = 'Year', 
+        limits = c(1990,2015),
+        breaks = seq(1990, 2015, 5), 
+        minor_breaks = NULL
+      ) +
+      facet_wrap(~lhs_name,ncol = 2, scales = 'free_y') + 
+      theme(
+        strip.text = element_text(size = 16),
+        legend.position = 'bottom'
+      )
+    if(print) print(rf_het_hs_p)
+    ggsave(
+      rf_het_hs_p, 
+      filename = here(paste0(
+        'figures/micro/rf-event/het-i_m_hs-all-outcomes.jpeg'
       )), 
       width = width_in*1.5, height = height_in*2.75
     )
