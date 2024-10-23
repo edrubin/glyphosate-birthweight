@@ -110,7 +110,7 @@ glyph_ts_decile_p =
     x = year, 
     y = avg_glyph_km2, 
     color = trt,
-    shape = trt,
+    #shape = trt,
     group = interaction(year <= 1995, trt), 
   )) + 
   geom_line(linewidth = 1) +
@@ -143,7 +143,7 @@ ggsave(
   bg = 'white'
 )  
 ggsave(
-  plot = glyph_ts_p + 
+  plot = glyph_ts_decile_p + 
     theme_minimal(base_size = 24) + 
     theme(
       legend.text=element_text(size=20), 
@@ -151,7 +151,7 @@ ggsave(
       legend.margin=margin(t=-25), 
       panel.grid.minor = element_blank()
     ),
-  filename = here("figures/descriptive/ts-glyph.jpeg"),
+  filename = here("figures/descriptive/ts-glyph-decile.eps"),
   device = cairo_ps,
   width = 8*0.8, height = 6*0.8,
   bg = 'white'

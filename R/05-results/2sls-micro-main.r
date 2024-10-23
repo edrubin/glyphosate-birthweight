@@ -872,9 +872,8 @@ lapply(
 # Table for water ml model ----------------------------------------------------
   water_ml_spec = 
     qread(
-      list.files(here('data/results/micro'), full.names = TRUE) |>
-      str_subset('est_water_rf-ml-pred') |>
-      str_subset('controls-3_spatial-rural_het-_iv-allyielddiffpercentilegmo')
+      list.files(here('data/results/micro-new'), full.names = TRUE) |>
+      str_subset('est_water_rf-ml-pred')
     )
 # Function to make table for each outcome 
 make_water_ml_table = function(outcome_in, mod){

@@ -362,6 +362,16 @@ plot_predbw_results = function(
     )),
     width = width_in, height = height_in*0.85
   )
+  if(outcome_in == 'dbwt'){
+    ggsave(
+      plot = decile_p,
+      filename = here(paste0(
+        'figures/micro/2sls/deciles-',outcome_in,'.eps'
+      )),
+      device = cairo_ps,
+      width = width_in, height = height_in*0.85
+    )
+  }
   # Effect at mean for deciles 
   decile_effatmean_p = 
     ggplot(
@@ -400,6 +410,16 @@ plot_predbw_results = function(
     )),
     width = width_in, height = height_in*0.85
   )
+  if(outcome_in == 'dbwt'){
+    ggsave(
+      plot = decile_effatmean_p,
+      filename = here(paste0(
+        'figures/micro/2sls/deciles-at-mean-',outcome_in,'.eps'
+      )),
+      device = cairo_ps,
+      width = width_in, height = height_in*0.85
+    )
+  }
   # Effect at mean for deciles: Policy effect
   decile_effatmean_policy_p = 
     ggplot(
@@ -490,6 +510,16 @@ plot_predbw_results = function(
     )),
     width = width_in, height = height_in
   )
+  if(outcome_in == 'dbwt'){
+    ggsave(
+      plot = decile_effatmean_policy_gly_p,
+      filename = here(paste0(
+        'figures/micro/2sls/deciles-at-mean-policy-gly-',outcome_in,'.eps'
+      )),
+      device = cairo_ps,
+      width = width_in, height = height_in*0.85
+    )
+  }
   # Now a plot with all three splits 
   all_splits_p = 
     ggplot(
@@ -882,6 +912,54 @@ plot_predbw_results_all_outcome = function(
     plot = all_splits_at_mean_policy_p,
     filename = here(paste0(
       'figures/micro/2sls/all-splits-all-outcomes-at-mean-policy.jpeg'
+    )),
+    width = width_in*1.5, height = height_in*2.75
+  )
+  # All pred bw het splits--effect at mean for GLY
+  all_splits_at_mean_gly_p = 
+    ggplot(
+      data = pctl_est_dt[
+        var_of_interest == TRUE & 
+        trt == 'all_yield_diff_percentile_gmo_max' &
+        fixef_num == 'Family demographics, county, and year by month' & 
+        control_num == 'All' & 
+        sample_var != 'month' & 
+        sample_var != 'pred_q14' &
+        sample_var != 'pred_q5_sex' &
+        !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly','c_section'))
+      ], 
+      aes(
+        x = pctl, 
+        y = effect_at_mean, ymin = effect_at_mean_l, ymax = effect_at_mean_h,
+        color = str_remove(sample_var, 'pred_q')|> as.integer() |> as.factor(), 
+        fill  = str_remove(sample_var, 'pred_q')|> as.integer() |> as.factor()
+      ),
+    ) + 
+    geom_hline(yintercept = 0, linetype = 'dashed') +
+    geom_ribbon(alpha = 0.3, color = NA) + 
+    geom_line() +
+    scale_color_viridis_d(
+      option = 'magma',
+      end = 0.9,
+      name = 'Number of Pred BW Bins', 
+      aesthetics = c('color','fill')
+    ) +
+    scale_x_continuous(
+      name = 'Predicted Birthweight Percentile',
+      labels = scales::label_percent()
+    ) +
+    scale_y_continuous(name = 'Effect at Mean') + 
+    theme(
+      panel.grid.minor = element_blank(),
+      legend.position = 'bottom',
+      strip.text = element_text(size = 16)
+    ) + 
+    facet_wrap(~lhs_name, ncol = 2, scales = 'free_y')
+  if(print) print(all_splits_at_mean_gly_p)
+  ggsave(
+    plot = all_splits_at_mean_gly_p,
+    filename = here(paste0(
+      'figures/micro/2sls/all-splits-all-outcomes-at-mean-gly.jpeg'
     )),
     width = width_in*1.5, height = height_in*2.75
   )
@@ -1488,21 +1566,23 @@ pred_bw_dt[,
     lhs == 'i_m_black', 'Pr(Mother Black)',
     lhs == 'i_m_nonwhite', 'Pr(Mother Non-white)',
     lhs == 'i_m_hispanic', 'Pr(Mother Hispanic)',
-    lhs == 'i_m_married', 'Pr(Mother Married)'
+    lhs == 'i_m_married', 'Pr(Mother Married)', 
+    lhs == 'index', 'Health Index'
   )
 ] 
   # Now spatial subsets
   spatial_subset_p =
     ggplot(
       pred_bw_dt[
-        !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')) & 
+        (lhs %in% c('dbwt','gestation','index','i_lbw', 'i_vlbw','i_preterm')) & 
         county_subset != 'Non-rural'&
         var_of_interest == TRUE & 
         trt == 'all_yield_diff_percentile_gmo_max' &
         fixef_num == 'Family demographics, county, and year by month' & 
         control_num == 'All' & 
         is.na(sample_var) & 
-        county_subset != 'Rural residence & occurrence'
+        !(county_subset %in% c('Rural residence & occurrence')) &
+        str_detect(county_subset, 'Ag Share', negate = TRUE)  
       ], 
       aes(
         x = county_subset,
@@ -1532,13 +1612,35 @@ pred_bw_dt[,
     bg = 'white'
   )
 
+# Getting race sample sizes 
+imnonwhite_mod =
+  str_subset(
+    list.files(here('data/results/micro-new'), full.names = TRUE),
+    'est_2sls_outcome'
+  ) |>
+  str_subset('het-imnonwhite') |>
+  qread()
+nobs_ls = 
+  lapply(
+    1:length(imnonwhite_mod[lhs = '^dbwt$', rhs = 'nico']), 
+    \(i) {
+      paste0(
+        round(
+          nobs(imnonwhite_mod[lhs = '^dbwt$', rhs = 'nico'][[i]])/1e6,
+          digits = 1
+        ), 
+        ' million births'
+      )
+    }
+  ) |> unlist()
+
 # Now mrace plot for all outcomes
 mrace_all_p = 
   pred_bw_dt[
     var_of_interest == TRUE & 
     sample_var == 'i_m_nonwhite' & 
     fixef_num == 'Family demographics, county, and year by month' & 
-    !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly')),.(
+    !(lhs %in% c('dbwt_pred','dbwt_pctl_pre','any_anomaly','c_section')),.(
       lhs_name,
       control_num, 
       effect_at_mean_l, 
@@ -1569,7 +1671,11 @@ mrace_all_p =
     scale_color_viridis_d(
       option = 'magma', 
       end = 0.9,
-      name = ''
+      name = '', 
+      labels = paste0(
+        c('Full sample: ','Mother white: ', 'Mother nonwhite: '), 
+        nobs_ls
+      )
     ) +
     theme(
       panel.grid.minor = element_blank(),

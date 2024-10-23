@@ -18,15 +18,15 @@ p_load(
     )]
   # Policy
   policy_2016 = c(
-    64815*0.0046*comb_cnty_health_dt[year == 2012,.(fsum(tot_inf_births))]$V1/1e6,
-    64815*0.0159*comb_cnty_health_dt[year == 2012,.(fsum(tot_inf_births))]$V1/1e6,
-    64815*0.0272*comb_cnty_health_dt[year == 2012,.(fsum(tot_inf_births))]$V1/1e6
+    64815*0.0058*comb_cnty_health_dt[year == 2012,.(fsum(tot_inf_births))]$V1/1e6,
+    64815*0.0164*comb_cnty_health_dt[year == 2012,.(fsum(tot_inf_births))]$V1/1e6,
+    64815*0.0270*comb_cnty_health_dt[year == 2012,.(fsum(tot_inf_births))]$V1/1e6
   )
   # GLY
   gly_2016 = c(
-    64815*0.0023*comb_cnty_health_dt[year == 2012,.(fsum(tot_inf_births))]$V1/1e6,
-    64815*0.0224*comb_cnty_health_dt[year == 2012,.(fsum(tot_inf_births))]$V1/1e6,
-    64815*0.0426*comb_cnty_health_dt[year == 2012,.(fsum(tot_inf_births))]$V1/1e6
+    64815*0.0073*comb_cnty_health_dt[year == 2012,.(fsum(tot_inf_births))]$V1/1e6,
+    64815*0.0214*comb_cnty_health_dt[year == 2012,.(fsum(tot_inf_births))]$V1/1e6,
+    64815*0.0355*comb_cnty_health_dt[year == 2012,.(fsum(tot_inf_births))]$V1/1e6
   )
   # Converting into other years: 
   cat(paste0(

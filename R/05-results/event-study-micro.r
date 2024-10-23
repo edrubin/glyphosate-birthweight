@@ -382,6 +382,16 @@ plot_reduced_form = function(
       )), 
       width = width_in, height = height_in
     )
+    if(outcome_in == 'dbwt'){
+      ggsave(
+        fs_event_p, 
+        filename = here(paste0(
+          'figures/micro/fs-event/main-',outcome_in,'.eps'
+        )), 
+        device = cairo_ps,
+        width = width_in, height = height_in
+      )
+    }
   }
   fs_event_main_policy_dt = 
     mod_dt[
@@ -422,6 +432,16 @@ plot_reduced_form = function(
       )), 
       width = width_in, height = height_in
     )
+    if(outcome_in == 'dbwt'){
+      ggsave(
+        fs_event_policy_p, 
+        filename = here(paste0(
+          'figures/micro/fs-event/main-policy-',outcome_in,'.eps'
+        )),
+        device = cairo_ps,
+        width = width_in, height = height_in
+      )
+    }
   }
   # Main plot--reduced form
   rf_event_main_dt = 
@@ -463,6 +483,16 @@ plot_reduced_form = function(
       )), 
       width = width_in, height = height_in
     )
+    if(outcome_in == 'dbwt'){
+      ggsave(
+        rf_event_p, 
+        filename = here(paste0(
+          'figures/micro/rf-event/main-',outcome_in,'.eps'
+        )),
+        device = cairo_ps,
+        width = width_in, height = height_in
+      )
+    }
   }
   rf_event_main_policy_dt = 
     mod_dt[
@@ -503,6 +533,16 @@ plot_reduced_form = function(
       )), 
       width = width_in, height = height_in
     )
+    if(outcome_in == 'dbwt'){
+      ggsave(
+        rf_event_policy_p, 
+        filename = here(paste0(
+          'figures/micro/rf-event/main-policy-',outcome_in,'.eps'
+        )),
+        device = cairo_ps,
+        width = width_in, height = height_in
+      )
+    }
   }
   # Reduced form with no controls/fe's: We don't estimate w/o family FEs anymore
   # rf_event_nc_dt = 
@@ -1548,7 +1588,7 @@ plot_reduced_form = function(
         var_of_interest == TRUE & 
         lhs == outcome_in &
         fixef_num == 'Family demographics, county, and year by month' & 
-        control_num == 'All' &
+        control_num == 'None' &
         trt == 'all_yield_diff_percentile_gmo_max' & 
         spatial == 'rural' &
         sample_var == 'pred_q5' & 
@@ -1593,7 +1633,7 @@ plot_reduced_form = function(
         type == 'rf' & 
         var_of_interest == TRUE & lhs == outcome_in &
         fixef_num == 'Family demographics, county, and year by month' & 
-        control_num == 'All' &
+        control_num == 'None' &
         trt == 'all_yield_diff_percentile_gmo_max' & 
         spatial == 'rural' &
         sample_var == 'pred_q5' & 
@@ -1688,8 +1728,7 @@ plot_reduced_form = function(
       fixef_num == 'Family demographics, county, and year by month' & 
       control_num == 'All' &
       trt == 'all_yield_diff_percentile_gmo_max' & 
-      sample_var == 'rural_res' & 
-      sample != 'Full sample'
+      spatial %in% c('urban res; urban occ','rural res; rural occ') 
     ]
   if(nrow(rf_res_dt) > 0){
     rf_event_residence_p = 
@@ -1697,8 +1736,8 @@ plot_reduced_form = function(
         data = rf_res_dt,
         aes(
           x = year, y = estimate, ymin = ci_l, ymax = ci_h,
-          color = sample, 
-          fill = sample
+          color = factor(spatial, levels = c('urban res; urban occ','rural res; rural occ')), 
+          fill =  factor(spatial, levels = c('urban res; urban occ','rural res; rural occ'))
         )
       ) +
       geom_hline(yintercept = 0) +

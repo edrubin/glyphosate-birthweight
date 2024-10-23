@@ -202,6 +202,13 @@ ggsave(
   width = 8, height = 8/1.4,
   bg = 'white'
 )
+ggsave(
+  change_glyph_p,
+  filename = here("figures/descriptive/glyph-km2-diff-9512.eps"),
+  device = cairo_ps,
+  width = 8, height = 8/1.4,
+  bg = 'white'
+)
 
 # Make the map
 change_glyph_rural_p = 
@@ -234,13 +241,7 @@ ggsave(
   width = 8, height = 8/1.4,
   bg = 'white'
 )
-ggsave(
-  change_glyph_rural_p,
-  filename = here("figures/descriptive/glyph-km2-diff-9512-rural.eps"),
-  device = cairo_ps,
-  width = 8, height = 8/1.4,
-  bg = 'white'
-)
+
 
 # Map of rural counties 
 rural_p = 
