@@ -206,6 +206,11 @@ extract_pred_bw_effects = function(mod_path, overwrite = FALSE){
       'Family demographics, county, year by month by Ag District'
     )),
     control_num = fcase(
+      str_detect(rhs, 'acres_km2') & 
+        str_detect(rhs, 'atrazine'), 
+        'Acres and all others',
+      str_detect(rhs, 'acres_km2'), 
+        'Acres',
       str_detect(rhs, 'atrazine') & 
         str_detect(rhs, 'unempl') &  
         str_detect(rhs, 'empl') &  
@@ -249,7 +254,9 @@ extract_pred_bw_effects = function(mod_path, overwrite = FALSE){
       'Age Shares', 
       'Age and Race Shares',
       'Fertilizers',
-      'All'
+      'Acres',
+      'All', 
+      'Acres and all others'
     )),
     lhs = lhs |> str_remove('^c\\(') |> str_remove('\\)$')
   )]
@@ -261,6 +268,7 @@ extract_pred_bw_effects = function(mod_path, overwrite = FALSE){
       trt == 'all_yield_diff_percentile_gmo', 'Attainable Yield, GM Avg Percentile',
       trt == 'all_yield_diff_percentile_gmo_max', 'Attainable Yield, GM Max Percentile',
       trt == 'e100m_yield_diff_percentile_gmo', 'Attainable Yield, GM Avg Percentile, Eastern US',
+      trt == 'all_yield_diff_gmo_max_50_50', 'Attainable Yield, GM Max Top vs Bottom Quartile',
       trt == 'percentile_gm_acres','1990-1995 GM Acreage Percentile',
       trt == 'percentile_gm_acres_pct_cnty', '1990-1995 GM Acreage Percentile',
       trt == 'percentile_gm_yield_max', '1990-1995 GM Max Yield Percentile',
@@ -1069,7 +1077,7 @@ mod_paths =
   str_subset(
     list.files(here('data/results/micro-new'), full.names = TRUE),
     'est_2sls_outcome'
-  )# |>str_subset('percentilegmacres', negate = TRUE) 
+  ) |>str_subset('percentilegmacres', negate = TRUE) 
 pred_bw_dt = 
   lapply(mod_paths, extract_pred_bw_effects) |> 
   rbindlist(use.names = TRUE, fill = TRUE)
@@ -1119,7 +1127,7 @@ spec_chart_outcome = function(
       fixef_num == 'Family demographics, county, and year by month' & 
       control_num == 'All' & 
       is.na(sample_var) & 
-      county_subset != 'Rural residence & occurrence'
+      county_subset != 'Rural residence & occurrence' 
     ]
   spec_dt_mrace = 
     pred_bw_dt[
@@ -1136,9 +1144,9 @@ spec_chart_outcome = function(
   ]
   # Setting order
   spec_dt_robust = spec_dt_robust[c(
-      11:12,3:6,1:2,9:10,52:53, #7:8,50:51, # 1:12,50:53, # Trt vars
+      11:12, 5:8, 1:4, 9:10, 52:53, # Trt vars
       13:14,17:40,# Fixef vars
-      42:48# Control vars
+      42:48, 50:51# Control vars
     )]
   # Getting values for each group of options
   control_num_v = unique(spec_dt_robust$control_num)
@@ -1208,7 +1216,7 @@ spec_chart_outcome = function(
     labels_robust, 
     highlight = c(hl_gly, hl_policy),
     order = order_in,
-    n = c(12, 26,7),
+    n = c(14, 26, 9),
     leftmargin = 22,
     col.est=c("grey85","#e64173"), 
     col.est2=c("grey85","#e64173"),
@@ -1219,7 +1227,11 @@ spec_chart_outcome = function(
   dev.off()
   # Now spatial subsets
   spatial_subset_p =
-    ggplot(spec_dt_spatial, aes(x = county_subset)) +
+    ggplot(
+      spec_dt_spatial[
+        !(mod_id %in% c('1726169143.qs','1725924460.qs'))
+      ], 
+      aes(x = county_subset)) +
     geom_pointrange(
       linewidth = 0.75,
       aes(y = estimate, ymin = ci_l, ymax = ci_h)
@@ -1400,56 +1412,56 @@ spec_chart_outcome = function(
     width = 7, height = 3, bg = 'white'
   )
   # Trt plot 
-  trt_p = 
-    ggplot(
-      data = pred_bw_dt[
-        lhs == outcome_in & 
-        fixef_num == 'Family demographics, county, and year by month' & 
-        var_of_interest == TRUE & 
-        county_subset == 'Rural' & 
-        is.na(sample_var) &
-        mod_id != '1726169143.qs'
-      ],
-      aes(
-        color = control_num,
-        x = trt_name,   
-        y = effect_at_mean, 
-        ymin = effect_at_mean_l, 
-        ymax = effect_at_mean_h
-      )
-    )  +
-    geom_hline(yintercept = 0, linetype = 'dashed', linewidth = 0.2) +
-    geom_pointrange(
-      position = position_dodge(width = 0.5), 
-      linewidth = 0.75
-    ) + 
-    #facet_grid(cols = vars(fixef_num)) + 
-    scale_y_continuous(
-      name = paste('Effect at Mean for ', y_lab), 
-      labels = y_labels
-    ) +
-    scale_x_discrete(
-      #labels = 1:14,
-      guide = guide_axis(n.dodge=2),
-      name = 'Controls' 
-    ) + 
-    #scale_color_viridis_d(
-    #  option = 'magma', 
-    #  end = 0.9,
-    #  #labels = paste0(
-    #  #  1:14,': ',
-    #  #  unique(pred_bw_dt[,.N,keyby = fixef_num])$fixef_num[-1]
-    #  #),
-    #  name = ''
-    #) +
-    theme_minimal() 
-  ggsave(
-    trt_p, 
-    filename = here(paste0(
-      "figures/micro/2sls/spec-chart-controls-",outcome_in,".jpeg"
-    )), 
-    width = 7, height = 3, bg = 'white'
-  )
+  # trt_p = 
+  #   ggplot(
+  #     data = pred_bw_dt[
+  #       lhs == outcome_in & 
+  #       fixef_num == 'Family demographics, county, and year by month' & 
+  #       var_of_interest == TRUE & 
+  #       county_subset == 'Rural' & 
+  #       is.na(sample_var) &
+  #       mod_id != '1726169143.qs'
+  #     ],
+  #     aes(
+  #       color = control_num,
+  #       x = trt_name,   
+  #       y = effect_at_mean, 
+  #       ymin = effect_at_mean_l, 
+  #       ymax = effect_at_mean_h
+  #     )
+  #   )  +
+  #   geom_hline(yintercept = 0, linetype = 'dashed', linewidth = 0.2) +
+  #   geom_pointrange(
+  #     position = position_dodge(width = 0.5), 
+  #     linewidth = 0.75
+  #   ) + 
+  #   #facet_grid(cols = vars(fixef_num)) + 
+  #   scale_y_continuous(
+  #     name = paste('Effect at Mean for ', y_lab), 
+  #     labels = y_labels
+  #   ) +
+  #   scale_x_discrete(
+  #     #labels = 1:14,
+  #     guide = guide_axis(n.dodge=2),
+  #     name = 'Controls' 
+  #   ) + 
+  #   #scale_color_viridis_d(
+  #   #  option = 'magma', 
+  #   #  end = 0.9,
+  #   #  #labels = paste0(
+  #   #  #  1:14,': ',
+  #   #  #  unique(pred_bw_dt[,.N,keyby = fixef_num])$fixef_num[-1]
+  #   #  #),
+  #   #  name = ''
+  #   #) +
+  #   theme_minimal() 
+  # # ggsave(
+  # #   trt_p, 
+  # #   filename = here(paste0(
+  # #     "figures/micro/2sls/spec-chart-controls-",outcome_in,".jpeg"
+  # #   )), 
+  # #   width = 7, height = 3, bg = 'white'
+  # # )
 
 }
 
