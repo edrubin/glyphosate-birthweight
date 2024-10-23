@@ -37,7 +37,7 @@
 #      Note: bins are already percentiles, so bin_width cannot give non-whole bins
   # The function
   plot_summaries = function(
-    bwt_type, pop_sum, pop_ecdf, sub_time, save_dir, bin_width = .01
+    bwt_type, pop_sum, pop_ecdf, sub_time, save_dir, filetype = '.eps', bin_width = .01
   ) {
     # Confirm packages are loaded
     require(pacman)
@@ -230,7 +230,7 @@
         save_dir,
         paste(
           bwt_type, pop_sum, pop_ecdf, sub_time,
-          paste0('bwt-', round(1 / bin_width), '.png'),
+          paste0('bwt-', round(1 / bin_width), filetype),
           sep = '-'
         )
       ),
@@ -244,7 +244,7 @@
         save_dir,
         paste(
           bwt_type, pop_sum, pop_ecdf, sub_time,
-          paste0('age-', round(1 / bin_width), '.png'),
+          paste0('age-', round(1 / bin_width), filetype),
           sep = '-'
         )
       ),
@@ -258,7 +258,7 @@
         save_dir,
         paste(
           bwt_type, pop_sum, pop_ecdf, sub_time,
-          paste0('ord-', round(1 / bin_width), '.png'),
+          paste0('ord-', round(1 / bin_width), filetype),
           sep = '-'
         )
       ),
@@ -272,7 +272,7 @@
         save_dir,
         paste(
           bwt_type, pop_sum, pop_ecdf, sub_time,
-          paste0('dem-', round(1 / bin_width), '.png'),
+          paste0('dem-', round(1 / bin_width), filetype),
           sep = '-'
         )
       ),
@@ -286,7 +286,7 @@
         save_dir,
         paste(
           bwt_type, pop_sum, pop_ecdf, sub_time,
-          paste0('edu-', round(1 / bin_width), '.png'),
+          paste0('edu-', round(1 / bin_width), filetype),
           sep = '-'
         )
       ),
@@ -300,7 +300,7 @@
         save_dir,
         paste(
           bwt_type, pop_sum, pop_ecdf, sub_time,
-          paste0('gly-', round(1 / bin_width), '.png'),
+          paste0('gly-', round(1 / bin_width), filetype),
           sep = '-'
         )
       ),
@@ -314,7 +314,7 @@
         save_dir,
         paste(
           bwt_type, pop_sum, pop_ecdf, sub_time,
-          paste0('crp-', round(1 / bin_width), '.png'),
+          paste0('crp-', round(1 / bin_width), filetype),
           sep = '-'
         )
       ),
