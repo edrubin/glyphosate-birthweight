@@ -34,9 +34,6 @@ p_load(
   )
 
 
-
-# x = gaez, y = acre share each crop
-#         , y = yield each crop 
 # Making the plots 
 gaez_crop_acreage_correlation = function(crop_in, crop_instr_dt, pink = '#e64173'){
   if(crop_in != 'gm_max'){

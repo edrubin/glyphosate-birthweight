@@ -56,7 +56,7 @@ aggregate_cnty_to_asd = function(comb_cnty_health_dt){
       get_vars(
         comb_cnty_health_dt,
         c('^year$', '^asd_code$', '^state_fips$', 
-          '_acres$', '_tot_yield$','^tot_inf_births$', 'tot_pop$'
+          '_acres$', '_tot_yield$','^tot_inf_births$', 'tot_pop$',
           'alachlor$', 'atrazine$', 'cyanazine$', 'fluazifop$',
           'metolachlor$', 'metribuzin$', 'nicosulfuron$', 
           'area_km2'

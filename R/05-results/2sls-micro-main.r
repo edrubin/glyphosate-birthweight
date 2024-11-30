@@ -44,7 +44,6 @@ p_load(
     pred_glyph_in_water_rf = 'Predicted Glyphosate (RF)'
   ))
   # Calculating 2012 mean for outcomes and GLY
-  # TODO: Use the main est table for this rather than county-level table
   comb_cnty_health_dt  = 
     read.fst(
       'data/clean/comb-cnty-health-dt.fst',
@@ -621,8 +620,6 @@ make_control_robust_tables = function(mod_path){
 }
 
 
-# ES NOTE: This isn't working presently, but we don't use it in the paper
-# ER NOTE: 10/17/24, need to fix it because we do now...
 # Running control tables for all estimations
 mod_path =  
   str_subset(
@@ -757,7 +754,6 @@ lapply(
   ) |> write(here('tables/2sls/main-outcomes-ss-gly.tex'))
 
 # Single table with Policy, GLY x GAEZ, pre-yield instrument Shift-Share estimates
-# TODO: once this finishes running
   pre_spec_ss = qread(mod_path_ss |> str_subset('percentilegmyieldmax'))
   pre_mod_ss = pre_spec_ss[
       #fixef = 'mage', 

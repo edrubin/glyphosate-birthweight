@@ -11,6 +11,7 @@ water-dir = data/watershed/
 health-dir = data/health-restricted/
 fig-desc-dir = figures/descriptive/
 fig-cnty-dir = figures/county-level/
+fig-micro-dir = figures/micro/
 # Variables
 crop-names := acre yield irrigated
 crop-dt := $(crop-names:%=$(raw-dir)all-crop-%-dt.fst)
@@ -25,7 +26,7 @@ pop-grids := $(pop-wt-yrs:%=$(water-dir)us-pop-grid/uspop%.tif)
 
 # -----------------------------------------------------------------------------
 # Setting up higher level targets
-all:  data-raw data-clean # water data-download
+all:  data-raw data-clean # micro-mods micro-results desc-figs predict-bw water data-download
 # Downloading data from web or API
 data-download: \
  $(dscr-dir)usgs-pesticides-raw.fst \
@@ -71,22 +72,40 @@ cnty-results: \
  $(wildcard $(fig-cnty-dir)all/*.jpeg) \
  $(wildcard $(fig-cnty-dir)ag-district/*.jpeg)
 # Micro analysis 
+micro-mods: \
+ $(wildcard $(result-dir)micro-new/est_rf_*.qs) \
+ $(wildcard $(result-dir)micro-new/est_2sls_*.qs)
 micro-results: \
- $(wildcard $(result-dir)micro/est_rf_*.qs) \
- $(wildcard $(result-dir)micro/est_2sls_*.qs)
+ $(wildcard $(fig-micro-dir)2sls/*.jpeg) \
+ $(wildcard $(fig-micro-dir)fs-event/*.jpeg) \
+ $(wildcard $(fig-micro-dir)rf-event/*.jpeg)
 
 # -----------------------------------------------------------------------------
 
-# TODO: Code for micro results 
+# Making the 2SLS figures
+$(wildcard $(fig-micro-dir)2sls/*.jpeg): \
+ R/05-results/2sls-micro-main.r \
+ R/05-results/2sls-micro-het.r \
+ $(wildcard $(result-dir)micro-new/est_2sls_.*\\.qs)
+	Rscript R/05-results/2sls-micro-main.r
+  Rscript R/05-results/2sls-micro-het.r
+	@echo "Made 2SLS figs"
+# Making micro event study figures
+$(wildcard $(fig-micro-dir)fs-event/*.jpeg) \
+$(wildcard $(fig-micro-dir)rf-event/*.jpeg): \
+ R/05-results/event-study-micro.r \
+ $(wildcard $(result-dir)micro-new/est_rf_*.qs)
+	Rscript $<
+	@echo "Made micro event study figs"
 # Targets for micro analysis 
-$(wildcard $(result-dir)micro/est_rf_.*\\.qs) \
-$(wildcard $(result-dir)micro/est_2sls_.*\\.qs): \
+$(wildcard $(result-dir)micro-new/est_rf_.*\\.qs) \
+$(wildcard $(result-dir)micro-new/est_2sls_.*\\.qs): \
  R/04-analysis/02b-analyze-natality-twfe.R \
  $(clean-dir)comb-cnty-dt.fst \
  $(clean-dir)crop-acre-percentile-90-95.fst \
  $(clean-dir)glyph-nat-dt.fst \
- $(clean-dir)natality-micro.fst 
-#  $(clean-dir)/prediction/output/natality-micro-rf-train80-noindicators-2-full-cvpred.fst
+ $(clean-dir)natality-micro.fst
+#  $(clean-dir)/prediction/output/dbwt-natality-micro-rf-train80-noindicators-2-full-cvpred.fst
 	Rscript $<
 	@echo "Ran main analysis"
 
@@ -105,7 +124,6 @@ $(wildcard $(fig-cnty-dir)all/*.jpeg): \
 	@echo "Made county event study figs"
 
 # Running and saving the models 
-# TODO: make this target be for all mods not just one of them 
 $(result-dir)county-level/all/cnty-main/event-mods.qs \
 $(result-dir)county-level/rural/cnty-main/event-mods.qs: \
  R/04-analysis/02a-analyze-county-twfe.R \
@@ -139,6 +157,9 @@ $(wildcard $(fig-desc-dir)/gaez-acreage/*.jpeg): \
  R/05-results/descr-appendix.R \
  $(clean-dir)comb-cnty-dt.fst
 	Rscript $<
+  Rscript R/05-results/balance-table-micro.R
+  Rscript R/05-results/descr-gly-intensity-country.r
+  Rscript R/05-results/gm-adoption.R
 	@echo "Made descriptive appendix plots"
 
 
@@ -148,13 +169,12 @@ $(wildcard $(fig-desc-dir)/gaez-acreage/*.jpeg): \
 # Summary tables of predictions
 $(wildcard $(clean-dir)prediction/summaries/*.fst): \
  R/04-analysis/01d-ml-train-models.R \
- $(clean-dir)natality-micro-rf-train80-noindicators-2-full-cvpred.fst
+ $(clean-dir)dbwt-natality-micro-rf-train80-noindicators-2-full-cvpred.fst
 	Rscript $<
 	@echo "Made Pred BW summary tables"
 
 # Training the model and making predictions
-# TODO: Is this the right file name? seems like not
-$(clean-dir)natality-micro-rf-train80-noindicators-2-full-cvpred.fst: \
+$(clean-dir)dbwt-natality-micro-rf-train80-noindicators-2-full-cvpred.fst: \
  R/04-analysis/01d-ml-train-models.R \
  R/04-analysis/01c-ml-tune-params.R \
  R/04-analysis/01b-ml-setup-models.R \
@@ -428,5 +448,5 @@ $(water-dir)hydrobasin-y-diff-dt.fst: R/00-data-prep/farm/04b-gaez-yield-watersh
 
 # -----------------------------------------------------------------------------
 # Helpers
-.PHONY: all data-clean data-raw data-download water desc-figs cnty-results predict-bw FORCE
+.PHONY: all data-clean data-raw data-download water desc-figs cnty-results predict-bw micro-mods micro-results FORCE
 FORCE:

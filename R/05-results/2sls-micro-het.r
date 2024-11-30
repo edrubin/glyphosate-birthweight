@@ -54,8 +54,6 @@ p_load(
     )] |>
     rbind(cut_dt[variable != 'pred_q5_sex'])
   # Calculating annual mean for outcomes and GLY 
-  # TODO: Use the main estimating table for this rather than county-level table
-  # TODO: Integrate with sample specific means
   comb_cnty_health_dt  = 
     read.fst(
       'data/clean/comb-cnty-health-dt.fst',
@@ -1760,4 +1758,4 @@ mrace_all_p =
       "figures/micro/2sls/spec-chart-fixef-all-outcomes.jpeg"
     )), 
     width = 10, height = 4.5, bg = 'white'
-  )
+  )  

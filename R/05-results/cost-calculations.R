@@ -4,7 +4,7 @@ p_load(
   here, data.table, fst, collapse
 )
 
-# Simple method first: Waitzman 2023--$64,815 per preterm birth (2016 USD)-----
+# Simple method: Waitzman 2023--$64,815 per preterm birth (2016 USD)-----
   # Birth and GLY data
   comb_cnty_health_dt = 
     read_fst(
@@ -43,7 +43,3 @@ p_load(
     '\n  GLY Effect $', round(gly_2016[2]*229.594/240.007,0),
     ' million (',round(gly_2016[1]*229.594/240.007,0),', ',round(gly_2016[3]*229.594/240.007,0),')'  
   ))
-  
-  
-
-64815*304.702/240.007
