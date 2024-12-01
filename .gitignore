@@ -6,6 +6,12 @@ notes/
 figures/
 tables/
 
+# Data we can't share
+data/health-restricted/
+data/clean/.*health-dt.fst
+data/clean/prediction/
+data/clean/mini-data.fst
+
 # Scratch code we don't need to keep track of
 R/scratch/
 

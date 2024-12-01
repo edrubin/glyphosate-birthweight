@@ -1,7 +1,7 @@
 
 # Requirements 
 
-We run the analysis using `make` version `4.4.1` 
+We run the analysis using `make` version `4.4.1` and `R` version `4.4.1`. We use [`renv`](https://rstudio.github.io/renv/index.html) to manage packages. To get started, install `renv` and run `renv::restore()` to download and install the package versions used in this project, which are recorded in the `renv.lock` file. 
 
 `make data-clean` will generate all of the intermediate files we need for the analysis, which takes about 4 minutes to run. This does not run two categories of targets: downloading data and the water ML pipeline. Those both take a while to run, along with the data we downloaded manually---they are grouped together in the `data/download-manual`, `data/download-script`, and `data/watershed` directories.
 
@@ -27,8 +27,7 @@ The following API keys are required, save them to .Renviron with with `usethis::
 
 ### Other Data 
 
-[GAEZ Data](https://gaez-services.fao.org/server/rest/services/res05/ImageServer)
-for Attainable Yield is in `data/download-manual/attainable-yield/`. (High/low): soy/mze/cot (soy, corn, cotton)  
+[GAEZ Data](https://gaez-services.fao.org/server/rest/services/res05/ImageServer) for Attainable Yield is in `data/download-manual/attainable-yield/`. These can also be downloaded using the following links: 
   - [Soy High](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110H/ylHr_soy.tif): res05/CRUTS32/Hist/8110H/ylHr_soy.tif  
   - [Soy Low](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110L/ylLr_soy.tif): res05/CRUTS32/Hist/8110H/ylLr_soy.tif
   - [Corn High](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110H/ylHr_mze.tif): res05/CRUTS32/Hist/8110H/ylHr_mze.tif  
@@ -36,4 +35,4 @@ for Attainable Yield is in `data/download-manual/attainable-yield/`. (High/low):
   - [Cotton High](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110H/ylHr_cot.tif): res05/CRUTS32/Hist/8110H/ylHr_cot.tif  
   - [Cotton Low](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110L/ylLr_cot.tif): res05/CRUTS32/Hist/8110H/ylLr_cot.tif
 
-Ag district to county crosswalk from [here](https://www.nass.usda.gov/Data_and_Statistics/County_Data_Files/Frequently_Asked_Questions/county_list.txt).
+The USDA Agriculutral Statistic District to County FIPS crosswalk is [here](https://www.nass.usda.gov/Data_and_Statistics/County_Data_Files/Frequently_Asked_Questions/county_list.txt).
