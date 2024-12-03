@@ -7,10 +7,6 @@
 #   - Restricting to 1992 and later (matches analysis years)
 
 
-# To-do list -----------------------------------------------------------------------------
-#   - Add option for removing imputation flags
-
-
 # Setup ----------------------------------------------------------------------------------
   # Load packages
   pacman::p_load(

@@ -3,13 +3,6 @@
 #   Time:   ~ 45 hours w/ grid of 5 mtry [3,15], 2 trees [50,100], 2 min-n [10^3, 10^2]
 
 
-# Data notes -----------------------------------------------------------------------------
-
-
-# To-do list -----------------------------------------------------------------------------
-#   - Add option to drop imputation flags.
-
-
 # Run scripts: Prep data and set up models -----------------------------------------------
   # Run the preceding scripts
   source(here::here('R', '04-analysis', '01b-ml-setup-models.R'))

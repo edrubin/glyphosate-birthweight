@@ -3,15 +3,8 @@
 #   Time:   ~ 1 hour per fold.
 
 
-# Data notes -----------------------------------------------------------------------------
-
-
 # Other ----------------------------------------------------------------------------------
 #   Helpful for manual CV:  https://rsample.tidymodels.org/reference/manual_rset.html
-
-# To-do list -----------------------------------------------------------------------------
-#   - Create a 'tune' option
-#   - Could do something with 'natality_test'
 
 
 # Run scripts: Prep data; set up and tune models -----------------------------------------

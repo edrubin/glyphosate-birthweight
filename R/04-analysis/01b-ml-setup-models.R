@@ -3,13 +3,6 @@
 #   Time:   ~ 11 seconds in addition to running 01a
 
 
-# Data notes -----------------------------------------------------------------------------
-
-
-# To-do list -----------------------------------------------------------------------------
-#   - Add option to drop imputation flags.
-
-
 # Run scripts: Prep data -----------------------------------------------------------------
   # Run the script that loads and preps data
   source(here::here('R', '04-analysis', '01a-ml-prep-data.R'))
