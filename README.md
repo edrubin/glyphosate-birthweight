@@ -14,7 +14,7 @@ For analysis:
 - `make micro-mods` runs the birth-level analysis  
 - `make micro-results` creates figures from the birth-level analysis  
 
-### API Keys
+### API keys
 
 The following API keys are required, save them to .Renviron with with `usethis::edit_r_environ()`   
 - [USDA QuickStats API](https://quickstats.nass.usda.gov/api/) saved in .Renviron as `NASS_KEY`  
@@ -25,7 +25,7 @@ The following API keys are required, save them to .Renviron with with `usethis::
 
 Most data required for our analysis is included in this repository, but some files are too large or not allowed to be shared publicly. 
 
-### NCHS Data  
+### NCHS data
 
 Instructions on how to get access to the restricted Births (Natality) and Deaths (Mortality) files are on the [NCHS website](https://www.cdc.gov/nchs/nvss/nvss-restricted-data.htm). Our primary analysis uses the natality files between 1990 and 2013. We do supplemental analysis that uses the mortality files over the same time period. Once obtained, the raw natality and mortality files go into: `data/health-restricted/raw`.
 
@@ -34,21 +34,21 @@ Instructions on how to get access to the restricted Births (Natality) and Deaths
 Download the [HydroBASINS](https://www.hydrosheds.org/products/hydrobasins) data for North America and copy the contents into `data/watersheds/hydrobasins`.
 
 
-### USGS Gridded Soil Survey  
+### USGS gridded soil survey  
 
 There are two pieces of data from the USGS's gridded soil survey needed for water analysis, which the [USGS hosts on Box here](https://nrcs.app.box.com/v/soils/folder/233393842838): 
 
 1. Download `MUKEY Grids (TIF)/FY2021_gNATSGO_mukey_grid.zip` and place the contents here: `data/watersheds/soil-quality/gNATSGO_mukey_grid`
 2. Download `MUKEY Grids (TIF)/FY2021_gNATSGO_Tabular_CSV.zip` and place the contents here: `data/watersheds/soil-quality/gNATSGO_Tabular_CSV`
 
-# Other Data Sources
+# Other data sources
 
-[GAEZ Data](https://gaez-services.fao.org/server/rest/services/res05/ImageServer) for Attainable Yield is in `data/download-manual/attainable-yield/`. These can also be downloaded using the following links: 
-  - [Soy High](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110H/ylHr_soy.tif): res05/CRUTS32/Hist/8110H/ylHr_soy.tif  
-  - [Soy Low](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110L/ylLr_soy.tif): res05/CRUTS32/Hist/8110H/ylLr_soy.tif
-  - [Corn High](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110H/ylHr_mze.tif): res05/CRUTS32/Hist/8110H/ylHr_mze.tif  
-  - [Corn Low](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110L/ylLr_mze.tif): res05/CRUTS32/Hist/8110H/ylLr_mze.tif
-  - [Cotton High](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110H/ylHr_cot.tif): res05/CRUTS32/Hist/8110H/ylHr_cot.tif  
-  - [Cotton Low](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110L/ylLr_cot.tif): res05/CRUTS32/Hist/8110H/ylLr_cot.tif 
+[GAEZ data](https://gaez-services.fao.org/server/rest/services/res05/ImageServer) for Attainable Yield is in `data/download-manual/attainable-yield/`. These can also be downloaded using the following links: 
+  - [Soy high](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110H/ylHr_soy.tif): res05/CRUTS32/Hist/8110H/ylHr_soy.tif  
+  - [Soy low](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110L/ylLr_soy.tif): res05/CRUTS32/Hist/8110H/ylLr_soy.tif
+  - [Corn high](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110H/ylHr_mze.tif): res05/CRUTS32/Hist/8110H/ylHr_mze.tif  
+  - [Corn low](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110L/ylLr_mze.tif): res05/CRUTS32/Hist/8110H/ylLr_mze.tif
+  - [Cotton high](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110H/ylHr_cot.tif): res05/CRUTS32/Hist/8110H/ylHr_cot.tif  
+  - [Cotton low](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110L/ylLr_cot.tif): res05/CRUTS32/Hist/8110H/ylLr_cot.tif 
 
 The USDA Agriculutral Statistic District to County FIPS crosswalk is [here](https://www.nass.usda.gov/Data_and_Statistics/County_Data_Files/Frequently_Asked_Questions/county_list.txt).
