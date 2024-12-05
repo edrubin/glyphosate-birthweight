@@ -1,4 +1,4 @@
-# Replication materials for glyphosate, GM, and perinatal health
+# Replication materials for paper *Glyphosate exposure and GM seed rollout unequally reduced perinatal health*
 
 ## Requirements 
 
