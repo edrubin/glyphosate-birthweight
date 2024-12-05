@@ -1,5 +1,6 @@
+# Replication materials for glyphosate, GM, and perinatal health
 
-# Requirements 
+## Requirements 
 
 We run the analysis using `make` version `4.4.1` and `R` version `4.4.1`. We use [`renv`](https://rstudio.github.io/renv/index.html) to manage packages. To get started, install `renv` and run `renv::restore()` to download and install the package versions used in this project, which are recorded in the `renv.lock` file. 
 
@@ -21,7 +22,7 @@ The following API keys are required, save them to .Renviron with with `usethis::
 - [Census API](https://api.census.gov/data/key_signup.html) saved in .Renviron as `CENSUS_KEY`  
 - [BEA API](https://apps.bea.gov/API/signup/) saved in .Renvoron as `BEA_KEY`  
 
-# Data not included
+## Data not included
 
 Most data required for our analysis is included in this repository, but some files are too large or not allowed to be shared publicly. 
 
@@ -41,7 +42,7 @@ There are two pieces of data from the USGS's gridded soil survey needed for wate
 1. Download `MUKEY Grids (TIF)/FY2021_gNATSGO_mukey_grid.zip` and place the contents here: `data/watersheds/soil-quality/gNATSGO_mukey_grid`
 2. Download `MUKEY Grids (TIF)/FY2021_gNATSGO_Tabular_CSV.zip` and place the contents here: `data/watersheds/soil-quality/gNATSGO_Tabular_CSV`
 
-# Other data sources
+## Other data sources
 
 [GAEZ data](https://gaez-services.fao.org/server/rest/services/res05/ImageServer) for Attainable Yield is in `data/download-manual/attainable-yield/`. These can also be downloaded using the following links: 
   - [Soy high](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110H/ylHr_soy.tif): res05/CRUTS32/Hist/8110H/ylHr_soy.tif  
