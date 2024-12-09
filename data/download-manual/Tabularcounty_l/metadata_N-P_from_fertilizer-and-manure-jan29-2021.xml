@@ -1,0 +1,767 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<metadata>
+  <idinfo>
+    <citation>
+      <citeinfo>
+        <origin>James A. Falcone</origin>
+        <pubdate>20210129</pubdate>
+        <title>Tabular county-level nitrogen and phosphorus estimates from fertilizer and manure for approximately 5-year periods from 1950 to 2017</title>
+        <geoform>Comma-separated text files</geoform>
+        <onlink>https://doi.org/10.5066/P9VSQN3C</onlink>
+      </citeinfo>
+    </citation>
+    <descript>
+      <abstract>This product provides tabular estimates of kilograms of nitrogen and phosphorus from a) fertilizer, and b) manure, for counties in the conterminous United States for the period 1950-2017. Data are generated for approximate five-year periods over the time, coinciding with U.S. Department of Agriculture Census of Agriculture census years. This data release also includes a model archive suitable for recreating the 2017 fertilizer estimates.</abstract>
+      <purpose>The data are intended as ancillary information for studies being performed as part of the U.S. Geological Survey’s (USGS) National Water-Quality Project (NWQP).</purpose>
+      <supplinf>This product is described in detail in the Open File Report given at Falcone, 2021.  The description provided in this metadata file is a summary.  See Open File Report for complete detail.
+
+This Data Release publishes the data in comma-separated text format (files ending in .txt). Two Microsoft Excel files (one for fertilizer, one for manure) are also provided for user convenience.  The manure Excel file has the formulas and calculations showing exactly how the total number of kilograms was calculated.  This is provided so that if users want to modify the formulas according to their own research, it would be easy to do so in the Excel file. The coefficients for weighting formulas by animal weight are the same as those given in Table 5 of the Open File Report. These are the files:
+
+- fert-total-1950-1982.txt:  Total kilograms of nitrogen and phosphorus from combined farm and non-farm (urban) fertilizer, for 1950-1982.
+- fert-farm-1987-2017.txt:  Kilograms of nitrogen and phosphorus from farm fertilizer, for 1987-2017.
+- fert-nonfarm-1987-2017.txt:  Kilograms of nitrogen and phosphorus from non-farm fertilizer, for 1987-2017.
+- manure-YYYY.txt: Numbers of animals for each livestock type, kilograms of nitrogen and phosphorus from manure for each animal group, as well as total nitrogen and phosphorus from manure for all animals, for year YYYY.
+- N-P_from_fertilizer_1950-2017-july23-2020.xlsx: Excel file with the same information that is in the two "fert" .txt files above.  This is provided as a convenience.
+- N-P_from_manure_1950-2017-july23-2020.xlsx: Excel file with the same information that is in the two "manure" .txt files above.  It contains the formulas that were used to calculate nutrients from livestock numbers. This is provided as a convenience.
+
+Additionally, nine supplemental text files are provided which flag which counties had livestock data estimated because the source data from the U.S. Department of Agriculture Census of Agriculture were "Not disclosed" (withheld for privacy purporses). The process by which the data were estimated is given in the Open File Report (Falcone, 2021).  These nine files are the files named "supplemental-nonDisclosed-filled-XXXX.txt".  A cell with a "1" indicates the county data was estimated for that livestock type and year. 
+
+All the files have 3,066 records, corresponding to the county agricultural data published by LaMotte, 2015.  A polygon shapefile for those counties is additionally published at https://catalog.data.gov/dataset/county-boundaries-for-selected-items-from-the-census-of-agriculture-1950-2012-coa-stcofips-876a8.
+
+Also included in this Data Release is a file named model_archive.zip.  This contains the code and data files necessary to recreate the 2017 estimates from fertilizer.  See the file readme.txt inside the model archive zip file for instructions on how to do so.
+
+References:
+Alexander, R.B., and Smith, R.A., 1990, County level estimates of nitrogen and phosphorus fertilizer use in the United States, 1945 to 1985: U.S. Geological Survey Open-File Report 90-130, 12 p., available online at http://pubs.usgs.gov/of/ofr90130/. Accessed November 30, 2005.
+
+Brakebill, J.W. and Gronberg, J.M., 2017, County-Level Estimates of Nitrogen and Phosphorus from Commercial Fertilizer for the Conterminous United States, 1987-2012: U.S. Geological Survey data release, https://doi.org/10.5066/F7H41PKX.
+
+Falcone, J.A., 2021, Estimates of county-level nitrogen and phosphorus from fertilizer and manure from 1950 through 2017 in the conterminous United States: U.S. Geological Survey Open-File Report 2020–1153, 20 p., https://doi.org/10.3133/ofr20201153.
+
+Gronberg, J.M., and Arnold, T.L., 2017, County-level estimates of nitrogen and phosphorus from animal manure for the conterminous United States, 2007 and 2012: U.S. Geological Survey Open-File Report 2017–1021, 6 p., https://doi.org/10.3133/ofr20171021.
+
+LaMotte, A.E., 2015, Selected items from the Census of Agriculture at the county level for the conterminous United States, 1950-2012: U.S. Geological Survey data release, http://dx.doi.org/10.5066/F7H13016.
+
+National Historical Geographic Information System (NHGIS), 2020, County level Census population (2000 and 2010), American Community Survey county population (2017), accessed April 13, 2020 at https://nhgis.org/.
+
+Stewart, J.S., Schwarz, G.E., Brakebill, J.W., and Preston, S.D., 2019, Catchment-level estimates of nitrogen and phosphorus agricultural use from commercial fertilizer sales for the conterminous United States, 2012: U.S. Geological Survey Scientific Investigations Report 2018–5145, 52 p., https://doi.org/10.3133/sir20185145.
+
+U.S. Department of Agriculture, 2020, National Agricultural Statistics Service QuickStats tool, accessed April 4, 2020 at https://quickstats.nass.usda.gov/.</supplinf>
+    </descript>
+    <timeperd>
+      <timeinfo>
+        <rngdates>
+          <begdate>19500101</begdate>
+          <enddate>20171231</enddate>
+        </rngdates>
+      </timeinfo>
+      <current>observed</current>
+    </timeperd>
+    <status>
+      <progress>Complete</progress>
+      <update>As needed</update>
+    </status>
+    <spdom>
+      <bounding>
+        <westbc>-127.922322113</westbc>
+        <eastbc>-65.023446015</eastbc>
+        <northbc>50.630121493</northbc>
+        <southbc>22.592853684</southbc>
+      </bounding>
+    </spdom>
+    <keywords>
+      <theme>
+        <themekt>None</themekt>
+        <themekey>inlandWaters</themekey>
+        <themekey>Nutrients</themekey>
+        <themekey>Nitrogen</themekey>
+        <themekey>Phosphorus</themekey>
+        <themekey>Fertilizer</themekey>
+        <themekey>Manure</themekey>
+        <themekey>Livestock</themekey>
+      </theme>
+      <theme>
+        <themekt>USGS Metadata Identifier</themekt>
+        <themekey>USGS:5ebad56382ce25b51361806a</themekey>
+      </theme>
+      <place>
+        <placekt>None</placekt>
+        <placekey>United States</placekey>
+        <placekey>Conterminous U.S.</placekey>
+      </place>
+    </keywords>
+    <accconst>None. Please see 'Distribution Info' for details.</accconst>
+    <useconst>Data are best suited for use at multi-county or regional scales</useconst>
+    <ptcontac>
+      <cntinfo>
+        <cntorgp>
+          <cntorg>US Geological Survey</cntorg>
+          <cntper>James Falcone</cntper>
+        </cntorgp>
+        <cntaddr>
+          <addrtype>Mailing</addrtype>
+          <address>12201 Sunrise Valley Dr.</address>
+          <address>MS 413 National Center</address>
+          <city>Reston</city>
+          <state>VA</state>
+          <postal>20192</postal>
+          <country>USA</country>
+        </cntaddr>
+        <cntvoice>703-648-5008</cntvoice>
+        <cntemail>jfalcone@usgs.gov</cntemail>
+      </cntinfo>
+    </ptcontac>
+    <native>Environment as of Metadata Creation: Microsoft Office 360 ProPlus, Version 1908, Build 11929.20776</native>
+  </idinfo>
+  <dataqual>
+    <attracc>
+      <attraccr>See "Comparison to Non-USGS Data" section in Falcone, 2021 Open File Report</attraccr>
+    </attracc>
+    <logic>No formal logical accuracy tests were conducted.</logic>
+    <complete>Data are complete</complete>
+    <lineage>
+      <srcinfo>
+        <srccite>
+          <citeinfo>
+            <origin>Falcone, J.A.</origin>
+            <pubdate>20210129</pubdate>
+            <title>Estimates of county-level nitrogen and phosphorus from fertilizer and manure for approximately five-year periods from 1950 to 2017 for the conterminous United States</title>
+            <geoform>Report</geoform>
+            <pubinfo>
+              <pubplace>online</pubplace>
+              <publish>U.S. Geological Survey</publish>
+            </pubinfo>
+            <onlink>https://doi.org/10.3133/ofr20201153</onlink>
+          </citeinfo>
+        </srccite>
+        <typesrc>Digital Resources</typesrc>
+        <srctime>
+          <timeinfo>
+            <rngdates>
+              <begdate>19500101</begdate>
+              <enddate>20171231</enddate>
+            </rngdates>
+          </timeinfo>
+          <srccurr>observed</srccurr>
+        </srctime>
+        <srccitea>Falcone, 2021</srccitea>
+        <srccontr>Open File Report which describes the processing of these data</srccontr>
+      </srcinfo>
+      <srcinfo>
+        <srccite>
+          <citeinfo>
+            <origin>Alexander, R.B., and Smith, R.A</origin>
+            <pubdate>19900601</pubdate>
+            <title>County level estimates of nitrogen and phosphorus fertilizer use in the United States, 1945 to 1985</title>
+            <geoform>Report</geoform>
+            <pubinfo>
+              <pubplace>online</pubplace>
+              <publish>U.S. Geological Survey</publish>
+            </pubinfo>
+            <onlink>http://pubs.usgs.gov/of/ofr90130</onlink>
+          </citeinfo>
+        </srccite>
+        <typesrc>Digital Resources</typesrc>
+        <srctime>
+          <timeinfo>
+            <rngdates>
+              <begdate>19450101</begdate>
+              <enddate>19851231</enddate>
+            </rngdates>
+          </timeinfo>
+          <srccurr>observed</srccurr>
+        </srctime>
+        <srccitea>Alexander and Smith, 1990</srccitea>
+        <srccontr>Open File Report from which estimates of nutrients from fertilize for 1950-1982 were taken</srccontr>
+      </srcinfo>
+      <srcinfo>
+        <srccite>
+          <citeinfo>
+            <origin>Brakebill, J.W. and Gronberg, J.M.</origin>
+            <pubdate>20171001</pubdate>
+            <title>County-Level Estimates of Nitrogen and Phosphorus from Commercial Fertilizer for the Conterminous United States, 1987-2012</title>
+            <geoform>Report</geoform>
+            <pubinfo>
+              <pubplace>online</pubplace>
+              <publish>U.S. Geological Survey</publish>
+            </pubinfo>
+            <onlink>https://doi.org/10.3133/ofr20171021 and https://doi.org/10.5066/F7H41PKX</onlink>
+          </citeinfo>
+        </srccite>
+        <typesrc>Digital Resources</typesrc>
+        <srctime>
+          <timeinfo>
+            <rngdates>
+              <begdate>19870101</begdate>
+              <enddate>20121231</enddate>
+            </rngdates>
+          </timeinfo>
+          <srccurr>observed</srccurr>
+        </srctime>
+        <srccitea>Brakebill and Gronberg, 2017</srccitea>
+        <srccontr>Dataset from which estimates of nutrients from fertilizer for 1987-2012 were taken</srccontr>
+      </srcinfo>
+      <srcinfo>
+        <srccite>
+          <citeinfo>
+            <origin>LaMotte, A.</origin>
+            <pubdate>20150801</pubdate>
+            <title>Selected items from the Census of Agriculture at the county level for the conterminous United States, 1950-2012</title>
+            <geoform>Report</geoform>
+            <pubinfo>
+              <pubplace>online</pubplace>
+              <publish>U.S. Geological Survey</publish>
+            </pubinfo>
+            <onlink>http://dx.doi.org/10.5066/F7H13016</onlink>
+          </citeinfo>
+        </srccite>
+        <typesrc>Digital Resources</typesrc>
+        <srctime>
+          <timeinfo>
+            <rngdates>
+              <begdate>19500101</begdate>
+              <enddate>20121231</enddate>
+            </rngdates>
+          </timeinfo>
+          <srccurr>observed</srccurr>
+        </srctime>
+        <srccitea>LaMotte, 2015</srccitea>
+        <srccontr>Dataset from which county-level livestock numbers were taken for the years 1950-2012</srccontr>
+      </srcinfo>
+      <srcinfo>
+        <srccite>
+          <citeinfo>
+            <origin>U.S. Department of Agriculture</origin>
+            <pubdate>20200404</pubdate>
+            <title>National Agricultural Statistics Service QuickStats tool</title>
+            <geoform>Report</geoform>
+            <pubinfo>
+              <pubplace>online</pubplace>
+              <publish>U.S. Department of Agriculture</publish>
+            </pubinfo>
+            <onlink>https://quickstats.nass.usda.gov/</onlink>
+          </citeinfo>
+        </srccite>
+        <typesrc>Digital Resources</typesrc>
+        <srctime>
+          <timeinfo>
+            <rngdates>
+              <begdate>20170101</begdate>
+              <enddate>20171231</enddate>
+            </rngdates>
+          </timeinfo>
+          <srccurr>observed</srccurr>
+        </srctime>
+        <srccitea>U.S. Department of Agriculture, 2020</srccitea>
+        <srccontr>Data source from which county-level livestock numbers were taken for the year 2017</srccontr>
+      </srcinfo>
+      <srcinfo>
+        <srccite>
+          <citeinfo>
+            <origin>Gronberg, J.M., and Arnold, T.L.</origin>
+            <pubdate>20170601</pubdate>
+            <title>County-level estimates of nitrogen and phosphorus from animal manure (2007 and 2012) and 30-meter-resolution grid of counties (2010) for the conterminous United States</title>
+            <geoform>Report</geoform>
+            <pubinfo>
+              <pubplace>online</pubplace>
+              <publish>U.S. Geological Survey</publish>
+            </pubinfo>
+            <onlink>https://doi.org/10.5066/F7X34VMZ</onlink>
+          </citeinfo>
+        </srccite>
+        <typesrc>Digital Resources</typesrc>
+        <srctime>
+          <timeinfo>
+            <rngdates>
+              <begdate>20070101</begdate>
+              <enddate>20121231</enddate>
+            </rngdates>
+          </timeinfo>
+          <srccurr>observed</srccurr>
+        </srctime>
+        <srccitea>Gronberg and Arnold, 2017</srccitea>
+        <srccontr>Report from which nutrient formulas were taken for calculating nitrogen and phosphorus from livestock manure</srccontr>
+      </srcinfo>
+      <procstep>
+        <procdesc>(1)A complete description of this dataset is given in the Open File Report with which it is associated (Falcone, 2021). A summary is given in these process steps. Data are published for the set of counties published by LaMotte (2015), because the livestock data for most years (1950-2012) were taken from that dataset.</procdesc>
+        <procdate>20200401</procdate>
+      </procstep>
+      <procstep>
+        <procdesc>(2) Estimates of nutrients from fertilizer for 1950 through 1982 are taken directly from Alexander and Smith (1990).  Estimates of nutrients from fertilizer for 1987 through 2012 are taken directly from Brakebill and Gronberg (2017).</procdesc>
+        <procdate>20200404</procdate>
+      </procstep>
+      <procstep>
+        <procdesc>(3) Nutrients from farm fertilizer for 2017 were derived from a regression model (Falcone, 2021) using similar predictors proposed by Stewart and others (2019). Nutrients from non-farm fertilizer for 2017 were derived by acquiring county-level population data, calculating the ratio of kilograms of nutrients per person for the previously published years 2010 and 2010, then applying that ratio to population data for the year 2017.  Population data was acquired from the National Historical GIS (NHGIS, 2020). (</procdesc>
+        <procdate>20200505</procdate>
+      </procstep>
+      <procstep>
+        <procdesc>(4) Estimates of nutrients from manure for all years were processed as described in Falcone, 2021.  In summary this was: a) Acquire county-level livestock data for 1950-2012 from LaMotte (2015), and for 2017 from the U.S. Department of Agriculture (2020).  b) Check for Undisclosed values and fill with estimate based on previous years, c) Multiply numbers of animals for each livestock type by the formulas provided by Gronberg and Arnold (2017), and adjust for changes in historical animal weights by year.</procdesc>
+        <procdate>20200515</procdate>
+      </procstep>
+    </lineage>
+  </dataqual>
+  <eainfo>
+    <detailed>
+      <enttyp>
+        <enttypl>Attribute Tables of estimates of nutrients from fertilizer</enttypl>
+        <enttypd>Data are given in two formats: as a Microsoft Excel file and as comma-separated text files</enttypd>
+        <enttypds>USGS National Water-Quality Project</enttypds>
+      </enttyp>
+      <attr>
+        <attrlabl>STCOFIPS</attrlabl>
+        <attrdef>State-county code in text format, published by LaMotte(2015). Field is repeated through all text files.</attrdef>
+        <attrdefs>LaMotte (2015)</attrdefs>
+        <attrdomv>
+          <udom>Unique identifier for county</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>fips-int</attrlabl>
+        <attrdef>State-county code in integer format, based on LaMotte(2015). Field is repeated through all text files.</attrdef>
+        <attrdefs>LaMotte (2015)</attrdefs>
+        <attrdomv>
+          <udom>Unique integer identifier for county.  STCOFIPS converted to integer.</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>CountyName. Field is repeated through all text files.</attrlabl>
+        <attrdef>County name</attrdef>
+        <attrdefs>LaMotte(2015)</attrdefs>
+        <attrdomv>
+          <udom>County name</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>State. Field is repeated through all text files.</attrlabl>
+        <attrdef>State code</attrdef>
+        <attrdefs>LaMotte(2015)</attrdefs>
+        <attrdomv>
+          <udom>State code</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>tot-fertN-kg-YYYY</attrlabl>
+        <attrdef>Total nitrogen from farm and non-farm fertilizer in kilograms for year YYYY.  In file fert-total-1950-1982.txt</attrdef>
+        <attrdefs>Alexander and Smith (1990)</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>71196320</rdommax>
+            <attrunit>Kilograms of nitrogen</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>tot-fertP-kg-YYYY</attrlabl>
+        <attrdef>Total phosphorus from farm and non-farm fertilizer in kilograms for year YYYY. In file fert-total-1950-1982.txt</attrdef>
+        <attrdefs>Alexander and Smith (1990)</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>10896496</rdommax>
+            <attrunit>Kilograms of phosphorus</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>farmfertN-kg-YYYY</attrlabl>
+        <attrdef>Nitrogen from farm fertilizer in kilograms for year YYYY. In file fert-farm-1987-2017.txt</attrdef>
+        <attrdefs>Brakebill and Gronberg(2017)</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>371</rdommin>
+            <rdommax>89349148</rdommax>
+            <attrunit>Kilograms of nitrogen</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>farmfertP-kg-YYYY</attrlabl>
+        <attrdef>Phosphorus from farm fertilizer in kilograms for year YYYY. In file fert-farm-1987-2017.txt</attrdef>
+        <attrdefs>Brakebill and Gronberg(2017)</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>65</rdommin>
+            <rdommax>15429086</rdommax>
+            <attrunit>Kilograms of phosphorus</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>nonffertN-kg-YYYY</attrlabl>
+        <attrdef>Nitrogen from non-farm fertilizer in kilograms for year YYYY. In file fert-nonfarm-1987-2017.txt</attrdef>
+        <attrdefs>Brakebill and Gronberg(2017)</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>13166688</rdommax>
+            <attrunit>Kilograms of nitrogen</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>nonffertP-kg-YYYY</attrlabl>
+        <attrdef>Phosphorus from non-farm fertilizer in kilograms for year YYYY. In file fert-nonfarm-1987-2017.txt</attrdef>
+        <attrdefs>Brakebill and Gronberg(2017)</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>1952275</rdommax>
+            <attrunit>Kilograms of phosphorus</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+    </detailed>
+    <detailed>
+      <enttyp>
+        <enttypl>Attribute Tables of estimates of nutrients from manure</enttypl>
+        <enttypd>Data are given in two formats: as a Microsoft Excel file and as comma-separated text files (manureYYYY.txt)</enttypd>
+        <enttypds>USGS National Water-Quality Project</enttypds>
+      </enttyp>
+      <attr>
+        <attrlabl>bcowsYYYYadj</attrlabl>
+        <attrdef>Number of beef cows for year YYYY, adjusted if estimated because of Undisclosed data</attrdef>
+        <attrdefs>LaMotte(2015). From Falcone (2021) for 2017 or if estimated.</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>169536</rdommax>
+            <attrunit>Number of beef cows</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>mcowsYYYYadj</attrlabl>
+        <attrdef>Number of milk cows for year YYYY, adjusted if estimated because of Undisclosed data</attrdef>
+        <attrdefs>LaMotte(2015). From Falcone (2021) for 2017 or if estimated.</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>500402</rdommax>
+            <attrunit>Number of milk cows</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>cowsYYYYadj</attrlabl>
+        <attrdef>Number of total cows for year YYYY, adjusted if estimated because of Undisclosed data</attrdef>
+        <attrdefs>LaMotte(2015). From Falcone (2021) for 2017 or if estimated.</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>1086130</rdommax>
+            <attrunit>Number of total cows</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>othercowsYYYYadj</attrlabl>
+        <attrdef>Number of other cows (not beef, not milk) for year YYYY, adjusted if estimated because of Undisclosed data</attrdef>
+        <attrdefs>LaMotte(2015). From Falcone (2021) for 2017 or if estimated.</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>572312</rdommax>
+            <attrunit>Number of other cows</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>hogsYYYYadj</attrlabl>
+        <attrdef>Number of hogs and pigs for year YYYY, adjusted if estimated because of Undisclosed data</attrdef>
+        <attrdefs>LaMotte(2015). From Falcone (2021) for 2017 or if estimated.</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>2285224</rdommax>
+            <attrunit>Number of hogs and pigs</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>chickensYYYYadj</attrlabl>
+        <attrdef>Number of chickens (layers) for year YYYY, adjusted if estimated because of Undisclosed data</attrdef>
+        <attrdefs>LaMotte(2015). From Falcone (2021) for 2017 or if estimated.</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>15044160</rdommax>
+            <attrunit>Number of layer chickens</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>broilersYYYYadj</attrlabl>
+        <attrdef>Number of broiler chickens for year YYYY, adjusted if estimated because of Undisclosed data</attrdef>
+        <attrdefs>LaMotte(2015). From Falcone (2021) for 2017 or if estimated.</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>43620576</rdommax>
+            <attrunit>Number of broiler chickens</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>turkeysYYYYadj</attrlabl>
+        <attrdef>Number of turkeys for year YYYY, adjusted if estimated because of Undisclosed data</attrdef>
+        <attrdefs>LaMotte(2015). From Falcone (2021) for 2017 or if estimated.</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>4774844</rdommax>
+            <attrunit>Number of turkeys</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>sheepYYYYadj</attrlabl>
+        <attrdef>Number of sheep and lambs for year YYYY, adjusted if estimated because of Undisclosed data</attrdef>
+        <attrdefs>LaMotte(2015). From Falcone (2021) for 2017 or if estimated.</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>600885</rdommax>
+            <attrunit>Number of sheep and lambs</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>horsesYYYYadj</attrlabl>
+        <attrdef>Number of horses and ponies for year YYYY, adjusted if estimated because of Undisclosed data</attrdef>
+        <attrdefs>LaMotte(2015). From Falcone (2021) for 2017 or if estimated.</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>37880</rdommax>
+            <attrunit>Number of horses and ponies</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Cattle_N_kg-YYYY</attrlabl>
+        <attrdef>Kilograms of nitrogen from cattle for year YYYY</attrdef>
+        <attrdefs>Calculated using formulas from Gronberg and Arnold (2017) and Falcone (2021).</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>66662478.5</rdommax>
+            <attrunit>Kilograms of nitrogen from cattle</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Cattle_P_kg-YYYY</attrlabl>
+        <attrdef>Kilograms of phosphorus from cattle for year YYYY</attrdef>
+        <attrdefs>Calculated using formulas from Gronberg and Arnold (2017) and Falcone (2021).</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>13114287.0</rdommax>
+            <attrunit>Kilograms of phosphorus from cattle</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Hogs_N_kg-YYYY</attrlabl>
+        <attrdef>Kilograms of nitrogen from hogs and pigs for year YYYY</attrdef>
+        <attrdefs>Calculated using formulas from Gronberg and Arnold (2017) and Falcone (2021).</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>23952546.0</rdommax>
+            <attrunit>Kilograms of nitrogen from hogs</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Hogs_P_kg-YYYY</attrlabl>
+        <attrdef>Kilograms of phosphorus from hogs and pigs for year YYYY</attrdef>
+        <attrdefs>Calculated using formulas from Gronberg and Arnold (2017) and Falcone (2021).</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>10645576.0</rdommax>
+            <attrunit>Kilograms of phosphorus from hogs</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Poultry_N_kg-YYYY</attrlabl>
+        <attrdef>Kilograms of nitrogen from poultry for year YYYY</attrdef>
+        <attrdefs>Calculated using formulas from Gronberg and Arnold (2017) and Falcone (2021).</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>19479194.7</rdommax>
+            <attrunit>Kilograms of nitrogen from poultry</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Poultry_P_kg-YYYY</attrlabl>
+        <attrdef>Kilograms of phosphorus from poultry for year YYYY</attrdef>
+        <attrdefs>Calculated using formulas from Gronberg and Arnold (2017) and Falcone (2021).</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>5847054.7</rdommax>
+            <attrunit>Kilograms of phosphorus from poultry</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Other_N_kg-YYYY</attrlabl>
+        <attrdef>Kilograms of nitrogen from sheep and horses for year YYYY</attrdef>
+        <attrdefs>Calculated using formulas from Gronberg and Arnold (2017) and Falcone (2021).</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>4133008.1</rdommax>
+            <attrunit>Kilograms of nitrogen from sheep and horses</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Other_P_kg-YYYY</attrlabl>
+        <attrdef>Kilograms of phosphorus from sheep and horses for year YYYY</attrdef>
+        <attrdefs>Calculated using formulas from Gronberg and Arnold (2017) and Falcone (2021).</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>718648.2</rdommax>
+            <attrunit>Kilograms of phosphorus from sheep and horses</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Total_N_kg-YYYY</attrlabl>
+        <attrdef>Kilograms of nitrogen from all animal types for year YYYY</attrdef>
+        <attrdefs>Calculated using formulas from Gronberg and Arnold (2017) and Falcone (2021).</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>70149921.4</rdommax>
+            <attrunit>Kilograms of nitrogen from all animal types</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Total_P_kg-YYYY</attrlabl>
+        <attrdef>Kilograms of nitrogen from all animal types for year YYYY</attrdef>
+        <attrdefs>Calculated using formulas from Gronberg and Arnold (2017) and Falcone (2021).</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>14235910.6</rdommax>
+            <attrunit>Kilograms of phosphorus from all animal types</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+    </detailed>
+    <detailed>
+      <enttyp>
+        <enttypl>Supplemental tables showing which counties and years had data estimated (filled) because they had been non-disclosed in the source Census of Agriculture data.  See Falcone, 2021 for description of method.  XXXX represents the animal type, as described in Falcone, 2021. Information is given in the files supplemental-nonDisclosed-filled-XXXX.txt.</enttypl>
+        <enttypd>Data are given as comma-separated text files</enttypd>
+        <enttypds>USGS National Water-Quality Project</enttypds>
+      </enttyp>
+      <attr>
+        <attrlabl>STCOFIPS</attrlabl>
+        <attrdef>State-county code in text format, published by LaMotte(2015). Field is repeated through all files.</attrdef>
+        <attrdefs>LaMotte (2015)</attrdefs>
+        <attrdomv>
+          <udom>Unique identifier for county</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>CountyName. Field is repeated through all files.</attrlabl>
+        <attrdef>County name</attrdef>
+        <attrdefs>LaMotte(2015)</attrdefs>
+        <attrdomv>
+          <udom>County name</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>XXXX-filled-nonDisc-YYYY</attrlabl>
+        <attrdef>Flag indicating if data were estimate for this county and year for animal type XXXX for year YYYY</attrdef>
+        <attrdefs>Based on description in Falcone (2021) of how data were estimated.</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>1</rdommax>
+            <attrunit>Binary flag: 1 = data were estimated; 0 = data were not estimated.</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+    </detailed>
+  </eainfo>
+  <distinfo>
+    <distrib>
+      <cntinfo>
+        <cntorgp>
+          <cntorg>US Geological Survey - ScienceBase</cntorg>
+        </cntorgp>
+        <cntaddr>
+          <addrtype>Mailing</addrtype>
+          <address>Denver Federal Center, Building 810, Mail Stop 302</address>
+          <city>Denver</city>
+          <state>CO</state>
+          <postal>80225</postal>
+          <country>USA</country>
+        </cntaddr>
+        <cntvoice>1-888-275-8747 (1-888-ASK-USGS)</cntvoice>
+        <cntemail>sciencebase@usgs.gov</cntemail>
+      </cntinfo>
+    </distrib>
+    <distliab>Although this data set has been used by the U.S. Geological
+Survey, U.S. Department of the Interior, no warranty expressed or
+implied is made by the U.S. Geological Survey as to the accuracy
+of the data and related materials. The act of distribution shall not 
+constitute any such warranty, and no responsibility is assumed by 
+the U.S. Geological Survey in the use of this data, software, or 
+related materials.
+Any use of trade, product, or firm names is for descriptive 
+purposes only and does not imply endorsement by the U.S. 
+Government.</distliab>
+    <stdorder>
+      <digform>
+        <digtinfo>
+          <formname>Tabular Data Set</formname>
+        </digtinfo>
+        <digtopt>
+          <onlinopt>
+            <computer>
+              <networka>
+                <networkr>https://doi.org/10.5066/P9VSQN3C</networkr>
+              </networka>
+            </computer>
+          </onlinopt>
+        </digtopt>
+      </digform>
+      <fees>None. This dataset is provided by USGS as a public service.</fees>
+    </stdorder>
+  </distinfo>
+  <metainfo>
+    <metd>20220805</metd>
+    <metc>
+      <cntinfo>
+        <cntperp>
+          <cntper>James Falcone</cntper>
+          <cntorg>U.S. Geological Survey</cntorg>
+        </cntperp>
+        <cntpos>Ask USGS -- Water Webserver Team</cntpos>
+        <cntaddr>
+          <addrtype>Mailing</addrtype>
+          <address>12201 Sunrise Valley Dr., MS 413</address>
+          <city>Reston</city>
+          <state>VA</state>
+          <postal>20192</postal>
+          <country>USA</country>
+        </cntaddr>
+        <cntvoice>1-888-275-8747 (1-888-ASK-USGS)</cntvoice>
+        <cntemail>jfalcone@usgs.gov</cntemail>
+      </cntinfo>
+    </metc>
+    <metstdn>FGDC Content Standard for Digital Geospatial Metadata</metstdn>
+    <metstdv>FGDC-STD-001-1998</metstdv>
+  </metainfo>
+</metadata>

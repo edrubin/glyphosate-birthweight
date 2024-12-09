@@ -1,0 +1,220 @@
+1,3-D~                            other pesticide
+2,4-D~                            herbicide
+2,4-DB~                           herbicide
+ABAMECTIN~                        insecticide
+ACEPHATE~                         insecticide
+ACETOCHLOR~                       herbicide
+ACIFLUORFEN~                      herbicide
+ALACHLOR~                         herbicide
+ALDICARB~                         insecticide
+AMETRYN~                          herbicide
+AMITRAZ~                          insecticide
+ASULAM~                           herbicide
+ATRAZINE~                         herbicide
+AZADIRACHTIN~                     insecticide
+AZINPHOS-METHYL~                  insecticide
+AZOXYSTROBIN~                     fungicide
+BENEFIN~                          herbicide
+BENOMYL~                          fungicide
+BENSULFURON~                      herbicide
+BENSULIDE~                        herbicide
+BENTAZONE~                         herbicide
+BENZYLADENINE~                    other pesticide
+BIFENTHRIN~                       insecticide
+BROMACIL~                          herbicide
+BROMOXYNIL~                        herbicide
+BT        ~                        insecticide
+BUPROFEZIN ~                       insecticide
+BUTENOIC ACID~                     other pesticide
+BUTYLATE     ~                     herbicide
+CACODYLIC ACID~                    other pesticide
+CAPTAN         ~                   fungicide
+CARBARYL        ~                  insecticide
+CARBOFURAN       ~                 insecticide
+CHLORETHOXYFOS    ~                insecticide
+CHLORIMURON        ~               herbicide
+CHLOROPICRIN        ~              other pesticide
+CHLOROTHALONIL      ~              fungicide
+CHLORPYRIFOS        ~              insecticide
+CHLORSULFURON       ~              herbicide
+CLETHODIM           ~              herbicide
+CLOFENTEZINE        ~              insecticide
+CLOMAZONE           ~              herbicide
+CLOPYRALID          ~              herbicide
+COPPER              ~              fungicide
+CRYOLITE            ~              insecticide
+CYANAZINE           ~              herbicide
+CYCLANILIDE         ~              other pesticide
+CYCLOATE            ~              herbicide
+CYFLUTHRIN          ~              insecticide
+CYMOXANIL           ~              fungicide
+CYPERMETHRIN        ~              insecticide
+CYROMAZINE          ~              insecticide
+CYTOKININ          ~              other pesticide
+DCNA                ~              fungicide
+DCPA                ~              herbicide
+DELTAMETHRIN        ~              insecticide
+DESMEDIPHAM         ~              herbicide
+DIAZINON            ~              insecticide
+DICAMBA             ~              herbicide
+DICHLOBENIL         ~              herbicide
+DICLOFOP            ~              herbicide
+DICOFOL             ~              insecticide
+DICROTOPHOS         ~              insecticide
+DIFENZOQUAT         ~              herbicide
+DIFLUBENZURON       ~              insecticide
+DIMETHENAMID        ~              herbicide
+DIMETHIPIN          ~              other pesticide
+DIMETHOATE          ~              insecticide
+DIMETHOMORPH        ~              fungicide
+DIQUAT              ~              herbicide
+DISULFOTON          ~              insecticide
+DIURON              ~              herbicide
+DODINE              ~              fungicide
+DSMA                ~              herbicide
+ENDOSULFAN          ~              insecticide
+ENDOTHAL           ~              herbicide
+EPTC                ~              herbicide
+ESFENVALERATE       ~              insecticide
+ETHALFLURALIN       ~              herbicide
+ETHEPHON            ~              other pesticide
+ETHION              ~              insecticide
+ETHOFUMESATE        ~              herbicide
+ETHOPROP            ~              insecticide
+ETHYL PARATHION     ~              insecticide
+ETRIDIAZOLE         ~              fungicide
+FENAMIPHOS          ~              insecticide
+FENARIMOL           ~              fungicide
+FENBUCONAZOLE       ~              fungicide
+FENBUTATIN OXIDE    ~              insecticide
+FENOXAPROP          ~              herbicide
+FENPROPATHRIN       ~              insecticide
+FERBAM              ~              fungicide
+FLUAZIFOP           ~              herbicide
+FLUMETRALIN         ~              other pesticide
+FLUMETSULAM         ~              herbicide
+FLUMICLORAC         ~              herbicide
+FLUOMETURON         ~              herbicide
+FLUTOLANIL          ~              fungicide
+FOMESAFEN            ~             herbicide
+FONOFOS              ~             insecticide
+FORMETANATE      ~             insecticide
+FOSETYL           ~             fungicide
+GIBBERELLIC ACID     ~             other pesticide
+GLYPHOSATE           ~             herbicide
+HALOSULFURON         ~             herbicide
+HEXAZINONE           ~             herbicide
+HEXYTHIAZOX          ~             insecticide
+IMAZAMETHABENZ       ~             herbicide
+IMAZAPIC             ~             herbicide
+IMAZAQUIN            ~             herbicide
+IMAZETHAPYR          ~             herbicide
+IMIDACLOPRID         ~             insecticide
+IPRODIONE            ~             fungicide
+LACTOFEN             ~             herbicide
+LAMBDACYHALOTHRIN    ~             insecticide
+LINDANE              ~             insecticide
+LINURON              ~             herbicide
+MALATHION            ~             insecticide
+MALEIC HYDRAZIDE     ~             other pesticide
+MANCOZEB             ~             fungicide
+MANEB                ~             fungicide
+MCPA                 ~             herbicide
+MCPB                 ~             herbicide
+MCPP                 ~             herbicide
+MEFENOXAM            ~             fungicide
+MEPIQUAT    ~             other pesticide
+METALAXYL            ~             fungicide
+METALDEHYDE          ~             insecticide
+METAM SODIUM         ~             other pesticide
+METHAMIDOPHOS        ~             insecticide
+METHIDATHION         ~             insecticide
+METHOMYL             ~             insecticide
+METHOXYCHLOR         ~             insecticide
+METHYL BROMIDE       ~             other pesticide
+METHYL PARATHION     ~             insecticide
+METIRAM              ~             fungicide
+METOLACHLOR          ~             herbicide
+METRIBUZIN           ~             herbicide
+METSULFURON          ~             herbicide
+MOLINATE             ~             herbicide
+MSMA                 ~             herbicide
+MYCLOBUTANIL         ~             fungicide
+NAA                  ~             other pesticide
+NAD                  ~             other pesticide
+NALED                ~             insecticide
+NAPROPAMIDE          ~             herbicide
+NAPTALAM             ~             herbicide
+NICOSULFURON         ~             herbicide
+NORFLURAZON          ~             herbicide
+OIL                  ~             insecticide
+ORYZALIN             ~             herbicide
+OXAMYL               ~             insecticide
+OXYDEMETON-METHYL    ~             insecticide
+OXYFLUORFEN          ~             herbicide
+OXYTETRACYCLINE      ~             fungicide
+OXYTHIOQUINOX        ~             insecticide
+PARAQUAT             ~             herbicide
+PCNB                 ~             fungicide
+PEBULATE             ~             herbicide
+PENDIMETHALIN        ~             herbicide
+PERMETHRIN           ~             insecticide
+PHENMEDIPHAM         ~             herbicide
+PHORATE              ~             insecticide
+PHOSMET              ~             insecticide
+PICLORAM             ~             herbicide
+PRIMISULFURON        ~             herbicide
+PROFENOFOS           ~             insecticide
+PROMETRYN            ~             herbicide
+PRONAMIDE            ~             herbicide
+PROPACHLOR           ~             herbicide
+PROPAMOCARB HCL          ~             fungicide
+PROPANIL             ~             herbicide
+PROPARGITE           ~             insecticide
+PROPICONAZOLE        ~             fungicide
+PROSULFURON          ~             herbicide
+PYRAZON              ~             herbicide
+PYRIDABEN            ~             insecticide
+PYRIDATE             ~             herbicide
+PYRIPROXYFEN         ~             insecticide
+PYRITHIOBAC-SODIUM          ~             herbicide
+QUINCLORAC           ~             herbicide
+QUIZALOFOP           ~             herbicide
+RIMSULFURON          ~             herbicide
+SETHOXYDIM           ~             herbicide
+SIMAZINE             ~             herbicide
+SODIUM CHLORATE      ~             other pesticide
+SPINOSAD             ~             insecticide
+STREPTOMYCIN         ~             fungicide
+SULFENTRAZONE        ~             herbicide
+SULFUR               ~             fungicide
+SULFURIC ACID        ~             other pesticide
+SULPROFOS            ~             insecticide
+TEBUCONAZOLE         ~             fungicide
+TEBUFENOZIDE         ~             insecticide
+TEBUPIRIMPHOS        ~             insecticide
+TEBUTHIURON          ~             herbicide
+TEFLUTHRIN           ~             insecticide
+TERBACIL             ~             herbicide
+TERBUFOS             ~             insecticide
+THIDIAZURON          ~             other pesticide
+THIFENSULFURON       ~             herbicide
+THIOBENCARB          ~             herbicide
+THIODICARB           ~             insecticide
+THIOPHANATE-METHYL   ~             fungicide
+THIRAM               ~             fungicide
+TRALOMETHRIN         ~             insecticide
+TRIADIMEFON          ~             fungicide
+TRIALLATE            ~             herbicide
+TRIASULFURON         ~             herbicide
+TRIBENURON METHYL           ~             herbicide
+TRIBUFOS             ~             other pesticide
+TRICLOPYR            ~             herbicide
+TRIFLUMIZOLE         ~             fungicide
+TRIFLURALIN          ~             herbicide
+TRIFLUSULFURON       ~             herbicide
+TRIFORINE            ~             fungicide
+TRIPHENYLTIN HYD     ~             fungicide
+VERNOLATE            ~             herbicide
+VINCLOZOLIN          ~             fungicide
+ZIRAM                ~             fungicide
