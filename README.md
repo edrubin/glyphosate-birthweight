@@ -53,3 +53,5 @@ There are two pieces of data from the USGS's gridded soil survey needed for wate
   - [Cotton low](https://s3.eu-west-1.amazonaws.com/data.gaezdev.aws.fao.org/res05/CRUTS32/Hist/8110L/ylLr_cot.tif): res05/CRUTS32/Hist/8110H/ylLr_cot.tif 
 
 The USDA Agriculutral Statistic District to County FIPS crosswalk is [here](https://www.nass.usda.gov/Data_and_Statistics/County_Data_Files/Frequently_Asked_Questions/county_list.txt).
+
+[SEER U.S. County Population Data](https://seer.cancer.gov/popdata/download.html): Single-age adjusted files starting in 1969 *and* 1990 (i.e., `us.1969_2022.singleages.adjusted.txt` and `us.1990_2022.singleages.adjusted.txt`). These files go into the `data/download-manual` directory.
