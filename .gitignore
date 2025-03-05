@@ -1,31 +1,36 @@
-
 # Folders we don't want
-data/
+#data/
 data-clean/
 notes/
 figures/
 tables/
 
-# Data we can't share
-data/clean/.*health-dt.fst
-data/clean/prediction/
-data/clean/mini-data.fst
-
+# Adding some data
+data/clean/
 data/download-script/
-
-data/health-restricted/raw/
-data/health-restricted/period-clean/
-
-data/raw/census_crop_acre_county.fst
-data/raw/county-dist-dt.fst
-
+data/health-restricted/
+data/raw/
 data/results/
+data/watershed/
 
-data/watershed/hydrobasins
-data/watershed/soil-quality/gNATSGO_mukey_grid
-data/watershed/soil-quality/gNATSGO_Tabular_CSV
-data/watershed/prism/
 
+# Data we can't share
+# data/clean/.*health-dt.fst
+# data/clean/prediction/
+# data/clean/mini-data.fst
+# data/download-script/
+# data/health-restricted/raw/
+# data/health-restricted/period-clean/
+# data/raw/census_crop_acre_county.fst
+# data/raw/county-dist-dt.fst
+# data/results/
+# data/watershed/hydrobasins
+# data/watershed/soil-quality/gNATSGO_mukey_grid
+# data/watershed/soil-quality/gNATSGO_Tabular_CSV
+# data/watershed/prism/
+# data/watershed/county-exposure-dt.fst
+# data/watershed/watershed-pesticide-dt.fst
+# data/watershed/pesticide-upstream-dt.fst
 
 # Scratch code we don't need to keep track of
 R/scratch/
