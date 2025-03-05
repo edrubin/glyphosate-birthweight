@@ -222,45 +222,17 @@ clean_natality = function(file_year, dt_out = FALSE){
 
   # For 1990-1993 files, have to to special merge to get place_fips
   if(file_year %in% 1990:1993){
-    # Loading the list of cities 
-    city_dt =
-      read.fst(
-        path = here('data/download-manual/city-water-dt.fst'),
-        as.data.table = TRUE
-      )
-    # Loading the manual crosswalk
-    manual_xwalk = 
-      fread(
-        here('data/health-restricted/city_res_xwalk.csv')
-      )[,.(
-        city_state,
-        city_res = str_pad(city_res, 3, 'left','0')
-      )] |>
-      merge(
-        city_dt,
-        by = 'city_state',
-        all= TRUE
-      ) %>% .[,.(state_fips, city_res, place_fips)]
     natality_raw_dt[,state_fips := str_sub(GEOID, 1,2)]
-    # Adding place fips to data 
-    natality_raw_dt = 
-      merge(
-        natality_raw_dt[,-'place_fips'], 
-        manual_xwalk,
-        by = c('state_fips','city_res'),
-        all.x = TRUE
-      )
   }
   
   # Only saving the columns we will use 
   natality_dt = natality_raw_dt[,.(
     GEOID, GEOID_occ, year, month, sex, dbwt, apgar5, gestation,
     mage, mrace, mhisp, meduc, mar,
-    fage,  fhisp, frace, 
+    fage,  fhisp, frace,
     birth_facility, restatus, no_city,
     live_birth_order, total_birth_order,
     c_section, 
-    city_res, place_fips,
     plurality,febrile,meconium,membrane_rupture,abruptio_placentae,placenta_previa,excessive_bleeding,mother_seizure,labor_under_3h,labor_over_20h,labor_dysfunc,breech,cephalopelvic_disproportion,cord_prolapse,anesthetic_comp,fetal_distress,labor_complication,baby_anemia,baby_injury,fetal_alcohol,baby_hyaline,meconoim_aspiration,vent_under_30m,vent_over_30m,baby_seizures,baby_other_abn,anencephaly,spina_bifida,hydrocephalus,microcephalus,baby_other_cent_nerv,heart_malform,baby_other_circ,rectal_atresia,tracheo,omphalocele,baby_other_gastro,malformed_genitals,renal_agenesis,baby_other_urogenital,cleft_lip,polydactyly,club_foot,baby_hernia,baby_other_muscl,downs_syndr,baby_other_chromo,baby_other_cong,tobacco, alcohol
   )]
   # Saving the results 
