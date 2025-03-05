@@ -255,13 +255,15 @@ map(
 
 
   # Codes from:
-  # https://www-doh.state.nj.us/doh-shad/query/ICDInf130.htm
+  # https://www-doh.nj.gov/doh-shad/query/ICDInf130.html
   # https://wonder.cdc.gov/wonder/sci_data/natal/linked/type_txt/cohort99/130Cause99.pdf
+  # NOTE Link above is currently broken but can be accessed via the wayback machine
+  # https://web.archive.org/web/20230113125923/https://wonder.cdc.gov/wonder/sci_data/natal/linked/type_txt/cohort99/130Cause99.pdf
 # Function to clean the icd-code crosswalk
 get_icd_xwalk = function(file_year){
   # Loading the data
   inf_icd_crosswalk = fread(
-      here('data/health-restricted/inf-icd-xwalk.csv')
+      here('data/download-manual/inf-icd-xwalk.csv')
     )[,inf_cod := str_pad(inf_cod, '3','left','0')]
   # For ICD-9 codes we need to do a lot of work
   if(file_year < 1999){

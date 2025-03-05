@@ -1,0 +1,131 @@
+inf_cod,descr,icd_9,icd_10,category_code,category_desc,glyph_effect
+2,Certain intestinal infectious diseases,001-008,A00-A08,1,Infectious and parasitic diseases,
+3,Diarrhea and gastroenteritis of infectious origin,9,A09,1,Infectious and parasitic diseases,
+4,Tuberculosis,010-018,A16-A19,1,Infectious and parasitic diseases,
+5,Tetanus,"037, 771.3","A33, A35",1,Infectious and parasitic diseases,
+6,Diphtheria,32,A36,1,Infectious and parasitic diseases,
+7,Whooping cough,33,A37,1,Infectious and parasitic diseases,
+8,Meningococcal infection,36,A39,1,Infectious and parasitic diseases,
+9,Septicemia,38,A40-A41,1,Infectious and parasitic diseases,
+10,Congenital syphilis,90,A50,1,Infectious and parasitic diseases,
+11,Gonococcal infection,98,A54,1,Infectious and parasitic diseases,
+13,Acute poliomyelitis,45,A80,1,Infectious and parasitic diseases,
+14,Varicella,52,B01,1,Infectious and parasitic diseases,
+15,Measles,55,B05,1,Infectious and parasitic diseases,
+16,Human immunodeficiency virus (HIV) disease,042-044,B20-B24,1,Infectious and parasitic diseases,
+17,Mumps,72,B26,1,Infectious and parasitic diseases,
+18,Other and unspecified viral diseases,"046-051, 053-054, 056-071, 073-079","A81-B00, B02-B04, B06-B19, B25, B27-B34",1,Infectious and parasitic diseases,
+19,Candidiasis,112,B37,1,Infectious and parasitic diseases,
+20,Malaria,84,B50-B54,1,Infectious and parasitic diseases,
+21,Pneumocyctosis,136.3,B59,1,Infectious and parasitic diseases,
+22,All other and unspecified infectious and parasitic diseases,"020-031, 034.1-0357, 039-041, 080-083, 085-088, 091-097, 099-111, 114-134, 136.0-136.2, 136.4-139","A20-A32, A38, A42-A49, A51-A53, A55-A79, B35-B36, B38-B49, B55-B58, B60-B99",1,Infectious and parasitic diseases,1
+25,Hodgkin's disease and Non-Hodgkin's lymphomas,200-202,C81-C85,2,Neoplasms,
+26,Leukemia,204-208,C91-C95,2,Neoplasms,
+27,Other and unspecified malignant neoplasms,"140-199, 203","C00-C80, C88, C90, C96-C97",2,Neoplasms,
+28,"In situ neoplasms, benign neoplasms and neoplasms of uncertain or unknown behavior",210-239,D00-D48,2,Neoplasms,
+30,Anemias,280-285,D50-D64,3,Diseases of the blood,
+31,Hemorrhagic conditions and other diseases of blood and blood-forming organs,286-289,D65-D76,3,Diseases of the blood,
+32,Certain disorders involving the immune mechanism,"135,279",D80-D89,3,Diseases of the blood,1
+34,"Short stature, not elsewhere classified",259.4,E34.3,4,"Endocrine, nutritional, metobolic",
+35,Nutritional deficiencies,260-269,E40-E64,4,"Endocrine, nutritional, metobolic",2
+36,Cystic fibrosis,277,E84,4,"Endocrine, nutritional, metobolic",
+37,"Volume depletion, diorders of fluid, electrolyte and acid-base balance",276,E86-E87,4,"Endocrine, nutritional, metobolic",
+38,"All other endocrine, nutritional and metabolic diseases","240-259.3, 259.8-259.9, 270-275, 277.1-278","E00-E32, E34.0-E34.2, E34.4-E34.9, E65-E83, E85, E88",4,"Endocrine, nutritional, metobolic",2
+40,Meningitis,320-322,"G00, G03",5,Nervous system,
+41,"Infantile spinal muscular atrophy, type I",335,G12.0,5,Nervous system,
+42,Infantile cerebral palsy,343,G80,5,Nervous system,
+43,"Anoxic brain damage, not elsewhere classified",348.1,G93.1,5,Nervous system,
+44,Other diseases of nervous system,"323-334, 335.1-342, 344-348.0, 348.2-359, 435","G04, G06-G11, G12.1-G12.9, G20-G72, G81-G92, G93.0, G93.2-G93.9, G95-G98",5,Nervous system,
+45,Diseases of the ear and mastoid process,380-389,H60-H93,6,Ear,
+47,Pulmonary heart disease and diseases of pulmonary circulation,415-417,I26-I28,7,Circulatory system,
+48,"Pericarditis, endocarditis and myocarditis",415-417,"I30, I33, I40",7,Circulatory system,
+49,Cardiomyopathy,425,I42,7,Circulatory system,
+50,Cardiac arrest,427.5,I46,7,Circulatory system,
+51,Cerebrovascular diseases,"430-434, 436-438",I60-I69,7,Circulatory system,
+52,All other diseases of circulatory system,"390-414, 423-424, 426-427.4, 427.6-429, 440-459","I00-I25, I31, I34-I38, I44-I45, I47-I51, I70-I99",7,Circulatory system,
+54,Acute upper respiratory infections,"034.0, 460-465",J00-J06,8,Respiratory system,
+56,Influenza,487,J09-J11,8,Respiratory system,1
+57,Pneumonia,480-486,J12-J18,8,Respiratory system,1
+58,Acute bronchitis and acute bronchiolitis,466,J20-J21,8,Respiratory system,1
+59,"Bronchitis, chronic and unspecified",490-491,J40-J42,8,Respiratory system,1
+60,Asthma,493,J45-J46,8,Respiratory system,1
+61,Pneumonitis due to solids and liquids,507,J69,8,Respiratory system,1
+62,Other and unspecified diseases of respiratory system,"470-479, 492, 494-506, 508-519","J22, J30-J39, J43-J44, J47-J68, J70-J98, U04",8,Respiratory system,1
+64,"Gastritis, duodenitis, and noninfective enteritis and colitis","535, 555-558","K29, K50-K55",9,Digestive system,
+65,Hernia of abdominal cavity and intestinal obstruction without hernia,"550-553, 560","K40-K46, K56",9,Digestive system,
+66,All other and unspecified diseases of digestive system,"520-534, 536-543, 562-579","K00-K28, K30-K38, K57-K92",9,Digestive system,
+68,Renal failure and other disorders of kidney,584-589,"N17-N19, N25, N27",10,Genitourinary system,
+69,Other and unspecified diseases of genitourinary system,"580-583, 590-629","N00-N15, N20-N23, N26, N28-N95",10,Genitourinary system,
+72,Newborn affected by maternal hypertensive disorders,760,P00.0,11,Mother's conditions,
+73,Newborn affected by other maternal conditions which may be unrelated to present pregnancy,"760.1-760.6, 760.8-760.9",P00.1-P00.9,11,Mother's conditions,
+75,Newborn affected by incompetent cervix,761,P01.0,11,Mother's conditions,
+76,Newborn affected by premature rupture of membranes,761.1,P01.1,11,Mother's conditions,
+77,Newborn affected by multiple pregnancy,761.5,P01.5,11,Mother's conditions,
+78,Newborn affected by other maternal complications of pregnancy,"761.2-761.4, 761.6-761.9","P01.2-P01.4, P01.6-P01.9",11,Mother's conditions,
+80,Newborn affected by complications involving placenta,762.0-762.3,P02.0-P02.3,11,Mother's conditions,
+81,Newborn affected by complications involving cord,762.4-762.6,P02.4-P02.6,11,Mother's conditions,
+82,Newborn affected by chorioamnionitis,762.7,P02.7,11,Mother's conditions,
+83,Newborn affected by other and unspecified abnomalities of membranes,762.8-762.9,P02.8-P02.9,11,Mother's conditions,
+84,Newborn affected by other complications of labor and delivery,"763.0-763.4, 763.6-763.9",P03,11,Mother's conditions,
+85,Newborn affected by noxious influences transmitted via placenta or breast milk,"760.7, 763.5",P04,11,Mother's conditions,
+87,Slow fetal growth and fetal malnutrition,764,P05,12,Low birth weight,2
+89,Extremely low birth weight or extreme immaturity,765,"P07.0, P07.2",12,Low birth weight,2
+90,Other low birth weight or preterm,765.1,"P07.1, P07.3",12,Low birth weight,2
+91,Disorders related to long gestation and high birth weight,766,P08,13,Other perinatal,1
+92,Birth trauma,767,P10-P15,13,Other perinatal,
+94,Intrauterine hypoxia,768.2-768.4,P20,13,Other perinatal,
+95,Birth asphyxia,768.5-768.9,P21,13,Other perinatal,
+96,Respiratory distress of newborn,769,P22,13,Other perinatal,
+98,Congenital pneumonia,770,P23,13,Other perinatal,
+99,Neonatal aspiration syndromes,770.1,P24,13,Other perinatal,
+100,Interstitial emphysema and related conditions originating in the perinatal period,770.2,P25,13,Other perinatal,
+101,Pulmonary hemorrhage originating in the perinatal period,770.3,P26,13,Other perinatal,
+102,Chronic respiratory disease originating in the perinatal period,770.7,P27,13,Other perinatal,
+103,Atelectasis,770.4-770.5,P28.0-P28.1,13,Other perinatal,
+104,All other respiratory conditions originating in the perinatal period,770.6-770.8,P28.2-P28.9,13,Other perinatal,
+106,Bacterial sepsis of newborn,771.8,P36,13,Other perinatal,
+107,Omphalitis of newborn with or without mild hemorrhage,771.4,P38,13,Other perinatal,
+108,All other infections specific to the perinatal period,"771.0-771.2, 771.5-771.7","P35, P37, P39",13,Other perinatal,
+110,Neonatal hemorrhage,772,"P50-P52, P54",13,Other perinatal,
+111,Hemorrhagic disease of newborn,776,P53,13,Other perinatal,
+112,Hemolytic disease of newborn due to isoimmunization and perinatal jaundice,773-774,P55-P59,13,Other perinatal,
+113,Hematological disorders,776.1-776.9,P60-P61,13,Other perinatal,
+114,Syndrome of infant of a diabetic mother and neonatal diabetes mellitus,775.0-775.1,P70.0-P70.2,13,Other perinatal,
+115,Necrotizing entercolitis of newborn,777.5,P77,13,Other perinatal,
+116,Hydrops fetalis not due to hemolytic disease,778,P83.2,13,Other perinatal,
+117,Other perinatal conditions,"775.2-775.9, 777.0-777.4, 777.6-777.9, 778.1-779","P29, P70.3-P70.9, P71-P76, P78-P81, P83.0-P83.1, P83.3-P83.9, P90-P96",13,Other perinatal,
+119,Anencephaly and similar malformations,740,Q00,14,Congenital,
+120,Congenital hydrocephalus,742.3,Q03,14,Congenital,
+121,Spina bifida,741,Q05,14,Congenital,
+122,Other congenital malformations of nervous system,"742.0-742.2, 742.4-742.9","Q01-Q02, Q04, Q06-Q07",14,Congenital,
+123,Congenital malformations of heart,745-746,Q20-Q24,14,Congenital,
+124,Other congenital malformationsof circulatory system,747,Q25-Q28,14,Congenital,
+125,Congenital malformations of respiratory system,748,Q30-Q34,14,Congenital,
+126,Congenital malformations of digestive system,749-751,Q35-Q45,14,Congenital,
+127,Congenital malformations of genitourinary system,752-753,Q50-Q64,14,Congenital,
+128,"Congenital malformations and deformations of musculoskeletal system, limbs and integument",754-757,Q65-Q85,14,Congenital,
+129,Down's syndrome,758,Q90,14,Congenital,
+130,Edward's syndrome,758.2,Q91.0-Q91.3,14,Congenital,
+131,Patau's syndrome,758.1,Q91.4-Q91.7,14,Congenital,
+132,Other congenital malformations and deformations,"743-744, 759","Q10-Q18, Q86-Q89",14,Congenital,
+133,"Other chromosomal abnormalities, not elsewhere classified",758.2-758.9,Q92-Q99,14,Congenital,
+135,Sudden infant death syndrome,798,R95,15,SIDS,2
+136,"Other symptoms, signs and abnormal clinical and laboratory findings, not elsewhere classified","780-796, 798.1-799","R00-R53, R55-R94, R96-R99",15,SIDS,
+137,All other diseases (Residual),"280-319, 360-379, 680-739","F01-F99, H00-H57, L00-M99",16,Other,1
+141,Motor vehicle accidents,E810-E825,"V02-V04, V09.0, V09.2, V12-V14, V19.0-V19.2, V19.4-V19.6, V20-V79, V80.3-V80.5, V81.0-V81.1, V82.0-V82.1, V83-V86, V87.0-V87.8, V88.0-V88.8, V89.0, V89.2",17,External,0
+142,Other and unspecified transport accidents,"E800-E807, E826-E848, E929.1","V01, V05-V06, V09.1, V09.3-V09.9, V10-V11, V15-V18, V19.3, V19.8-V19.9, V80.0-V80.2, V80.6-V80.9, V81.2-V81.9, V82.2-V82.9, V87.9, V88.9, V89.1, V89.3, V89.9, V90-V99",17,External,0
+143,Falls,E880-E888,W00-W19,17,External,0
+144,Accidental discharge of firearms,E922,W32-W34,17,External,0
+145,Accidental drowning and submersion,E910,W65-W74,17,External,0
+146,Accidental suffocation and strangulation in bed,E913.0,W75,17,External,0
+147,Other accidental suffocation and strangulation,E913.1-E913.9,"W76-W77, W81-W84",17,External,0
+148,Accidental inhalation and ingestation of food or other objects causing obstruction of respiratory tract,E911-E912,W78-W80,17,External,0
+149,"Accidents caused by exposure to smoke, fire and flames",E890-E899,X00-X09,17,External,0
+150,Accidental poisoning and exposure to noxious substances,"E850-E869, E924.1",X40-X49,17,External,0
+151,Other and unspecified accidents,"E900-E909, E914-E921, E923-E924.0, E924.8-E929","W20-W31, W35-W64, W85-W99, X10-X39, X50-X59",17,External,0
+153,"Assault (homicide) by hanging, strangulation and suffocation",E963,X91,17,External,0
+154,Assault (homicide) by discharge of firearms,E965.0-E965.4,"*U01.4, X93-X95",17,External,0
+155,"Neglect, abandonment and other maltreatment syndrome","E967, E968.4",Y06-Y07,17,External,0
+156,Assault (homicide) by other and unspecified means,"E960-E962, E964, E965.5-E966, E968.0-E968.3, E968.8-E968.9","*U01.0-*U01.3, *U01.5-*U01.9, X85-X90, X92, X96-Y05, Y08-Y09",17,External,0
+157,Complications of medical and surgical care,"E870-E879, E930-E949",Y40-Y84,17,External,0
+158,Other external causes,E970-E979,Y10-Y36,17,External,0
